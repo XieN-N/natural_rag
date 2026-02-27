@@ -1,0 +1,15 @@
+[project]
+name = "natural_rag"
+version = "0"
+requires-python = ">=3.12"
+
+dependencies = [
+    "pydantic",
+    "sentence_transformers",
+    "ipykernel",
+    "ipywidgets",
+    "openai",
+    "httpx[socks]",  # if using HTTP_PROXY with sentence_transformers
+    "bigtree",
+    "graph-ragu @ git+https://github.com/sedol1339/RAGU.git@caching",
+]
