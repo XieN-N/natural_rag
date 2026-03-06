@@ -13,7 +13,7 @@ import pandas as pd
 from ragu.models.llm import LLMOpenAI # pyright: ignore[reportMissingTypeStubs]
 from ragu.models.openai import CachedAsyncOpenAI # pyright: ignore[reportMissingTypeStubs]
 
-from natural_rag.baseline import (
+from natural_rag.baseline.baseline import (
     CLARIFY_PROMPT, INSERT_PROMPT, BUILD_PROMPT, OPTIMIZE_PROMPT, Changes, EntriesList, Names, TreeKnowledgeBase
 )
 

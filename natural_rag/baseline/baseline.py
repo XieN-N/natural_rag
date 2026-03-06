@@ -4,7 +4,7 @@ from typing import Iterable, Literal
 
 from pydantic import BaseModel, Field
 
-from natural_rag.vector_index import VectorIndex
+from natural_rag.baseline.vector_index import VectorIndex
 
 
 class Entry(BaseModel):
