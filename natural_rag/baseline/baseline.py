@@ -1,20 +1,8 @@
 from __future__ import annotations
-import asyncio
-from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Iterable, Literal, cast
-import os
+from typing import Iterable, Literal
 
-from diskcache import Index # pyright: ignore[reportMissingTypeStubs]
-import pandas as pd
-from pydantic import BaseModel
-from ragu.models.llm import LLMOpenAI # pyright: ignore[reportMissingTypeStubs]
-from ragu.models.openai import CachedAsyncOpenAI # pyright: ignore[reportMissingTypeStubs]
-
-# from ragu.common.logger import logger # pyright: ignore[reportMissingTypeStubs]
-# logger.remove()
-# logger.add(sys.stdout, level="DEBUG") 
+from pydantic import BaseModel, Field
 
 from natural_rag.vector_index import VectorIndex
 
@@ -40,6 +28,19 @@ class EntriesList(BaseModel):
 
 class Names(BaseModel):
     names: list[str]
+
+
+class Change(BaseModel):
+    entry: str
+    new_parent: str | None = Field(description="New parent entry name, use None for root.")
+
+    def model_post_init(self, __context: object):
+        if self.new_parent in ('none', '<root>', 'root'):
+            self.new_parent = None
+
+
+class Changes(BaseModel):
+    changes: list[Change]
 
 
 # A database structure description included in various prompts
@@ -108,7 +109,9 @@ Your task is to convert a plain text document into a structured knowledge base. 
 {SCHEMA_DESCRIPTION}
 
 Return only list[Entry] as json. Try to achieve full document coverage, prefer to \
-cite the document text without changes. Parent may be another returned entry or none.
+cite the document text without changes. Parent may be another returned entry or none. \
+Importantly: each entry should be at least a paragraph of text! Don't increase the \
+number of entries unnecessarily; instead, supplement the entry descriptions.
 
 The document:
 
@@ -186,6 +189,22 @@ duplicate. To do so, return the entry with the name from excerpt, and the merged
 text.\
 """
 
+# For database optimizing
+
+OPTIMIZE_PROMPT = f"""\
+I am building a structured knowledge base. {SCHEMA_DESCRIPTION}
+
+I need to optimize structure of the existing knowledge base. Check for \
+inconsisitencies in the database structure below. Propose parent changes \
+for entries where you feel that the entry is more related to the new parent, \
+than to the current parent. Propose changes if you are sure, otherwise return \
+nothing if structure is fine. \
+
+{{excerpt_tree}}
+
+Now tell me which parent changes you propose.
+"""
+
 
 class TreeKnowledgeBase:
     """Keeps a list of entries and a vector search engine.
@@ -252,44 +271,21 @@ class TreeKnowledgeBase:
                 chain.append(parent.name)
                 entry = parent
 
-    # def as_tree(self) -> tuple[TreeNode, dict[str, TreeNode]]:
-    #     root = TreeNode('root')
-    #     nodes = {name: TreeNode(entry) for name, entry in self._entries.items()}
-    #     for node in nodes.values():
-    #         entry = cast(Entry, node.value)
-    #         try:
-    #             node.parent = nodes[entry.parent] if (entry.parent is not None) else root
-    #         except IndexError:
-    #             raise ValueError(f'Cannot find parent {entry.parent} for entry {entry.name}')
-    #     return root, nodes
+    def get_full_path(self, name: str) -> Iterable[Entry]:
+        entry = self._entries[name]
+        yield entry
+        while entry.parent:
+            entry = self._entries[entry.parent]
+            yield entry
     
-    # def get_tree_excerpt(self, names: list[str]) -> TreeNode:
-    #     root, all_nodes = self.as_tree()
-    #     keep_entries = {name: all_nodes[name] for name in names}
-    #     keep_entries |= {
-    #         parent.value.name: parent
-    #         for node in keep_entries.values()
-    #         for parent in node.ancestors
-    #         if isinstance(parent.value, Entry)
-    #     }
-    #     for child in root.descendants:
-    #         if (
-    #             isinstance(child.value, Entry)
-    #             and child.value.name not in keep_entries
-    #         ):
-    #             child.parent.n_omitted += 1 # type: ignore
-    #             child.parent = None # type: ignore
-    #     return root
+    def get_siblings(self, name: str) -> Iterable[str]:
+        parent = self._entries[name].parent
+        for name, entry in self._entries.items():
+            if entry.parent == parent:
+                yield name
 
     def get_excerpt(self, names: list[str] | None = None) -> Excerpt:
         excerpt = Excerpt('root', {})
-
-        def get_full_path(name: str) -> Iterable[Entry]:
-            entry = self._entries[name]
-            yield entry
-            while entry.parent:
-                entry = self._entries[entry.parent]
-                yield entry
         
         def add_chain_inplace(chain: list[Entry], excerpt: Excerpt):
             while chain:
@@ -299,7 +295,7 @@ class TreeKnowledgeBase:
                 excerpt = excerpt.children[entry.name]
         
         for name in (names if names is not None else list(self._entries)):
-            chain = list(get_full_path(name))[::-1]
+            chain = list(self.get_full_path(name))[::-1]
             add_chain_inplace(chain, excerpt)
         
         def count_omitted_inplace(excerpt: Excerpt):
@@ -308,35 +304,13 @@ class TreeKnowledgeBase:
                 entry for entry in self._entries.values()
                 if entry.parent == current_name
                 and entry.name not in excerpt.children
-            ])
+            ]) if excerpt.children else 0
             for child in excerpt.children.values():
                 count_omitted_inplace(child)
             
         count_omitted_inplace(excerpt)
 
         return excerpt
-
-# @dataclass
-# class OmittedNodes:
-#     n: int
-
-#     def to_string(self) -> str:
-#         return f'\t({self.n} more child entries not shown)'
-
-# @dataclass
-# class TreeNode(Node):
-#     value: Entry | Literal['root'] | OmittedNodes
-#     n_omitted: int = 0
-
-#     def __post_init__(self):
-#         match self.value:
-#             case Entry():
-#                 name = self.value.name
-#             case 'root':
-#                 name = 'root'
-#             case OmittedNodes():
-#                 name = self.value.to_string()
-#         super().__init__(name)
 
 @dataclass
 class Excerpt:
@@ -351,7 +325,8 @@ class Excerpt:
         else:
             result.append('<root>')
         if self.n_omitted > 0:
-            result.append(f'├── ({self.n_omitted} more child entries not shown)')
+            tab = '├── ' if self.children else '└── '
+            result.append(f'{tab}({self.n_omitted} more child entries not shown)')
         for child_idx, child in enumerate(self.children.values()):
             for child_line_idx, line in enumerate(child.to_lines()):
                 if child_idx == len(self.children) - 1:
@@ -368,126 +343,49 @@ class Excerpt:
         return result
 
 
-async def main():
-    base = TreeKnowledgeBase()
-    llm = LLMOpenAI(
-        client=CachedAsyncOpenAI(
-            base_url=os.environ['VSEGPT_BASE_URL'],
-            api_key=os.environ['VSEGPT_KEY'],
-            rate_min_delay=2,
-            cache=Index('./llm_cache'),
-        ),
-        model_name='mistralai/mistral-medium-3',
-    )
+# from collections.abc import Iterable
+# from itertools import chain
+# import random
+# from bigtree.node.node import Node
+# from bigtree.tree.export import print_tree
 
-    docs = sorted(Path('datasets/bl_small/docs').glob('*.md'))
-    # docs += [
-    #     Path('datasets/bl/docs/Alembic.md'),
-    #     Path('datasets/bl/docs/Anadia.md'),
-    #     Path('datasets/bl/docs/Chiromaw.md'),
-    # ]
+# def get_excerpt(
+#     root: Node,
+#     select: Iterable[Node] | int,
+#     expand_siblings: bool = False,
+#     n_omitted_siblings: bool = True,
+#     n_omitted_children: bool = True,
+# ) -> Node:
+#     if isinstance(select, int):
+#         all_descendants = list(root.descendants)
+#         select = random.sample(all_descendants, min(select, len(all_descendants)))
+#     select = set(select)
+#     if expand_siblings:
+#         select |= set(chain(*[node.siblings for node in select]))
+#     subtree = set(chain(*[node.node_path for node in select]))
+            
+#     def build_pruned_tree(orig_node: Node) -> Node:
+#         new_node = Node(orig_node.name)
+#         for child in orig_node.children:
+#             if child in subtree:
+#                 build_pruned_tree(child).parent = new_node
+#         if len(new_node.children) == 0:
+#             if n_omitted_children:
+#                 n_children = len(list(orig_node.descendants))
+#                 if n_children:
+#                     new_node.name += f' ({n_children} children omitted)'
+#         elif n_omitted_siblings:
+#                 n_omitted = len(orig_node.children) - len(new_node.children)
+#                 if n_omitted:
+#                     Node(f"({n_omitted} more nodes omitted)", parent=new_node)
+#         return new_node
 
-    for doc_idx, doc in enumerate(docs):
-        print(f'Doc {doc_idx}: {doc.name}')
-        doc = doc.read_text()
-    
-        print(f'----------------\nBUILDING\n----------------')
-        
-        new_entries = cast(EntriesList, await llm.chat_completion(
-            [{"role": "user", "content": BUILD_PROMPT.format(document=doc)}],
-            output_schema=EntriesList,
-        )).entries
-        print(f'Extracted {len(new_entries)} entries')
-        # print(entries)
+#     return build_pruned_tree(root)
 
-        found_relevant_entries: dict[str, float] = defaultdict(float)
-        for entry in new_entries:
-            for query in entry.get_all_fields():
-                for score, name in base.search_entries(query, n=50):
-                    found_relevant_entries[name] += score
+# root = Node("Root")
+# for i in list("ABCDEFGHIJ"):
+#     child = Node(f"Node_{i}", parent=root)
+#     for j in range(1, 7):
+#         Node(f"Node_{i}{j}", parent=child)
 
-        top_relevant_entries = sorted(
-            found_relevant_entries.items(),
-            key=lambda item: -item[1]
-        )[:50]
-        
-        print(f'{top_relevant_entries=}')
-
-        top_relevant_entry_names = [name for name, _score in top_relevant_entries]
-
-        if len(top_relevant_entry_names):
-            print(f'----------------\nCLARIFYING\n----------------')
-            excerpt = base.get_excerpt(top_relevant_entry_names)
-            excerpt_text = '\n'.join(excerpt.to_lines())
-            print('Excerpt from found entries:')
-            print(excerpt_text)
-
-            names_to_clarify = cast(Names, await llm.chat_completion(
-                [{"role": "user", "content": CLARIFY_PROMPT.format(
-                    new_entries='\n'.join([e.model_dump_json() for e in new_entries]),
-                    excerpt_tree=excerpt_text,
-                )}],
-                output_schema=Names,
-            )).names
-
-            print(f'{names_to_clarify=}')
-            print(f'----------------\nREFINING\n----------------')
-
-            refined_new_entries = cast(EntriesList, await llm.chat_completion(
-                [{"role": "user", "content": INSERT_PROMPT.format(
-                    new_entries='\n'.join([
-                        e.model_dump_json()
-                        for e in new_entries
-                    ]),
-                    excerpt_tree=excerpt_text,
-                    excerpt_entries='\n'.join([
-                        base.get_entry(name).model_dump_json()
-                        for name in names_to_clarify
-                        if name in base
-                    ]),
-                )}],
-                output_schema=EntriesList,
-            )).entries
-
-            old_and_new_parents: dict[str, list[str]] = defaultdict(lambda: ['', ''])
-            for entry in new_entries:
-                old_and_new_parents[entry.name][0] = entry.parent or ''
-            for entry in refined_new_entries:
-                old_and_new_parents[entry.name][1] = entry.parent or ''
-            diff_df = pd.DataFrame([
-                {'name': name, 'old_parent': old_parent, 'new_parent': new_parent}
-                for name, (old_parent, new_parent) in old_and_new_parents.items()
-            ])
-
-            with pd.option_context(
-                "display.max_rows", None,
-                "display.max_columns", None,
-                'display.max_colwidth', None,
-                'display.width', None,
-            ):
-                print(diff_df)
-
-            new_entries = refined_new_entries
-        
-        print(f'----------------\nINSERTING\n----------------')
-
-        for entry in new_entries:
-            base.add_or_replace_entry(entry)
-        
-        base.check_if_entry_tree_valid()
-    
-        excerpt = base.get_excerpt()
-        print('\n'.join(excerpt.to_lines()))
-
-        # if doc_idx == 2:
-        #     break
-
-if __name__ == '__main__':
-    # base = TreeKnowledgeBase()
-    # base.add_or_replace_entry(Entry(name='A', summary='xxxxx', text='', keywords=[], parent=None))
-    # base.add_or_replace_entry(Entry(name='B', summary='xxxxx', text='', keywords=[], parent='A'))
-    # base.add_or_replace_entry(Entry(name='B2', summary='xxxxx', text='', keywords=[], parent='A'))
-    # base.add_or_replace_entry(Entry(name='C', summary='xxxxx', text='', keywords=[], parent='B'))
-    # base.check_if_entry_tree_valid()
-    # print('\n'.join(base.get_excerpt(['A', 'C']).to_lines()))
-    asyncio.run(main())
+# print_tree(get_excerpt(root, select=3, expand_siblings=True))
