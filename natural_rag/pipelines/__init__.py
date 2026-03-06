@@ -1,6 +1,8 @@
 from abc import ABC
+from pathlib import Path
 
 from natural_rag.data import Document
+from natural_rag.dataset import RAGDataset
 
 
 class RAGPipeline(ABC):
