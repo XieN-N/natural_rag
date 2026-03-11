@@ -1,46 +1,61 @@
-- text: Why all the enemies are so tough to kill?
-  eval_rules:
-  - score: 1
-    check: Mention that main Betweenlands creatures are resistant to non-Betweenlands
-      (Overworld) weapons.
-    metadata:
-      comment: An assistant should understand that such a vague question can be asked
-        in early game, so should be related to using non-Betweenlands weapons. But
-        additional reasoning about specific mobs is okay.
-  relevant:
-  - doc_id: Basic Guide to Survival
-    loc:
-    - Tools and weapons can be brought but are
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that main Betweenlands creatures are resistant to non-Betweenlands
+          (Overworld) weapons.
+        metadata:
+          comment: An assistant should understand that such a vague question can be
+            asked in early game, so should be related to using non-Betweenlands weapons.
+            But additional reasoning about specific mobs is okay.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - You probably use non-Betweenlands weapons to which Betweenlands creatures are
     resistant.
-
-- text: What are the most important items in the early game, to make the realm exploration
-    easier?
-  eval_rules:
-  - score: 1
-    check: Mention crafting Betweenlands tools and weapons. Optionally may mention
-      weedwood, bone or octine varieties; do not mention other tool varieties.
-    metadata:
-      comment: Mentioning other tool varieties is a mistake for early game.
-  - score: 1
-    check: Mention crafting Betweenlands armour. Optionally may mention bone, lurker
-      skin or syrmorite varieties; do not mention other armour varieties.
-    metadata:
-      comment: Mentioning other armor varieties is a mistake for early game.
-  - score: 1
-    check: Mention Sulfur Torches or Bulb-Capped Mushroom (at lest one of them).
-    metadata:
-      comment: While torches are not mentioned in the Basic Guide to Survival, the
-        guide says that the realm is dark. Also the wiki says that Sulfur Torch provides
-        a light source.
-  - score: 1
-    check: Mention that you need more than one food source.
-  - score: 1
-    check: Mention that you need to cure decay with Balls of Sap or Weeping Blue Petals
-      (mention at least one of these options).
+  relevant:
+  - doc_id: Basic Guide to Survival
+    loc:
+    - Tools and weapons can be brought but are
+  text: Why all the enemies are so tough to kill?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention crafting Betweenlands tools and weapons. Optionally may mention
+          weedwood, bone or octine varieties; do not mention other tool varieties.
+        metadata:
+          comment: Mentioning other tool varieties is a mistake for early game.
+        score: 1
+      '1':
+        check: Mention crafting Betweenlands armour. Optionally may mention bone,
+          lurker skin or syrmorite varieties; do not mention other armour varieties.
+        metadata:
+          comment: Mentioning other armor varieties is a mistake for early game.
+        score: 1
+      '2':
+        check: Mention Sulfur Torches or Bulb-Capped Mushroom (at lest one of them).
+        metadata:
+          comment: While torches are not mentioned in the Basic Guide to Survival,
+            the guide says that the realm is dark. Also the wiki says that Sulfur
+            Torch provides a light source.
+        score: 1
+      '3':
+        check: Mention that you need more than one food source.
+        score: 1
+      '4':
+        check: Mention that you need to cure decay with Balls of Sap or Weeping Blue
+          Petals (mention at least one of these options).
+        score: 1
+  metadata:
+    comment: There are some necessary things to mention, but the assitant can complement
+      the answer arbitrarily.
+    reasoning_type: factual wide
+  reference_answers:
+  - The non-Betweenlands tools and weapons are much less effective here, so you need
+    to craft Betweenlands tools, weapons and armour. You need to collect multiple
+    varieties of foods, such as mushrooms, to Food Sickness. You need Balls of Sap
+    or Weeping Blue Petals to restore a Decay bar. You need sulfur torches to see
+    better in the dark. You may need Swamp Reeds for other useful tools such as Buckets.
   relevant:
   - doc_id: Basic Guide to Survival
     loc:
@@ -58,70 +73,50 @@
   - doc_id: Sulfur Torch
     loc:
     - Sulfur Torches are blocks that act as primary sources
-  metadata:
-    reasoning_type: factual wide
-    comment: There are some necessary things to mention, but the assitant can complement
-      the answer arbitrarily.
-  reference_answers:
-  - The non-Betweenlands tools and weapons are much less effective here, so you need
-    to craft Betweenlands tools, weapons and armour. You need to collect multiple
-    varieties of foods, such as mushrooms, to Food Sickness. You need Balls of Sap
-    or Weeping Blue Petals to restore a Decay bar. You need sulfur torches to see
-    better in the dark. You may need Swamp Reeds for other useful tools such as Buckets.
-
-- text: I went down into the cave with a supply of sticks, got some sulfur, why I
-    cannot craft a torch?
-  eval_rules:
-  - score: 1
-    check: Mention that you need Weedwood Sticks (not just "sticks").
-  relevant:
-  - doc_id: Sulfur Torch
-    loc:
-    - <Crafting Recipe>
+  text: What are the most important items in the early game, to make the realm exploration
+    easier?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that you need Weedwood Sticks (not just "sticks").
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Sulfur Torch is crafted using Weedwood Stick. You probably carry normal sticks,
     not weedwood ones.
-
-- text: What is this bar made of circles above the hunger bar?
-  eval_rules:
-  - score: 3
-    check: Mention that this is the decay bar.
-  - score: 1
-    check: Mention that depletion of the decay bar reduces the maximum health, optionally
-      mention that this also applies slowness.
-  - score: 1
-    check: Mention the Sap Tree as the cure for the decay.
-  - score: 1
-    check: Mention the Weeping Blue as the cure for the decay.
   relevant:
-  - doc_id: Decay
+  - doc_id: Sulfur Torch
     loc:
-    - The decay bar is represented as a line of Sap Balls
-    - As decay points drop, the player's maximum
-    - The most reliable method is to avoid threats
-    - Decay can also be reversed by consuming
+    - <Crafting Recipe>
+  text: I went down into the cave with a supply of sticks, got some sulfur, why I
+    cannot craft a torch?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that this is the decay bar.
+        score: 3
+      '1':
+        check: Mention that depletion of the decay bar reduces the maximum health,
+          optionally mention that this also applies slowness.
+        score: 1
+      '2':
+        check: Mention the Sap Tree as the cure for the decay.
+        score: 1
+      '3':
+        check: Mention the Weeping Blue as the cure for the decay.
+        score: 1
   metadata:
-    reasoning_type: factual
     comment: While the question is only about the bar itself, asking such a question
       means that the player does not understand the mechanics of this bar, and it
       also needs to be explained.
+    reasoning_type: factual
   reference_answers:
   - This is the decay bar. Simply existing in the dimension slowly causes it to decrease.
     As decay points drop, the player's maximum health is reduced and slowness is applied.
     You need to consume Balls of Sap that is harvested them from the Sap Tree, or
     consume petals collected from the Weeping Blue flower to replenish the decay bar.
     There are also other sources to replenish the decay bar.
-
-- text: Why my maximum health got reduced, am I sick?
-  eval_rules:
-  - score: 2
-    check: Mention the Decay bar, depletion of which reduces the maximum health.
-  - score: 1
-    check: Mention the Sap Tree as the cure for the decay.
-  - score: 1
-    check: Mention the Weeping Blue as the cure for the decay.
   relevant:
   - doc_id: Decay
     loc:
@@ -129,38 +124,58 @@
     - As decay points drop, the player's maximum
     - The most reliable method is to avoid threats
     - Decay can also be reversed by consuming
+  text: What is this bar made of circles above the hunger bar?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention the Decay bar, depletion of which reduces the maximum health.
+        score: 2
+      '1':
+        check: Mention the Sap Tree as the cure for the decay.
+        score: 1
+      '2':
+        check: Mention the Weeping Blue as the cure for the decay.
+        score: 1
   metadata:
-    reasoning_type: factual
     comment: The question requires not only explaining what happens, but also explaining
       how to cure.
+    reasoning_type: factual
   reference_answers:
   - Note the decay bar above you hunger bar. Simply existing in the dimension slowly
     causes it to decrease. As decay points drop, the player's maximum health is reduced
     and slowness is applied. You need to consume Balls of Sap that is harvested them
     from the Sap Tree, or consume petals collected from the Weeping Blue flower to
     replenish the decay bar. There are also other sources to replenish the decay bar.
-
-- text: Is it dangerous to approach the ruins?
-  eval_rules:
-  - score: 1
-    check: Mention that no mobs spawn specifically in the ruins (meaning the small
-      Ruins in the Marsh and Sludge Plains).
-  - score: 1
-    check: Mention hostile Termites that spawn when breaking loot pots in these ruins.
-  - score: 1
-    check: 'Mention naturally spawning hostile mobs for the biomes where the small
-      Ruins are found. Optionally concretize: Wight, Peat Mummy, Chiromaw, Shallowbreath,
-      Leech or Sludge.'
-  - score: -1
-    check: Wrongly mention any mobs not listed above.
-  - score: 0
-    check: Optionally discuss other structures which may be called "ruins", except
-      the small ruins, and their mobs and hazards.
   relevant:
-  - doc_id: Ruins
+  - doc_id: Decay
     loc:
-    - Ruins are a variety of small, dilapidated structures
-    - <Marsh Composition>
+    - The decay bar is represented as a line of Sap Balls
+    - As decay points drop, the player's maximum
+    - The most reliable method is to avoid threats
+    - Decay can also be reversed by consuming
+  text: Why my maximum health got reduced, am I sick?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that no mobs spawn specifically in the ruins (meaning the small
+          Ruins in the Marsh and Sludge Plains).
+        score: 1
+      '1':
+        check: Mention hostile Termites that spawn when breaking loot pots in these
+          ruins.
+        score: 1
+      '2':
+        check: 'Mention naturally spawning hostile mobs for the biomes where the small
+          Ruins are found. Optionally concretize: Wight, Peat Mummy, Chiromaw, Shallowbreath,
+          Leech or Sludge.'
+        score: 1
+      '3':
+        check: Wrongly mention any mobs not listed above.
+        score: -1
+      '4':
+        check: Optionally discuss other structures which may be called "ruins", except
+          the small ruins, and their mobs and hazards.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
@@ -168,63 +183,81 @@
     They are generally safe, except the environmental mobs in the biome. However,
     small hostile Termites may spawn when breaking loot pots, but they are easy to
     kill.
-
-- text: Can I interact with creepy ghosts that disappear as I get close to them?
-  eval_rules:
-  - score: 1
-    check: Mention that ghosts ("Them") are not interactable entities.
-  - score: 0
-    check: 'Optionally discuss another type of disappearing entities: Wisps.'
-    metadata:
-      comment: Wiki says that Wisps give off colored light and disappear on approach,
-        which is ambiguously related to "creepy ghosts". So, mentioning Wisps is definitely
-        not a mistake. However, "Them" are descibed as more creepy (distorted, staring
-        silhouettes), and without mentioning "Them" the answer is incomplete.
   relevant:
-  - doc_id: Dense Fog
+  - doc_id: Ruins
     loc:
-    - A small distance away from the player, distorted
-    - They will seem to float slowly towards the player
-    - They are purely aesthetic.
+    - Ruins are a variety of small, dilapidated structures
+    - <Marsh Composition>
+  text: Is it dangerous to approach the ruins?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that ghosts ("Them") are not interactable entities.
+        score: 1
+      '1':
+        check: 'Optionally discuss another type of disappearing entities: Wisps.'
+        metadata:
+          comment: Wiki says that Wisps give off colored light and disappear on approach,
+            which is ambiguously related to "creepy ghosts". So, mentioning Wisps
+            is definitely not a mistake. However, "Them" are descibed as more creepy
+            (distorted, staring silhouettes), and without mentioning "Them" the answer
+            is incomplete.
+        score: 0
   metadata:
     reasoning_type: null
   reference_answers:
   - The black distorted, staring silhouettes referred to as "Them" are purely aesthetic.
     The luminous wisps are collectable during the Auroras event, when they stop disappearing
     as you get close.
-
-- text: Is it possible to skip the night?
-  eval_rules:
-  - score: 2
-    check: Either answer negatively (not possible to skip, even with the Moss Bed),
-      or tell that no such mechanics is found in the wiki.
-  - score: 1
-    check: Clarify that there is no "night" in the Betweenlands, while making sure
-      to mention that some events affect luminosity.
-    metadata:
-      comment: Mentioning both these facts at once will help avoid confusing the player.
   relevant:
-  - doc_id: Moss Bed
+  - doc_id: Dense Fog
     loc:
-    - However, since there is no proper day/night cycle
+    - A small distance away from the player, distorted
+    - They will seem to float slowly towards the player
+    - They are purely aesthetic.
+  text: Can I interact with creepy ghosts that disappear as I get close to them?
+- eval_rules:
+    checks:
+      '0':
+        check: Either answer negatively (not possible to skip, even with the Moss
+          Bed), or tell that no such mechanics is found in the wiki.
+        score: 2
+      '1':
+        check: Clarify that there is no "night" in the Betweenlands, while making
+          sure to mention that some events affect luminosity.
+        metadata:
+          comment: Mentioning both these facts at once will help avoid confusing the
+            player.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - There is no proper day/night cycle in the Betweenlands. There are some events
     which can affect luminosity , but no possibilities are found in the wiki to skip
     them.
-
-- text: How do I craft a bed to set a respawn point?
-  eval_rules:
-  - score: 1
-    check: Mention that you need Moss and Weedwood Planks. Optionally mention a Cave
-      Moss variation.
-  - score: 1
-    check: Mention that moss can be harvested with a Syrmorite Shears. Optionally
-      also mention harvesting with a Sickle.
-    metadata:
-      comment: It is not obvious how to get a Moss, so this also needs to be mentioned
-        as a part of the process.
+  relevant:
+  - doc_id: Moss Bed
+    loc:
+    - However, since there is no proper day/night cycle
+  text: Is it possible to skip the night?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that you need Moss and Weedwood Planks. Optionally mention
+          a Cave Moss variation.
+        score: 1
+      '1':
+        check: Mention that moss can be harvested with a Syrmorite Shears. Optionally
+          also mention harvesting with a Sickle.
+        metadata:
+          comment: It is not obvious how to get a Moss, so this also needs to be mentioned
+            as a part of the process.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You need 3 moss and 3 Weedwood Planks. Moss can be harvested with a Syrmorite
+    Shears or a Sickle.
   relevant:
   - doc_id: Moss Bed
     loc:
@@ -233,62 +266,63 @@
   - doc_id: Moss
     loc:
     - The block itself must be broken with
+  text: How do I craft a bed to set a respawn point?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a Greebling.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
-  - You need 3 moss and 3 Weedwood Planks. Moss can be harvested with a Syrmorite
-    Shears or a Sickle.
-
-- text: I heard a fiddle playing and then it suddenly stopped. Is it just ambient
-    music or some kind of mob or event?
-  eval_rules:
-  - score: 1
-    check: Mention a Greebling.
+  - This is a Stringed Greebling musician playing, which is a peaceful elusive mob.
   relevant:
   - doc_id: Greebling
     loc:
     - Upon entering the range of a Greebling, ambient music
     - Greeblings can spawn in two variants; one with
     - The string instrument of the red-clothed Greebling
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - This is a Stringed Greebling musician playing, which is a peaceful elusive mob.
-
-- text: Are 2 varieties of food enough to prevent food sickness?
-  eval_rules:
-  - score: 1
-    check: Report the lack of an answer.
-  relevant:
-  - doc_id: Food Sickness
-    loc:
-    - Eating a different type of food will help to bring
+  text: I heard a fiddle playing and then it suddenly stopped. Is it just ambient
+    music or some kind of mob or event?
+- eval_rules:
+    checks:
+      '0':
+        check: Report the lack of an answer.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - This is not clearly stated in the wiki. Eating a food increasing its sickness
     counter by 5. Eating a different type of food will bring the sickness level down
     on the other food, but it is not stated how much.
-
-- text: What if I continue eating mushrooms, despite that "I feel terrible, I cannot
-    eat this anymore"?
-  eval_rules:
-  - score: 2
-    check: Mention reducing the amount of hunger restored.
-  - score: 1
-    check: Clarify that the Food Sickness mechanics is because of eating the same
-      food type, and not only for mushrooms.
-  - score: -1
-    check: Wrongly mention negative effects besides reducing the amount of hunger
-      restored.
   relevant:
   - doc_id: Food Sickness
     loc:
-    - While in the Betweenlands, players
-    - They can continue to eat it if they wish, but
+    - Eating a different type of food will help to bring
+  text: Are 2 varieties of food enough to prevent food sickness?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention reducing the amount of hunger restored.
+        score: 2
+      '1':
+        check: Clarify that the Food Sickness mechanics is because of eating the same
+          food type, and not only for mushrooms.
+        score: 1
+      '2':
+        check: Wrongly mention negative effects besides reducing the amount of hunger
+          restored.
+        score: -1
   metadata:
     reasoning_type: factual
   reference_answers:
   - If you continue eating the same food, you get a Food Sickness, the benefits will
     be greatly diminished, only restoring 1/3 hunger it normally would. You better
     switch to another food, including another mushrooms.
+  relevant:
+  - doc_id: Food Sickness
+    loc:
+    - While in the Betweenlands, players
+    - They can continue to eat it if they wish, but
+  text: What if I continue eating mushrooms, despite that "I feel terrible, I cannot
+    eat this anymore"?

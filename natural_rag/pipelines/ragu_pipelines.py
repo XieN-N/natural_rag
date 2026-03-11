@@ -13,8 +13,8 @@ from ragu import (
     Settings,
     ArtifactsExtractorLLM,
 )
-from ragu.models.embedder import EmbedderOpenAI
-from ragu.models.llm import LLMOpenAI
+from ragu.models.embedder import Embedder, EmbedderOpenAI
+from ragu.models.llm import LLM
 from ragu.models.openai import CachedAsyncOpenAI
 from ragu.search_engine.local_search import LocalSearchEngine
 
@@ -27,24 +27,21 @@ class RAGUPipeline(RAGPipeline):
     def __init__(
         self,
         language: str,
-        index_dir: Path,
+        index_dir: str | Path,
+        builder_llm: LLM,  # such as ragu.models.llm.LLMOpenAI(self.client, assistant_llm_name)
+        assistant_llm: LLM,  # such as ragu.models.llm.LLMOpenAI(self.client, assistant_llm_name)
+        embedder: Embedder,  # such as ragu.models.embedder.EmbedderOpenAI(self.client, embedder_name, dim=4096)
+        use_llm_summarization: bool = True,
+        vectorize_chunks: bool = True,
     ):
         ragu_logger.remove()
         ragu_logger.add(sys.stdout, level="DEBUG")
 
         self.language = language
         self.index_dir = index_dir
-        self.client = CachedAsyncOpenAI(
-            base_url=os.environ['OPENAI_BASE_URL'],
-            api_key=os.environ['OPENAI_API_KEY'],
-            rate_min_delay=2,
-            rate_max_simultaneous=10,
-            retry_times_sec=(2, 2, 2, 2, 2),
-            cache='./tmp/llm_cache',
-            debug_errors_storage='./tmp/llm_debug',
-        )
-        self.llm = LLMOpenAI(self.client, "mistralai/mistral-medium-3")
-        self.embedder = EmbedderOpenAI(self.client, "emb-qwen/qwen3-embedding-8b", dim=4096)
+        self.builder_llm = builder_llm
+        self.assistant_llm = assistant_llm
+        self.embedder = embedder
 
         Settings.storage_folder = self.index_dir
         Settings.language = self.language
@@ -52,17 +49,17 @@ class RAGUPipeline(RAGPipeline):
         self.chunker = SimpleChunker(max_chunk_size=1000)
 
         self.artifact_extractor = ArtifactsExtractorLLM(
-            llm=self.llm,
+            llm=self.builder_llm,
             do_validation=False
         )
 
         self.builder_settings = BuilderArguments(
-            use_llm_summarization=True,
-            vectorize_chunks=True,
+            use_llm_summarization=use_llm_summarization,
+            vectorize_chunks=vectorize_chunks,
         )
 
         self.knowledge_graph = KnowledgeGraph(
-            llm=self.llm,
+            llm=self.builder_llm,
             embedder=self.embedder,
             chunker=self.chunker,
             artifact_extractor=self.artifact_extractor,
@@ -70,7 +67,7 @@ class RAGUPipeline(RAGPipeline):
         )
 
         self.local_search = LocalSearchEngine(
-            LLMOpenAI(self.client, "mistralai/mistral-medium-3"),
+            self.assistant_llm,
             self.knowledge_graph,
             self.embedder,
             tokenizer_model="gpt-4o-mini",
@@ -78,8 +75,7 @@ class RAGUPipeline(RAGPipeline):
 
     def build_index(self, documents: list[Document]):
         docs = [doc.text for doc in documents if doc.text]
-        shutil.rmtree(Settings.storage_folder, ignore_errors=True)
         asyncio.run(self.knowledge_graph.build_from_docs(docs))
 
-    def answer_question(self, question: str) -> list[str]:
+    def generate_answer(self, question: str) -> str:
         return asyncio.run(self.local_search.a_query(question)).response # type: ignore

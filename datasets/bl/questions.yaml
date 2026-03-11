@@ -1,73 +1,95 @@
-- text: Can I start a new world in the Betweenlands straight away, without slaying
-    druids and making a portal?
-  eval_rules:
-  - score: 1
-    check: Mention that the config option exists. Optionally mention that this option
-      exists from the version 3.3.9.
-  - score: 0
-    check: Optionally mention that this is possible by obtaining a Swamp Talisman
-      via creative gamemode.
-  relevant:
-  - doc_id: Release 3.3.9
-    loc:
-    - Added config to let players start in The Betweenlands
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the config option exists. Optionally mention that this
+          option exists from the version 3.3.9.
+        score: 1
+      '1':
+        check: Optionally mention that this is possible by obtaining a Swamp Talisman
+          via creative gamemode.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
   - According to the changelog, in Release 3.3.9 a config option was added to let
     players start in the Betweenlands.
-- text: Why does the game freezes every second in Betweenlands?
-  metadata:
-    reasoning_type: out of scope
+  relevant:
+  - doc_id: Release 3.3.9
+    loc:
+    - Added config to let players start in The Betweenlands
+  text: Can I start a new world in the Betweenlands straight away, without slaying
+    druids and making a portal?
+- metadata:
     comment: This has nothing to do with this mod, may be caused by small amount of
       allocated RAM for Java.
-- text: How to show FPS?
-  metadata:
     reasoning_type: out of scope
+  text: Why does the game freezes every second in Betweenlands?
+- metadata:
     comment: This has nothing to do with this mod.
-- text: How to know if Minecraft uses GPU?
-  metadata:
     reasoning_type: out of scope
+  text: How to show FPS?
+- metadata:
     comment: This has nothing to do with this mod.
-- text: Why all the enemies are so tough to kill?
-  eval_rules:
-  - score: 1
-    check: Mention that main Betweenlands creatures are resistant to non-Betweenlands
-      (Overworld) weapons.
-    metadata:
-      comment: An assistant should understand that such a vague question can be asked
-        in early game, so should be related to using non-Betweenlands weapons. But
-        additional reasoning about specific mobs is okay.
-  relevant:
-  - doc_id: Basic Guide to Survival
-    loc:
-    - Tools and weapons can be brought but are
+    reasoning_type: out of scope
+  text: How to know if Minecraft uses GPU?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that main Betweenlands creatures are resistant to non-Betweenlands
+          (Overworld) weapons.
+        metadata:
+          comment: An assistant should understand that such a vague question can be
+            asked in early game, so should be related to using non-Betweenlands weapons.
+            But additional reasoning about specific mobs is okay.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - You probably use non-Betweenlands weapons to which Betweenlands creatures are
     resistant.
-- text: How to return back if I lost the portal in the Betweenlands?
-  eval_rules:
-  - score: 0
-    check: Optionally mention that you can craft a new Swamp Talisman and/or ignite
-      a 4x3 frame of Portal Frame with a Swamp Talisman.
-    metadata:
-      comment: The wiki does not clearly say if one can use a Swamp Talisman in the
-        Betweenlands dimension to create a portal back to the Overworld.
-  - score: 2
-    check: Mention that you can spot the portal in the Amate Map.
-  - score: 0
-    check: Optionally mention an option to die and respawn in the overworld, or tricks
-      with creative mode or cheats.
-    metadata:
-      comment: Mentioning an option to die and respawn in the overworld is doubtful
-        but not a mistake. The wiki does not say which is the default respawn dimension,
-        it only mentions that the config field exists.
-  - score: -1
-    check: Wrongly mention ways not listed above, including mentioning linking portals.
-    metadata:
-      comment: Linking mechanics does not help you to find or create portals.
+  relevant:
+  - doc_id: Basic Guide to Survival
+    loc:
+    - Tools and weapons can be brought but are
+  text: Why all the enemies are so tough to kill?
+- eval_rules:
+    checks:
+      '0':
+        check: Optionally mention that you can craft a new Swamp Talisman and/or ignite
+          a 4x3 frame of Portal Frame with a Swamp Talisman.
+        metadata:
+          comment: The wiki does not clearly say if one can use a Swamp Talisman in
+            the Betweenlands dimension to create a portal back to the Overworld.
+        score: 0
+      '1':
+        check: Mention that you can spot the portal in the Amate Map.
+        score: 2
+      '2':
+        check: Optionally mention an option to die and respawn in the overworld, or
+          tricks with creative mode or cheats.
+        metadata:
+          comment: Mentioning an option to die and respawn in the overworld is doubtful
+            but not a mistake. The wiki does not say which is the default respawn
+            dimension, it only mentions that the config field exists.
+        score: 0
+      '3':
+        check: Wrongly mention ways not listed above, including mentioning linking
+          portals.
+        metadata:
+          comment: Linking mechanics does not help you to find or create portals.
+        score: -1
+  metadata:
+    comment: First, the wiki does not clearly say if one can use a Swamp Talisman
+      in the Betweenlands dimension to create a portal. So, mentioning this is at
+      least not a mistake. Second, mentioning an option to die and respawn in the
+      overworld is not a mistake, but not clealy correct. The wiki does not mention
+      a default respawn dimension, but only says that the config field exists.
+    reasoning_type: factual
+  reference_answers:
+  - You can craft a new Swamp Talisman from the Betweenlands ingredients and try to
+    make a new portal if you lost one. Or make a four-by-three frame of Portal Frame
+    blocks and try to ignite it with a Swamp Talisman. Also you can spot a Portal
+    Tree in the Amate Map if you travel near it.
   relevant:
   - doc_id: Swamp Talisman
     loc:
@@ -75,40 +97,44 @@
   - doc_id: Amate Map
     loc:
     - Portal Tree
+  text: How to return back if I lost the portal in the Betweenlands?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a dangerous Angler fish.
+        score: 3
+      '1':
+        check: Mention that Lurkers (crocodiles) are mainly neutral unless provoked.
+        metadata:
+          comment: Lurkers are look like crocodiles so it is not obvious to player
+            that they are neutral, and should be mentioned.
+        score: 2
+      '2':
+        check: Mention that Rock Snots are hostile.
+        score: 2
+      '3':
+        check: Mention that Jellyfish or Freshwater Urchins are defensive mobs.
+        score: 1
+      '4':
+        check: Optionally mention creatures like Firefly, Anadia, Greebling Coracle,
+          Greebling Rider, Silt Crab, Bubbler Crab.
+        metadata:
+          comment: They either spawn in the Deep Waters and are neutral, or do not
+            spawn in the ocean (Deep waters biome), but may spawn nearly. No other
+            creatures are mentioned in the wiki.
+        score: 0
+      '5':
+        check: Wrongly mention creatures or hazards not listed above.
+        score: -3
   metadata:
-    reasoning_type: factual
-    comment: First, the wiki does not clearly say if one can use a Swamp Talisman
-      in the Betweenlands dimension to create a portal. So, mentioning this is at
-      least not a mistake. Second, mentioning an option to die and respawn in the
-      overworld is not a mistake, but not clealy correct. The wiki does not mention
-      a default respawn dimension, but only says that the config field exists.
+    comment: The "ocean" is a Deep waters biome, that the assistant should understand.
+    reasoning_type: factual wide
   reference_answers:
-  - You can craft a new Swamp Talisman from the Betweenlands ingredients and try to
-    make a new portal if you lost one. Or make a four-by-three frame of Portal Frame
-    blocks and try to ignite it with a Swamp Talisman. Also you can spot a Portal
-    Tree in the Amate Map if you travel near it.
-- text: Is the ocean dangerous?
-  eval_rules:
-  - score: 3
-    check: Mention a dangerous Angler fish.
-  - score: 2
-    check: Mention that Lurkers (crocodiles) are mainly neutral unless provoked.
-    metadata:
-      comment: Lurkers are look like crocodiles so it is not obvious to player that
-        they are neutral, and should be mentioned.
-  - score: 2
-    check: Mention that Rock Snots are hostile.
-  - score: 1
-    check: Mention that Jellyfish or Freshwater Urchins are defensive mobs.
-  - score: 0
-    check: Optionally mention creatures like Firefly, Anadia, Greebling Coracle, Greebling
-      Rider, Silt Crab, Bubbler Crab.
-    metadata:
-      comment: They either spawn in the Deep Waters and are neutral, or do not spawn
-        in the ocean (Deep waters biome), but may spawn nearly. No other creatures
-        are mentioned in the wiki.
-  - score: -3
-    check: Wrongly mention creatures or hazards not listed above.
+  - In the Deep Waters biome the main danger are Anglers (glowing fish). They will
+    attack the player rapidly and in quite big groups and can even leaping out of
+    the water. Lurkers (crocodiles) are neutral unless provoked or the player is afflicted
+    with Stench. Also, Rock Snots will attack the player but deal small damage, and
+    Jellyfish or Freshwater Urchin will defend themselves if the player gets too close.
   relevant:
   - doc_id: Deep Waters
     loc:
@@ -129,43 +155,50 @@
   - doc_id: Freshwater Urchin
     loc:
     - Freshwater Urchins will avoid
+  text: Is the ocean dangerous?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Lurker could be provoked.
+        score: 1
+      '1':
+        check: Mention that you may be afflicted with Stench. May also concretize
+          that Stench is applied if you contact Stagnant Water or have a rotten Anadia
+          in the inventory.
+        score: 1
+      '2':
+        check: Wrongly mention possible reasons not listed above.
+        score: -1
   metadata:
-    reasoning_type: factual wide
-    comment: The "ocean" is a Deep waters biome, that the assistant should understand.
+    reasoning_type: factual
   reference_answers:
-  - In the Deep Waters biome the main danger are Anglers (glowing fish). They will
-    attack the player rapidly and in quite big groups and can even leaping out of
-    the water. Lurkers (crocodiles) are neutral unless provoked or the player is afflicted
-    with Stench. Also, Rock Snots will attack the player but deal small damage, and
-    Jellyfish or Freshwater Urchin will defend themselves if the player gets too close.
-- text: Why a crocodile attacked me, if usually they do not?
-  eval_rules:
-  - score: 1
-    check: Mention that Lurker could be provoked.
-  - score: 1
-    check: Mention that you may be afflicted with Stench. May also concretize that
-      Stench is applied if you contact Stagnant Water or have a rotten Anadia in the
-      inventory.
-  - score: -1
-    check: Wrongly mention possible reasons not listed above.
+  - You either provoked one of the Lurkers nearby, or you are afflicted with Stench
+    (you contact Stagnant Water or have a rotten Anadia in the inventory).
   relevant:
   - doc_id: Lurker
     loc:
     - Lurkers resemble crocodiles
     - They will not attack players unless provoked
     - The only exception to this is if the player
+  text: Why a crocodile attacked me, if usually they do not?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively and mention the concept of Drinkable Brews.
+        score: 1
+      '1':
+        check: Answer positively and mention the concept of Infusions (potions) made
+          with Herblore.
+        score: 1
   metadata:
-    reasoning_type: factual
+    comment: 'A wide question that is hard to evaluate: an assistant may list either
+      ingredients, or the resulting driks, or both. But a player at least needs to
+      know about the concepts of Drinkable Brew and Infusion.'
+    reasoning_type: factual wide
   reference_answers:
-  - You either provoked one of the Lurkers nearby, or you are afflicted with Stench
-    (you contact Stagnant Water or have a rotten Anadia in the inventory).
-- text: Are there any plants that can be used to make drinks?
-  eval_rules:
-  - score: 1
-    check: Answer positively and mention the concept of Drinkable Brews.
-  - score: 1
-    check: Answer positively and mention the concept of Infusions (potions) made with
-      Herblore.
+  - There are plenty of drikable brews, as well as infusions. Some of them require
+    plants. One simple example is Nettle Tea that can be crafted from nettle only
+    in a steeping pot.
   relevant:
   - doc_id: Drinkable Brews
     loc:
@@ -177,39 +210,45 @@
     loc:
     - Plant Items are a variety of items
     - They are primarily used in making
+  text: Are there any plants that can be used to make drinks?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention crafting Betweenlands tools and weapons. Optionally may mention
+          weedwood, bone or octine varieties; do not mention other tool varieties.
+        metadata:
+          comment: Mentioning other tool varieties is a mistake for early game.
+        score: 1
+      '1':
+        check: Mention crafting Betweenlands armour. Optionally may mention bone,
+          lurker skin or syrmorite varieties; do not mention other armour varieties.
+        metadata:
+          comment: Mentioning other armor varieties is a mistake for early game.
+        score: 1
+      '2':
+        check: Mention Sulfur Torches or Bulb-Capped Mushroom (at lest one of them).
+        metadata:
+          comment: While torches are not mentioned in the Basic Guide to Survival,
+            the guide says that the realm is dark. Also the wiki says that Sulfur
+            Torch provides a light source.
+        score: 1
+      '3':
+        check: Mention that you need more than one food source.
+        score: 1
+      '4':
+        check: Mention that you need to cure decay with Balls of Sap or Weeping Blue
+          Petals (mention at least one of these options).
+        score: 1
   metadata:
+    comment: There are some necessary things to mention, but the assitant can complement
+      the answer arbitrarily.
     reasoning_type: factual wide
-    comment: 'A wide question that is hard to evaluate: an assistant may list either
-      ingredients, or the resulting driks, or both. But a player at least needs to
-      know about the concepts of Drinkable Brew and Infusion.'
   reference_answers:
-  - There are plenty of drikable brews, as well as infusions. Some of them require
-    plants. One simple example is Nettle Tea that can be crafted from nettle only
-    in a steeping pot.
-- text: What are the most important items in the early game, to make the realm exploration
-    easier?
-  eval_rules:
-  - score: 1
-    check: Mention crafting Betweenlands tools and weapons. Optionally may mention
-      weedwood, bone or octine varieties; do not mention other tool varieties.
-    metadata:
-      comment: Mentioning other tool varieties is a mistake for early game.
-  - score: 1
-    check: Mention crafting Betweenlands armour. Optionally may mention bone, lurker
-      skin or syrmorite varieties; do not mention other armour varieties.
-    metadata:
-      comment: Mentioning other armor varieties is a mistake for early game.
-  - score: 1
-    check: Mention Sulfur Torches or Bulb-Capped Mushroom (at lest one of them).
-    metadata:
-      comment: While torches are not mentioned in the Basic Guide to Survival, the
-        guide says that the realm is dark. Also the wiki says that Sulfur Torch provides
-        a light source.
-  - score: 1
-    check: Mention that you need more than one food source.
-  - score: 1
-    check: Mention that you need to cure decay with Balls of Sap or Weeping Blue Petals
-      (mention at least one of these options).
+  - The non-Betweenlands tools and weapons are much less effective here, so you need
+    to craft Betweenlands tools, weapons and armour. You need to collect multiple
+    varieties of foods, such as mushrooms, to Food Sickness. You need Balls of Sap
+    or Weeping Blue Petals to restore a Decay bar. You need sulfur torches to see
+    better in the dark. You may need Swamp Reeds for other useful tools such as Buckets.
   relevant:
   - doc_id: Basic Guide to Survival
     loc:
@@ -227,36 +266,35 @@
   - doc_id: Sulfur Torch
     loc:
     - Sulfur Torches are blocks that act as primary sources
-  metadata:
-    reasoning_type: factual wide
-    comment: There are some necessary things to mention, but the assitant can complement
-      the answer arbitrarily.
-  reference_answers:
-  - The non-Betweenlands tools and weapons are much less effective here, so you need
-    to craft Betweenlands tools, weapons and armour. You need to collect multiple
-    varieties of foods, such as mushrooms, to Food Sickness. You need Balls of Sap
-    or Weeping Blue Petals to restore a Decay bar. You need sulfur torches to see
-    better in the dark. You may need Swamp Reeds for other useful tools such as Buckets.
-- text: I went down into the cave with a supply of sticks, got some sulfur, why I
-    cannot craft a torch?
-  eval_rules:
-  - score: 1
-    check: Mention that you need Weedwood Sticks (not just "sticks").
-  relevant:
-  - doc_id: Sulfur Torch
-    loc:
-    - <Crafting Recipe>
+  text: What are the most important items in the early game, to make the realm exploration
+    easier?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that you need Weedwood Sticks (not just "sticks").
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Sulfur Torch is crafted using Weedwood Stick. You probably carry normal sticks,
     not weedwood ones.
-- text: Why was I able to collect swamp lights before, but now they disappear when
-    I get close?
-  eval_rules:
-  - score: 1
-    check: Mention that Wisps do not disappear when approaching only during the Auroras
-      event.
+  relevant:
+  - doc_id: Sulfur Torch
+    loc:
+    - <Crafting Recipe>
+  text: I went down into the cave with a supply of sticks, got some sulfur, why I
+    cannot craft a torch?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Wisps do not disappear when approaching only during the
+          Auroras event.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You talk about Wisps. Only during the Auroras event they do not vanish when a
+    player get close.
   relevant:
   - doc_id: Marsh
     loc:
@@ -265,39 +303,55 @@
     loc:
     - On normal occasions, when a player attempts
     - However, during the Auroras event
+  text: Why was I able to collect swamp lights before, but now they disappear when
+    I get close?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Rubber Boots to prevent slowdown in the mud.
+        score: 3
+      '1':
+        check: 'Mention at least one of the other ways to prevent slowdown in the
+          mud: Shell Stock, Boots of the Marsh Runner or Amphibious Armor with Anadia
+          Fins upgrades.'
+        score: 1
+      '10':
+        check: Mention other utilities not stated above.
+        score: -3
+      '2':
+        check: Mention Harlequin Toad.
+        score: 1
+      '3':
+        check: Mention Ring of Ascent.
+        score: 1
+      '4':
+        check: Mention Weedwood Rowboat.
+        score: 1
+      '5':
+        check: Mention Menhirs.
+        score: 1
+      '6':
+        check: Mention Draeton.
+        score: 1
+      '7':
+        check: Mention Volarkite.
+        score: 1
+      '8':
+        check: Optionally may mention Weedwood Chip Path or Weedwood Walkway, despite
+          they are not for exploring the world.
+        score: 0
+      '9':
+        check: Optionally may mention Staff of the Mist Walker.
+        score: 0
   metadata:
-    reasoning_type: factual
+    reasoning_type: wide factual
   reference_answers:
-  - You talk about Wisps. Only during the Auroras event they do not vanish when a
-    player get close.
-- text: What's the fun in exploring the world if you're constantly getting stuck in
-    the mud? How to make the exploring comfortable?
-  eval_rules:
-  - score: 3
-    check: Mention Rubber Boots to prevent slowdown in the mud.
-  - score: 1
-    check: 'Mention at least one of the other ways to prevent slowdown in the mud:
-      Shell Stock, Boots of the Marsh Runner or Amphibious Armor with Anadia Fins
-      upgrades.'
-  - score: 1
-    check: Mention Harlequin Toad.
-  - score: 1
-    check: Mention Ring of Ascent.
-  - score: 1
-    check: Mention Weedwood Rowboat.
-  - score: 1
-    check: Mention Menhirs.
-  - score: 1
-    check: Mention Draeton.
-  - score: 1
-    check: Mention Volarkite.
-  - score: 0
-    check: Optionally may mention Weedwood Chip Path or Weedwood Walkway, despite
-      they are not for exploring the world.
-  - score: 0
-    check: Optionally may mention Staff of the Mist Walker.
-  - score: -3
-    check: Mention other utilities not stated above.
+  - There are multiple ways to avoid slowing in the mud, such as wearing Rubber Boots
+    or drinking Shell Stock. Also you can ride Harlequin Toad, use Volarkite to glide
+    through the air, use Weedwood Rowboat to travel through water, use Ring of Ascent
+    to fly or use Menhirs for fast travel. In the late game you can use a Draeton
+    to travel by air. You also can build Weedwood Chip Path or Weedwood Walkway to
+    walk along them.
   relevant:
   - doc_id: Mud
     loc:
@@ -328,36 +382,40 @@
   - doc_id: Staff of the Mist Walker
     loc:
     - Right clicking with a Staff of the Mist Walker
+  text: What's the fun in exploring the world if you're constantly getting stuck in
+    the mud? How to make the exploring comfortable?
+- metadata:
+    reasoning_type: out of scope
+  text: Why doesn't the game pause when I press ESC, and I get killed?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that armor crafted from Swamp Hag bones or Slimy Bone Ore.
+        score: 3
+      '1':
+        check: 'Mention at least one of the other armor varieties for early game:
+          either crafted from Lurker Skin, or via mining Syrmorite ore.'
+        score: 2
+      '2':
+        check: Optionally mention shields from any matherials.
+        score: 0
+      '3':
+        check: Mention other armor sets that exist in the game WITHOUT clarifying
+          that they are not for early game (Amphibious Armor, Ancient Armor, Valonite
+          Armor, Silk Mask), while the question clearly relates to the early game.
+        score: -1
+      '4':
+        check: 'Wrongly mention armor pieces that are not made to protect due to low
+          stats: Explorer''s Hat, Rubber Boots, Skull Mask, Spirit Tree Face Mask.'
+        score: -1
+      '5':
+        check: Wrongly mention armor sets not listed above.
+        score: -3
   metadata:
     reasoning_type: wide factual
   reference_answers:
-  - There are multiple ways to avoid slowing in the mud, such as wearing Rubber Boots
-    or drinking Shell Stock. Also you can ride Harlequin Toad, use Volarkite to glide
-    through the air, use Weedwood Rowboat to travel through water, use Ring of Ascent
-    to fly or use Menhirs for fast travel. In the late game you can use a Draeton
-    to travel by air. You also can build Weedwood Chip Path or Weedwood Walkway to
-    walk along them.
-- text: Why doesn't the game pause when I press ESC, and I get killed?
-  metadata:
-    reasoning_type: out of scope
-- text: Where can I find at least some armor in the Betweenlands?
-  eval_rules:
-  - score: 3
-    check: Mention that armor crafted from Swamp Hag bones or Slimy Bone Ore.
-  - score: 2
-    check: 'Mention at least one of the other armor varieties for early game: either
-      crafted from Lurker Skin, or via mining Syrmorite ore.'
-  - score: 0
-    check: Optionally mention shields from any matherials.
-  - score: -1
-    check: Mention other armor sets that exist in the game WITHOUT clarifying that
-      they are not for early game (Amphibious Armor, Ancient Armor, Valonite Armor,
-      Silk Mask), while the question clearly relates to the early game.
-  - score: -1
-    check: 'Wrongly mention armor pieces that are not made to protect due to low stats:
-      Explorer''s Hat, Rubber Boots, Skull Mask, Spirit Tree Face Mask.'
-  - score: -3
-    check: Wrongly mention armor sets not listed above.
+  - To craft armor in early game you can use Slimy Bones (drops from Swamp Hags or
+    Slimy Bone Ore) or Lurker Skin (drops from Lurkers).
   relevant:
   - doc_id: Basic Guide to Survival
     loc:
@@ -369,48 +427,33 @@
   - doc_id: Lurker Skin Armor
     loc:
     - Lurker Skin Armor is a basic armor set.
+  text: Where can I find at least some armor in the Betweenlands?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that this is the decay bar.
+        score: 3
+      '1':
+        check: Mention that depletion of the decay bar reduces the maximum health,
+          optionally mention that this also applies slowness.
+        score: 1
+      '2':
+        check: Mention the Sap Tree as the cure for the decay.
+        score: 1
+      '3':
+        check: Mention the Weeping Blue as the cure for the decay.
+        score: 1
   metadata:
-    reasoning_type: wide factual
-  reference_answers:
-  - To craft armor in early game you can use Slimy Bones (drops from Swamp Hags or
-    Slimy Bone Ore) or Lurker Skin (drops from Lurkers).
-- text: What is this bar made of circles above the hunger bar?
-  eval_rules:
-  - score: 3
-    check: Mention that this is the decay bar.
-  - score: 1
-    check: Mention that depletion of the decay bar reduces the maximum health, optionally
-      mention that this also applies slowness.
-  - score: 1
-    check: Mention the Sap Tree as the cure for the decay.
-  - score: 1
-    check: Mention the Weeping Blue as the cure for the decay.
-  relevant:
-  - doc_id: Decay
-    loc:
-    - The decay bar is represented as a line of Sap Balls
-    - As decay points drop, the player's maximum
-    - The most reliable method is to avoid threats
-    - Decay can also be reversed by consuming
-  metadata:
-    reasoning_type: factual
     comment: While the question is only about the bar itself, asking such a question
       means that the player does not understand the mechanics of this bar, and it
       also needs to be explained.
+    reasoning_type: factual
   reference_answers:
   - This is the decay bar. Simply existing in the dimension slowly causes it to decrease.
     As decay points drop, the player's maximum health is reduced and slowness is applied.
     You need to consume Balls of Sap that is harvested them from the Sap Tree, or
     consume petals collected from the Weeping Blue flower to replenish the decay bar.
     There are also other sources to replenish the decay bar.
-- text: Why my maximum health got reduced, am I sick?
-  eval_rules:
-  - score: 2
-    check: Mention the Decay bar, depletion of which reduces the maximum health.
-  - score: 1
-    check: Mention the Sap Tree as the cure for the decay.
-  - score: 1
-    check: Mention the Weeping Blue as the cure for the decay.
   relevant:
   - doc_id: Decay
     loc:
@@ -418,37 +461,58 @@
     - As decay points drop, the player's maximum
     - The most reliable method is to avoid threats
     - Decay can also be reversed by consuming
+  text: What is this bar made of circles above the hunger bar?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention the Decay bar, depletion of which reduces the maximum health.
+        score: 2
+      '1':
+        check: Mention the Sap Tree as the cure for the decay.
+        score: 1
+      '2':
+        check: Mention the Weeping Blue as the cure for the decay.
+        score: 1
   metadata:
-    reasoning_type: factual
     comment: The question requires not only explaining what happens, but also explaining
       how to cure.
+    reasoning_type: factual
   reference_answers:
   - Note the decay bar above you hunger bar. Simply existing in the dimension slowly
     causes it to decrease. As decay points drop, the player's maximum health is reduced
     and slowness is applied. You need to consume Balls of Sap that is harvested them
     from the Sap Tree, or consume petals collected from the Weeping Blue flower to
     replenish the decay bar. There are also other sources to replenish the decay bar.
-- text: Is it dangerous to approach the ruins?
-  eval_rules:
-  - score: 1
-    check: Mention that no mobs spawn specifically in the ruins (meaning the small
-      Ruins in the Marsh and Sludge Plains).
-  - score: 1
-    check: Mention hostile Termites that spawn when breaking loot pots in these ruins.
-  - score: 1
-    check: 'Mention naturally spawning hostile mobs for the biomes where the small
-      Ruins are found. Optionally concretize: Wight, Peat Mummy, Chiromaw, Shallowbreath,
-      Leech or Sludge.'
-  - score: -1
-    check: Wrongly mention any mobs not listed above.
-  - score: 0
-    check: Optionally discuss other structures which may be called "ruins", except
-      the small ruins, and their mobs and hazards.
   relevant:
-  - doc_id: Ruins
+  - doc_id: Decay
     loc:
-    - Ruins are a variety of small, dilapidated structures
-    - <Marsh Composition>
+    - The decay bar is represented as a line of Sap Balls
+    - As decay points drop, the player's maximum
+    - The most reliable method is to avoid threats
+    - Decay can also be reversed by consuming
+  text: Why my maximum health got reduced, am I sick?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that no mobs spawn specifically in the ruins (meaning the small
+          Ruins in the Marsh and Sludge Plains).
+        score: 1
+      '1':
+        check: Mention hostile Termites that spawn when breaking loot pots in these
+          ruins.
+        score: 1
+      '2':
+        check: 'Mention naturally spawning hostile mobs for the biomes where the small
+          Ruins are found. Optionally concretize: Wight, Peat Mummy, Chiromaw, Shallowbreath,
+          Leech or Sludge.'
+        score: 1
+      '3':
+        check: Wrongly mention any mobs not listed above.
+        score: -1
+      '4':
+        check: Optionally discuss other structures which may be called "ruins", except
+          the small ruins, and their mobs and hazards.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
@@ -456,195 +520,240 @@
     They are generally safe, except the environmental mobs in the biome. However,
     small hostile Termites may spawn when breaking loot pots, but they are easy to
     kill.
-- text: Who is the final boss in the realm?
-  eval_rules:
-  - score: 1
-    check: Mention that the Prime Wight is currently unimplemented.
-  - score: 0
-    check: 'Optionally mention other strong bosses: The Primordial Malevolence, The
-      Sludge Menace or the Spirit Tree.'
-  - score: -1
-    check: Wrongly mention bosses not listed above.
-    metadata:
-      comment: While other bosses exist, they are starting bosses and not final, as
-        described on wiki.
   relevant:
-  - doc_id: Prime Wight
+  - doc_id: Ruins
     loc:
-    - The Prime Wight is the currently unimplemented final boss
+    - Ruins are a variety of small, dilapidated structures
+    - <Marsh Composition>
+  text: Is it dangerous to approach the ruins?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the Prime Wight is currently unimplemented.
+        score: 1
+      '1':
+        check: 'Optionally mention other strong bosses: The Primordial Malevolence,
+          The Sludge Menace or the Spirit Tree.'
+        score: 0
+      '2':
+        check: Wrongly mention bosses not listed above.
+        metadata:
+          comment: While other bosses exist, they are starting bosses and not final,
+            as described on wiki.
+        score: -1
   metadata:
     reasoning_type: factual
   reference_answers:
   - The final boss is Prime Wight that is not yet implemented. Among the most dangerous
     existing enemies are the Primordial Malevolence and The Sludge Menace.
-- text: How do I disable winter season event other than changing the system time?
-  eval_rules:
-  - score: 1
-    check: Mention a command `/blevent <toggle|on|off> thebetweenlands:winter`, optionally
-      selecting only "off" from the options. Optionally mention using this command
-      with a command block.
-  - score: -1
-    check: Wrongly mention other ways not listed above.
+  relevant:
+  - doc_id: Prime Wight
+    loc:
+    - The Prime Wight is the currently unimplemented final boss
+  text: Who is the final boss in the realm?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a command `/blevent <toggle|on|off> thebetweenlands:winter`,
+          optionally selecting only "off" from the options. Optionally mention using
+          this command with a command block.
+        score: 1
+      '1':
+        check: Wrongly mention other ways not listed above.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - 'You can use a command: `/blevent off thebetweenlands:winter`.'
   relevant:
   - doc_id: Winter
     loc:
     - The Winter event only occurs naturally in the Betweenlands
     - It is constantly active during this time, unless
     - The Winter event can be manually turned/toggled
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - 'You can use a command: `/blevent off thebetweenlands:winter`.'
-- text: Is it possible to skip the night?
-  eval_rules:
-  - score: 2
-    check: Either answer negatively (not possible to skip, even with the Moss Bed),
-      or tell that no such mechanics is found in the wiki.
-  - score: 1
-    check: Clarify that there is no "night" in the Betweenlands, while making sure
-      to mention that some events affect luminosity.
-    metadata:
-      comment: Mentioning both these facts at once will help avoid confusing the player.
-  relevant:
-  - doc_id: Moss Bed
-    loc:
-    - However, since there is no proper day/night cycle
+  text: How do I disable winter season event other than changing the system time?
+- eval_rules:
+    checks:
+      '0':
+        check: Either answer negatively (not possible to skip, even with the Moss
+          Bed), or tell that no such mechanics is found in the wiki.
+        score: 2
+      '1':
+        check: Clarify that there is no "night" in the Betweenlands, while making
+          sure to mention that some events affect luminosity.
+        metadata:
+          comment: Mentioning both these facts at once will help avoid confusing the
+            player.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - There is no proper day/night cycle in the Betweenlands. There are some events
     which can affect luminosity , but no possibilities are found in the wiki to skip
     them.
-- text: Why a monster with a long tongue dislikes me?
-  metadata:
-    reasoning_type: vague
+  relevant:
+  - doc_id: Moss Bed
+    loc:
+    - However, since there is no proper day/night cycle
+  text: Is it possible to skip the night?
+- metadata:
     comment: Just telling that Shambler Mobs is hostile is not really an answer, but
       rather a reformulation of the question.
-- text: How do I interact with a stone which has two holes inside, with particles
-    around it?
-  eval_rules:
-  - score: 1
-    check: Mention that Menhir can be linked with a Bone Wayfinder to fast travel.
+    reasoning_type: vague
+  text: Why a monster with a long tongue dislikes me?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Menhir can be linked with a Bone Wayfinder to fast travel.
+        score: 1
+  metadata:
+    comment: While visual reasoning is desired, the Menhir can still be identified
+      from the text corpus only by the "particles around it".
+    reasoning_type: factual
+  reference_answers:
+  - You found a Menhir, which can be linked for fast travel by right-clicking it with
+    a Bone Wayfinder, which is an item found as loot.
   relevant:
   - doc_id: Menhir
     loc:
     - The Menhir is a special utility block that generates
     - Black particles will linger in the area surrounding a Menhir.
     - A Menhir can be linked for fast travel by right-clicking
-  metadata:
-    reasoning_type: factual
-    comment: While visual reasoning is desired, the Menhir can still be identified
-      from the text corpus only by the "particles around it".
-  reference_answers:
-  - You found a Menhir, which can be linked for fast travel by right-clicking it with
-    a Bone Wayfinder, which is an item found as loot.
-- text: 5 minutes after fighting a swarm of insects, they are still crawling across
-    my screen. How do I remove them?
-  eval_rules:
-  - score: 2
-    check: 'Mention at least one of the simplest ways: shake your head, jump, sneak,
-      swing.'
-  - score: 0
-    check: 'Optionally mention another ways: submerge or set yourself on fire.'
-  - score: 0
-    check: Optionally mention that the swarm (Infestation) will reapply the effect
-      on touch.
-  - score: -1
-    check: Wrongly mention other ways not listed above.
-  relevant:
-  - doc_id: Infestation
-    loc:
-    - The player can slowly get rid of the on-screen
-    - They can also get rid of them faster
+  text: How do I interact with a stone which has two holes inside, with particles
+    around it?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Mention at least one of the simplest ways: shake your head, jump,
+          sneak, swing.'
+        score: 2
+      '1':
+        check: 'Optionally mention another ways: submerge or set yourself on fire.'
+        score: 0
+      '2':
+        check: Optionally mention that the swarm (Infestation) will reapply the effect
+          on touch.
+        score: 0
+      '3':
+        check: Wrongly mention other ways not listed above.
+        score: -1
   metadata:
     reasoning_type: factual
   reference_answers:
   - You need to either shake your head, or jump, sneak, swing, submerge or set yourself
     on fire.
-- text: Can I interact with creepy ghosts that disappear as I get close to them?
-  eval_rules:
-  - score: 1
-    check: Mention that ghosts ("Them") are not interactable entities.
-  - score: 0
-    check: 'Optionally discuss another type of disappearing entities: Wisps.'
-    metadata:
-      comment: Wiki says that Wisps give off colored light and disappear on approach,
-        which is ambiguously related to "creepy ghosts". So, mentioning Wisps is definitely
-        not a mistake. However, "Them" are descibed as more creepy (distorted, staring
-        silhouettes), and without mentioning "Them" the answer is incomplete.
   relevant:
-  - doc_id: Dense Fog
+  - doc_id: Infestation
     loc:
-    - A small distance away from the player, distorted
-    - They will seem to float slowly towards the player
-    - They are purely aesthetic.
+    - The player can slowly get rid of the on-screen
+    - They can also get rid of them faster
+  text: 5 minutes after fighting a swarm of insects, they are still crawling across
+    my screen. How do I remove them?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that ghosts ("Them") are not interactable entities.
+        score: 1
+      '1':
+        check: 'Optionally discuss another type of disappearing entities: Wisps.'
+        metadata:
+          comment: Wiki says that Wisps give off colored light and disappear on approach,
+            which is ambiguously related to "creepy ghosts". So, mentioning Wisps
+            is definitely not a mistake. However, "Them" are descibed as more creepy
+            (distorted, staring silhouettes), and without mentioning "Them" the answer
+            is incomplete.
+        score: 0
   metadata:
     reasoning_type: null
   reference_answers:
   - The black distorted, staring silhouettes referred to as "Them" are purely aesthetic.
     The luminous wisps are collectable during the Auroras event, when they stop disappearing
     as you get close.
-- text: What can I find in this dimension? I've been walking for an hour and I can't
-    find anything interesting.
-  eval_rules:
-  - score: 1
-    check: Mention that there are many of structures, optionally with specific examples.
-    metadata:
-      comment: The question is wide, but at least mentioning structures is necessary.
   relevant:
-  - doc_id: Structures
+  - doc_id: Dense Fog
     loc:
-    - <Buildings>
+    - A small distance away from the player, distorted
+    - They will seem to float slowly towards the player
+    - They are purely aesthetic.
+  text: Can I interact with creepy ghosts that disappear as I get close to them?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that there are many of structures, optionally with specific
+          examples.
+        metadata:
+          comment: The question is wide, but at least mentioning structures is necessary.
+        score: 1
   metadata:
     reasoning_type: factual wide
   reference_answers:
   - There are plenty of structures, even massive ones. You're probably just unlucky
     with random generation, keep exploring.
-- text: Is a giant frog dangerous?
-  eval_rules:
-  - score: 2
-    check: Mention that it is not dangerous.
-  - score: 1
-    check: Mention that it is called Harlequin Toad.
   relevant:
-  - doc_id: Harlequin Toad
+  - doc_id: Structures
     loc:
-    - Being passive when not tamed, they will not attack
+    - <Buildings>
+  text: What can I find in this dimension? I've been walking for an hour and I can't
+    find anything interesting.
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that it is not dangerous.
+        score: 2
+      '1':
+        check: Mention that it is called Harlequin Toad.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - No, it is passive, and can be tamed.
-- text: What kind of monster with red eyes sits in the black pool, what to expect
-    from him?
-  eval_rules:
-  - score: 2
-    check: Mention that it is called Tar Beast.
-  - score: 2
-    check: Mention that this is a strong monster (either in general or describing
-      specific abilities).
-  - score: 1
-    check: Mention that you need to keep a distance from it.
   relevant:
-  - doc_id: Tar Beast
+  - doc_id: Harlequin Toad
     loc:
-    - Tar Beasts are hulking monsters that
-    - Tar Beasts are hunched-over humanoids
+    - Being passive when not tamed, they will not attack
+  text: Is a giant frog dangerous?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that it is called Tar Beast.
+        score: 2
+      '1':
+        check: Mention that this is a strong monster (either in general or describing
+          specific abilities).
+        score: 2
+      '2':
+        check: Mention that you need to keep a distance from it.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - This is Tar Beast, a mini-boss. It is dangerous nearby, try to keep a reasonable
     distance and shoot it with arrows.
-- text: How do I craft a bed to set a respawn point?
-  eval_rules:
-  - score: 1
-    check: Mention that you need Moss and Weedwood Planks. Optionally mention a Cave
-      Moss variation.
-  - score: 1
-    check: Mention that moss can be harvested with a Syrmorite Shears. Optionally
-      also mention harvesting with a Sickle.
-    metadata:
-      comment: It is not obvious how to get a Moss, so this also needs to be mentioned
-        as a part of the process.
+  relevant:
+  - doc_id: Tar Beast
+    loc:
+    - Tar Beasts are hulking monsters that
+    - Tar Beasts are hunched-over humanoids
+  text: What kind of monster with red eyes sits in the black pool, what to expect
+    from him?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that you need Moss and Weedwood Planks. Optionally mention
+          a Cave Moss variation.
+        score: 1
+      '1':
+        check: Mention that moss can be harvested with a Syrmorite Shears. Optionally
+          also mention harvesting with a Sickle.
+        metadata:
+          comment: It is not obvious how to get a Moss, so this also needs to be mentioned
+            as a part of the process.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You need 3 moss and 3 Weedwood Planks. Moss can be harvested with a Syrmorite
+    Shears or a Sickle.
   relevant:
   - doc_id: Moss Bed
     loc:
@@ -653,52 +762,60 @@
   - doc_id: Moss
     loc:
     - The block itself must be broken with
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - You need 3 moss and 3 Weedwood Planks. Moss can be harvested with a Syrmorite
-    Shears or a Sickle.
-- text: I have found arrows, how to craft a bow?
-  eval_rules:
-  - score: 1
-    check: Mention that a Weedwood Bow can be crafted from Weedwood Stick and Reed
-      Rope.
-  - score: 0
-    check: Optionally mention Predator Bow that is not craftable.
-  relevant:
-  - doc_id: Weedwood Bow
-    loc:
-    - <Crafting Recipe>
+  text: How do I craft a bed to set a respawn point?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that a Weedwood Bow can be crafted from Weedwood Stick and
+          Reed Rope.
+        score: 1
+      '1':
+        check: Optionally mention Predator Bow that is not craftable.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
   - A Weedwood Bow can be crafted from Weedwood Stick and Reed Rope.
-- text: How to switch arrow types?
-  metadata:
-    reasoning_type: out of scope
-    comment: This is a Minecraft mechanics not controlled by the Betweenlands mod.
-- text: What is poison gland, can I make a smoothie out of it?
-  eval_rules:
-  - score: 1
-    check: Mention that Poison Gland is used to craft Poisoned Arrows.
   relevant:
-  - doc_id: Poison Gland
+  - doc_id: Weedwood Bow
     loc:
-    - Poison Glands are items used in making
+    - <Crafting Recipe>
+  text: I have found arrows, how to craft a bow?
+- metadata:
+    comment: This is a Minecraft mechanics not controlled by the Betweenlands mod.
+    reasoning_type: out of scope
+  text: How to switch arrow types?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Poison Gland is used to craft Poisoned Arrows.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - It is used for turning Angler Tooth Arrows into Poisoned Arrows.
-- text: In a high tower, I cannot reach loot pots, because stairs block them. How
-    to reach them?
-  eval_rules:
-  - score: 1
-    check: Mention that block protection will be removed after completing the tower.
-  - score: 0
-    check: Optionally mention using a Magic Item Magnet.
-    metadata:
-      comment: The magnet is rare, and is not necessary as the tower's protection
-        will be removed after the tower completion anyway.
+  relevant:
+  - doc_id: Poison Gland
+    loc:
+    - Poison Glands are items used in making
+  text: What is poison gland, can I make a smoothie out of it?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that block protection will be removed after completing the
+          tower.
+        score: 1
+      '1':
+        check: Optionally mention using a Magic Item Magnet.
+        metadata:
+          comment: The magnet is rare, and is not necessary as the tower's protection
+            will be removed after the tower completion anyway.
+        score: 0
+  metadata:
+    reasoning_type: factual reasoning
+  reference_answers:
+  - You need to complete the tower and start descending, the tower will start crumbling,
+    then block protection will be removed and you can reach your loot.
   relevant:
   - doc_id: Cragrock Tower
     loc:
@@ -708,44 +825,52 @@
   - doc_id: Magic Item Magnet
     loc:
     - This allows players to pick up items from
+  text: In a high tower, I cannot reach loot pots, because stairs block them. How
+    to reach them?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that you need to start descending, then the block protection
+          will be removed.
+        score: 1
   metadata:
-    reasoning_type: factual reasoning
+    reasoning_type: null
   reference_answers:
-  - You need to complete the tower and start descending, the tower will start crumbling,
-    then block protection will be removed and you can reach your loot.
-- text: I cleared the high tower and got an achievement, but I still can't break the
-    blocks in it, will the block protection last forever?
-  eval_rules:
-  - score: 1
-    check: Mention that you need to start descending, then the block protection will
-      be removed.
+  - No, you just need to start descending.
   relevant:
   - doc_id: Cragrock Tower
     loc:
     - Most of the blocks of a Cragrock Tower are protected
     - Once a Cragrock Tower has been completed
     - It is at this point that the ward protecting
+  text: I cleared the high tower and got an achievement, but I still can't break the
+    blocks in it, will the block protection last forever?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Wight Fortress
+        score: 1
+      '1':
+        check: Mention Sludgeon
+        score: 1
+      '2':
+        check: Mention Cragrock Tower
+        metadata:
+          comment: While in the "Structures" page the Cragrock Tower is not called
+            big, but rather tall, in the Cragrock Tower's wiki page there are many
+            mentions that it is large and massive.
+        score: 1
+      '3':
+        check: Wrongly mention Ancient Temple without clarifying that it has not yet
+          been implemented.
+        score: -1
+      '4':
+        check: Wrongly mention other dungeons not listed above.
+        score: -1
   metadata:
-    reasoning_type: null
+    reasoning_type: factual wide
   reference_answers:
-  - No, you just need to start descending.
-- text: Which types of big dungeons are there in the Betweenlands?
-  eval_rules:
-  - score: 1
-    check: Mention Wight Fortress
-  - score: 1
-    check: Mention Sludgeon
-  - score: 1
-    check: Mention Cragrock Tower
-    metadata:
-      comment: While in the "Structures" page the Cragrock Tower is not called big,
-        but rather tall, in the Cragrock Tower's wiki page there are many mentions
-        that it is large and massive.
-  - score: -1
-    check: Wrongly mention Ancient Temple without clarifying that it has not yet been
-      implemented.
-  - score: -1
-    check: Wrongly mention other dungeons not listed above.
+  - 'There are currently 3 of them: Cragrock Tower, Sludgeon and Wight Fortress.'
   relevant:
   - doc_id: Structures
     loc:
@@ -753,93 +878,113 @@
   - doc_id: Cragrock Tower
     loc:
     - There was this massive tower that I found
+  text: Which types of big dungeons are there in the Betweenlands?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively.
+        score: 1
   metadata:
     reasoning_type: factual wide
   reference_answers:
-  - 'There are currently 3 of them: Cragrock Tower, Sludgeon and Wight Fortress.'
-- text: Are there underwater bosses?
-  eval_rules:
-  - score: 1
-    check: Answer negatively.
+  - No, there aren't any.
   relevant:
   - doc_id: Mobs
     loc:
     - <Chief Mobs>
     - <Bosses>
     - <Upcoming Bosses>
+  text: Are there underwater bosses?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Rift is opened via `/blevent on thebetweenlands:rift`.
+        score: 2
+      '1':
+        check: Mention that Rift provides more light if it is day in the Overworld.
+          Optionally mention that you can run `/time set day` additionally.
+        score: 1
   metadata:
-    reasoning_type: factual wide
+    reasoning_type: factual
   reference_answers:
-  - No, there aren't any.
-- text: Which console command to use to change weather, so that the world becomes
-    more illuminated?
-  eval_rules:
-  - score: 2
-    check: Mention that Rift is opened via `/blevent on thebetweenlands:rift`.
-  - score: 1
-    check: Mention that Rift provides more light if it is day in the Overworld. Optionally
-      mention that you can run `/time set day` additionally.
+  - A rift is opened via `/blevent on thebetweenlands:rift`, and then Overworld day
+    is set via `/time set day`.
   relevant:
   - doc_id: Rift
     loc:
     - Normally, the Betweenlands has no daylight cycle
     - The Rift event will increase the sky light
     - Note that the additional sky light can vary between
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - A rift is opened via `/blevent on thebetweenlands:rift`, and then Overworld day
-    is set via `/time set day`.
-- text: I have found Critter Cruncher in my inventory, where could I have gotten it
-    from?
-  eval_rules:
-  - score: 2
-    check: Mention that it can be found as loot.
-  - score: 1
-    check: 'Mention at least one of the possible sources: Shrine, Cragrock Tower or
-      Wight Fortress.'
-  - score: 0
-    check: Optionally mention that it can be obtained via animating Item Scroll.
-    metadata:
-      comment: It requires player efforts, so is not relevant to the question.
-  relevant:
-  - doc_id: Critter Cruncher
-    loc:
-    - The Critter Cruncher is a unique melee weapon
-    - It can also be found as Loot
+  text: Which console command to use to change weather, so that the world becomes
+    more illuminated?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that it can be found as loot.
+        score: 2
+      '1':
+        check: 'Mention at least one of the possible sources: Shrine, Cragrock Tower
+          or Wight Fortress.'
+        score: 1
+      '2':
+        check: Optionally mention that it can be obtained via animating Item Scroll.
+        metadata:
+          comment: It requires player efforts, so is not relevant to the question.
+        score: 0
   metadata:
     reasoning_type: null
   reference_answers:
   - You have found it as Loot from chests in Shrine, Cragrock Tower or Wight Fortress.
     It can also be obtained via animating Item Scroll.
-- text: It says reed rope can be used in a compost bin. I have crafted the compost
-    bin, how to put the reed rope inside?
-  eval_rules:
-  - score: 2
-    check: 'Mention both actions: first left-click to open the Compost Bin, then right-click
-      to put a reed rope inside.'
-  - score: 1
-    check: Mention left-click to close the Compost Bin afterwards to start composting.
+  relevant:
+  - doc_id: Critter Cruncher
+    loc:
+    - The Critter Cruncher is a unique melee weapon
+    - It can also be found as Loot
+  text: I have found Critter Cruncher in my inventory, where could I have gotten it
+    from?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Mention both actions: first left-click to open the Compost Bin, then
+          right-click to put a reed rope inside.'
+        score: 2
+      '1':
+        check: Mention left-click to close the Compost Bin afterwards to start composting.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - First open the Compost Bin with left-click, then right-click it with a Reed Rope
+    and close with left-click, so that the items inside will begin composting.
   relevant:
   - doc_id: Compost Bin
     loc:
     - The Compost Bin can be opened and closed with left-click.
     - While open, it can be right-clicked
     - Once the lid is closed, the items inside
+  text: It says reed rope can be used in a compost bin. I have crafted the compost
+    bin, how to put the reed rope inside?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a Tar Drip (either without details, or telling that it is needed
+          to make a Barrel). Alternatively, mention doing a Crab Pot Filtering to
+          produce a Filtered Silt Glass Jar as an alternative to barrels.
+        score: 1
+      '1':
+        check: Mention a Pheromone Thorax (either without details, or telling that
+          it is needed for the production of silk).
+        score: 1
   metadata:
-    reasoning_type: factual
+    comment: The question requires analysis of the entire chain of operations and
+      ingredients, not just the final "steeping" operation.
+    reasoning_type: factual reasoning
   reference_answers:
-  - First open the Compost Bin with left-click, then right-click it with a Reed Rope
-    and close with left-click, so that the items inside will begin composting.
-- text: Which uncommon resources I need to start doing steeping?
-  eval_rules:
-  - score: 1
-    check: Mention a Tar Drip (either without details, or telling that it is needed
-      to make a Barrel). Alternatively, mention doing a Crab Pot Filtering to produce
-      a Filtered Silt Glass Jar as an alternative to barrels.
-  - score: 1
-    check: Mention a Pheromone Thorax (either without details, or telling that it
-      is needed for the production of silk).
+  - You need some uncommon resources. Steeping requires a Silk Bundle and a Clean
+    Water. Ypu need a Tar Drip to make barrel to enable water filtering to produce
+    Clean Water. Second, Pheromone Thorax is required to start farming silk for Silk
+    Bundles.
   relevant:
   - doc_id: Steeping
   - doc_id: Clean Water
@@ -871,26 +1016,25 @@
   - doc_id: Infestation
     loc:
     - Infestations are swarms of bugs that can rarely
+  text: Which uncommon resources I need to start doing steeping?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively with explaination that Anadia Remains can be crafted
+          from meat dropped by Anadia upon death (not by fishing), or with Water Filtering
+          (it is enough to mention only one of these methods).
+        score: 1
+      '1':
+        check: Wrongly advice to trim Anadia.
+        metadata:
+          comment: Trimming can be done after fishing that the player wants to avoid.
+        score: 1
   metadata:
     reasoning_type: factual reasoning
-    comment: The question requires analysis of the entire chain of operations and
-      ingredients, not just the final "steeping" operation.
   reference_answers:
-  - You need some uncommon resources. Steeping requires a Silk Bundle and a Clean
-    Water. Ypu need a Tar Drip to make barrel to enable water filtering to produce
-    Clean Water. Second, Pheromone Thorax is required to start farming silk for Silk
-    Bundles.
-- text: To enable crab filtering, do I need to catch Anadia with a fishing rod to
-    get Anadia Remains?
-  eval_rules:
-  - score: 1
-    check: Answer negatively with explaination that Anadia Remains can be crafted
-      from meat dropped by Anadia upon death (not by fishing), or with Water Filtering
-      (it is enough to mention only one of these methods).
-  - score: 1
-    check: Wrongly advice to trim Anadia.
-    metadata:
-      comment: Trimming can be done after fishing that the player wants to avoid.
+  - Not necessarily. You need Anadia Remains, but it can be crafted from Raw Anadia
+    Meat that drops from Anadia upon death if killed by a player, so catching it with
+    a fishing rod is not required.
   relevant:
   - doc_id: Crab Pot Filter
     loc:
@@ -905,37 +1049,33 @@
   - doc_id: Raw Anadia Meat
     loc:
     - Raw Anadia Meat drops directly from Anadia
-  metadata:
-    reasoning_type: factual reasoning
-  reference_answers:
-  - Not necessarily. You need Anadia Remains, but it can be crafted from Raw Anadia
-    Meat that drops from Anadia upon death if killed by a player, so catching it with
-    a fishing rod is not required.
-- text: Do items have different aspects depending on the world?
-  eval_rules:
-  - score: 1
-    check: Answer positively.
-  - score: 0
-    check: Optionally mention that some aspects are fixed.
-  relevant:
-  - doc_id: Aspects
-    loc:
-    - The distribution depends on the world seed.
+  text: To enable crab filtering, do I need to catch Anadia with a fishing rod to
+    get Anadia Remains?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively.
+        score: 1
+      '1':
+        check: Optionally mention that some aspects are fixed.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
   - Yes.
-- text: What is the additional slot in a double furnace?
-  eval_rules:
-  - score: 2
-    check: Mention that this slot accepts Limestone Flux.
-  - score: 1
-    check: Mention that the Limestone Flux increases ingot production.
   relevant:
-  - doc_id: Dual Sulfur Furnace
+  - doc_id: Aspects
     loc:
-    - In addition, there are new, optional left slots
-    - These slots are capable of accepting
+    - The distribution depends on the world seed.
+  text: Do items have different aspects depending on the world?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that this slot accepts Limestone Flux.
+        score: 2
+      '1':
+        check: Mention that the Limestone Flux increases ingot production.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
@@ -943,27 +1083,45 @@
     are capable of accepting Limestone Flux and give Octine Ore and Syrmorite Ore
     smelted in their part of the furnace a chance to yield two ingots instead of just
     one.
-- text: I heard a fiddle playing and then it suddenly stopped. Is it just ambient
-    music or some kind of mob or event?
-  eval_rules:
-  - score: 1
-    check: Mention a Greebling.
+  relevant:
+  - doc_id: Dual Sulfur Furnace
+    loc:
+    - In addition, there are new, optional left slots
+    - These slots are capable of accepting
+  text: What is the additional slot in a double furnace?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a Greebling.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - This is a Stringed Greebling musician playing, which is a peaceful elusive mob.
   relevant:
   - doc_id: Greebling
     loc:
     - Upon entering the range of a Greebling, ambient music
     - Greeblings can spawn in two variants; one with
     - The string instrument of the red-clothed Greebling
+  text: I heard a fiddle playing and then it suddenly stopped. Is it just ambient
+    music or some kind of mob or event?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention orange Dentrothyst variety (not just "Dentrothyst").
+        score: 1
+      '1':
+        check: Optionally mention Pyrads.
+        score: 0
   metadata:
+    comment: "While an asssistant can mention other resources, the orange Dentrothyst\
+      \ shard is the most important one, and is rarer than green variety the player\
+      \ mentioned. \u041Ether resources are just simple wood of fungus."
     reasoning_type: factual
   reference_answers:
-  - This is a Stringed Greebling musician playing, which is a peaceful elusive mob.
-- text: What can I find in a giant tree, except green crystals and white pear seeds?
-  eval_rules:
-  - score: 1
-    check: Mention orange Dentrothyst variety (not just "Dentrothyst").
-  - score: 0
-    check: Optionally mention Pyrads.
+  - In the Giant Weedwood Tree roots, you also can find Orange Dentrothyst which is
+    rarer than Green Dentrothyst. You can also fight Pyrads that drop Pyrad Flame.
   relevant:
   - doc_id: Giant Weedwood Tree
     loc:
@@ -974,32 +1132,36 @@
     loc:
     - Dentrothysts are unique amber-like blocks
     - There are two varieties - a more common
+  text: What can I find in a giant tree, except green crystals and white pear seeds?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Brew of the Cat's Eye.
+        metadata:
+          comment: A long-lasting source, comparing to the Shaman's Brew that gives
+            nigh vision briefly, so is more important to mention.
+        score: 2
+      '1':
+        check: Mention Shaman's Brew.
+        score: 1
+      '2':
+        check: Mention Amphibious Armor with the Anadia Eye upgrade, making sure to
+          clarify that it gives nigh vision only underwater.
+        score: 1
+      '3':
+        check: Optionally mention Bulb-Capped Mushrooms.
+        metadata:
+          comment: They give nausea the player is talking about.
+        score: 0
+      '4':
+        check: Wrongly mention other sources not listed above.
+        score: -1
   metadata:
     reasoning_type: factual
-    comment: "While an asssistant can mention other resources, the orange Dentrothyst\
-      \ shard is the most important one, and is rarer than green variety the player\
-      \ mentioned. \u041Ether resources are just simple wood of fungus."
   reference_answers:
-  - In the Giant Weedwood Tree roots, you also can find Orange Dentrothyst which is
-    rarer than Green Dentrothyst. You can also fight Pyrads that drop Pyrad Flame.
-- text: Is there anything for night vision without nausea?
-  eval_rules:
-  - score: 2
-    check: Mention Brew of the Cat's Eye.
-    metadata:
-      comment: A long-lasting source, comparing to the Shaman's Brew that gives nigh
-        vision briefly, so is more important to mention.
-  - score: 1
-    check: Mention Shaman's Brew.
-  - score: 1
-    check: Mention Amphibious Armor with the Anadia Eye upgrade, making sure to clarify
-      that it gives nigh vision only underwater.
-  - score: 0
-    check: Optionally mention Bulb-Capped Mushrooms.
-    metadata:
-      comment: They give nausea the player is talking about.
-  - score: -1
-    check: Wrongly mention other sources not listed above.
+  - First, Brew of the Cat's Eye provide Night Vision for 2:00-8:40. Second, Shaman's
+    Brew provides Night Vision for 20 seconds. Third, Amphibious Armor with the Anadia
+    Eye upgrade provides Night Vision underwater.
   relevant:
   - doc_id: Bulb-Capped Mushroom
     loc:
@@ -1010,19 +1172,22 @@
   - doc_id: Amphibious Armor
     loc:
     - <Upgrades>
+  text: Is there anything for night vision without nausea?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively, or concretize that their usages are completely different.
+        score: 1
+      '1':
+        check: Mention similarity in generation between Life Crystal Ore and Diamond
+          Ore (both are rare and deep).
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
-  - First, Brew of the Cat's Eye provide Night Vision for 2:00-8:40. Second, Shaman's
-    Brew provides Night Vision for 20 seconds. Third, Amphibious Armor with the Anadia
-    Eye upgrade provides Night Vision underwater.
-- text: Is the Life Crystal an approximate analogue of the vanilla Diamond?
-  eval_rules:
-  - score: 1
-    check: Answer negatively, or concretize that their usages are completely different.
-  - score: 1
-    check: Mention similarity in generation between Life Crystal Ore and Diamond Ore
-      (both are rare and deep).
+  - On the one hand yes, because the Life Crystal Ore has a small chance to generate
+    at the lowest levels. On the other hand, Life Crystal have a completely different
+    application.
   relevant:
   - doc_id: Life Crystal
     loc:
@@ -1031,38 +1196,44 @@
     loc:
     - Life Crystal Stalactites generate in formations
     - Life Crystal Ore has a small chance
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - On the one hand yes, because the Life Crystal Ore has a small chance to generate
-    at the lowest levels. On the other hand, Life Crystal have a completely different
-    application.
-- text: 'In the Ring of Power help message I read: "equip using the radial menu: press
-    NONE". What means to press NONE?'
-  eval_rules:
-  - score: 1
-    check: Guess that the player have the Radial Menu not bound to any key.
-  - score: 0
-    check: Optionally mention that the Radial Equipment Menu is opened by pressing
-      C by default.
-  relevant:
-  - doc_id: Ring of Power
-    loc:
-    - The Ring of Power is equipped through
+  text: Is the Life Crystal an approximate analogue of the vanilla Diamond?
+- eval_rules:
+    checks:
+      '0':
+        check: Guess that the player have the Radial Menu not bound to any key.
+        score: 1
+      '1':
+        check: Optionally mention that the Radial Equipment Menu is opened by pressing
+          C by default.
+        score: 0
   metadata:
     reasoning_type: factual reasoning
   reference_answers:
   - The Ring of Power is equipped through the Radial Equipment Menu, which is opened
     by pressing C (by default). You probably have the Radial Equipment Menu not binded
     to any key.
-- text: Why does compost turned green and worms appeared after re-digging it?
-  eval_rules:
-  - score: 1
-    check: Mention a "decay" process of Compost-filled soil.
-  - score: 1
-    check: Mention that Tiny Sludge Worms can spawn when digging holes for compost.
-  - score: 1
-    check: Mention that these two mechanics are unrelated.
+  relevant:
+  - doc_id: Ring of Power
+    loc:
+    - The Ring of Power is equipped through
+  text: 'In the Ring of Power help message I read: "equip using the radial menu: press
+    NONE". What means to press NONE?'
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a "decay" process of Compost-filled soil.
+        score: 1
+      '1':
+        check: Mention that Tiny Sludge Worms can spawn when digging holes for compost.
+        score: 1
+      '2':
+        check: Mention that these two mechanics are unrelated.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - These are different mechanics. First, worms have a chance to appear when digging
+    the ground. Second, compost-filled soil will randomly decay turning into green.
   relevant:
   - doc_id: Farming
     loc:
@@ -1070,50 +1241,59 @@
   - doc_id: Tiny Sludge Worm
     loc:
     - Tiny Sludge Worms can spawn when digging
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - These are different mechanics. First, worms have a chance to appear when digging
-    the ground. Second, compost-filled soil will randomly decay turning into green.
-- text: Can I get a rubber tree sapling by breaking a rubber tree leaves?
-  eval_rules:
-  - score: 1
-    check: Answer positively.
-  - score: 0
-    check: Optionally mention that leave blocks can be collected with Syrmorite Shears.
-  relevant:
-  - doc_id: Rubber Tree Sapling
-    loc:
-    - They have a chance to drop from decayed
+  text: Why does compost turned green and worms appeared after re-digging it?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively.
+        score: 1
+      '1':
+        check: Optionally mention that leave blocks can be collected with Syrmorite
+          Shears.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
   - Yes.
-- text: What is the skull mask for?
-  eval_rules:
-  - score: 1
-    check: Mention that Wights will not be able to use their "possession" attack on
-      any player that is wearing the mask.
   relevant:
-  - doc_id: Skull Mask
+  - doc_id: Rubber Tree Sapling
     loc:
-    - Wights will not be able to use their
+    - They have a chance to drop from decayed
+  text: Can I get a rubber tree sapling by breaking a rubber tree leaves?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Wights will not be able to use their "possession" attack
+          on any player that is wearing the mask.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Wights will not be able to use their "possession" attack on any player that is
     wearing the mask, making them easier to deal with.
-- text: Why do you need a Moth House, if you can farm Silk Threads directly from the
-    Infested Weedwood Bush?
-  eval_rules:
-  - score: 2
-    check: 'Mention larger production rate: 3 Silk Threads per grub vs 2 Silk Threads
-      per grub or cocoon.'
-  - score: -1
-    check: Wrongly mention that you don't need a Pheromone Thorax for Moth House.
-    metadata:
-      comment: You still need Pheromone Thorax to produce grubs, then move them into
-        the Moth House.
+  relevant:
+  - doc_id: Skull Mask
+    loc:
+    - Wights will not be able to use their
+  text: What is the skull mask for?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Mention larger production rate: 3 Silk Threads per grub vs 2 Silk
+          Threads per grub or cocoon.'
+        score: 2
+      '1':
+        check: Wrongly mention that you don't need a Pheromone Thorax for Moth House.
+        metadata:
+          comment: You still need Pheromone Thorax to produce grubs, then move them
+            into the Moth House.
+        score: -1
+  metadata:
+    reasoning_type: factual reasoning
+  reference_answers:
+  - Getting Silk Grub Cocoons directly from the Infested Weedwood Bush provides 2
+    Silk Threads per grub, and placing grubs into Moth House provides 3 Silk Threads
+    per grub, that is 1.5x larger production rate.
   relevant:
   - doc_id: Moth House
     loc:
@@ -1125,62 +1305,76 @@
   - doc_id: Silk Grub Cocoon
     loc:
     - <Crafting Uses>
-  metadata:
-    reasoning_type: factual reasoning
-  reference_answers:
-  - Getting Silk Grub Cocoons directly from the Infested Weedwood Bush provides 2
-    Silk Threads per grub, and placing grubs into Moth House provides 3 Silk Threads
-    per grub, that is 1.5x larger production rate.
-- text: Why bugs attacked me when I just tried to farm a silk?
-  eval_rules:
-  - score: 2
-    check: 'Mention one possible reason: you missed a moment to harvest the bush until
-      the final, and in the end Infestation spawned.'
-  - score: 1
-    check: 'Mention another possible reason: you standed inside an Infested Weedwood
-      Bush, but need to keep a distance.'
-  - score: -1
-    check: Give a wrong advice to harvest Cocoons from Cocooned Bushes (you actually
-      need to harvest Silk Grubs due to larger production rate).
-  relevant:
-  - doc_id: Infested Weedwood Bush
-    loc:
-    - The bush will then progress through the stages
-    - At the final stage of infestation, an Infestation
+  text: Why do you need a Moth House, if you can farm Silk Threads directly from the
+    Infested Weedwood Bush?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Mention one possible reason: you missed a moment to harvest the bush
+          until the final, and in the end Infestation spawned.'
+        score: 2
+      '1':
+        check: 'Mention another possible reason: you standed inside an Infested Weedwood
+          Bush, but need to keep a distance.'
+        score: 1
+      '2':
+        check: Give a wrong advice to harvest Cocoons from Cocooned Bushes (you actually
+          need to harvest Silk Grubs due to larger production rate).
+        score: -1
   metadata:
     reasoning_type: factual
   reference_answers:
   - You missed a moment to harvest Silk Grubs, and at the final stage an Infestation
     was spawned. Another possible reason is that you entered an Infested Weedwood
     Bush, keep a distance.
-- text: What is the black bar under a ring of power?
-  eval_rules:
-  - score: 2
-    check: Guess that the charge is drained.
-  - score: 1
-    check: Mention that recharging can be done by right-clicking.
-  - score: -1
-    check: Wrongly advice other ways to recharge.
+  relevant:
+  - doc_id: Infested Weedwood Bush
+    loc:
+    - The bush will then progress through the stages
+    - At the final stage of infestation, an Infestation
+  text: Why bugs attacked me when I just tried to farm a silk?
+- eval_rules:
+    checks:
+      '0':
+        check: Guess that the charge is drained.
+        score: 2
+      '1':
+        check: Mention that recharging can be done by right-clicking.
+        score: 1
+      '2':
+        check: Wrongly advice other ways to recharge.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - The charge is drained, you need to recharge it by right-clicking.
   relevant:
   - doc_id: Ring of Power
     loc:
     - The Ring of Power's charge will drain while
     - The ring's charge can be replenished by right-clicking
+  text: What is the black bar under a ring of power?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Answer positively: silk production is not a closed loop and requires
+          farming Pheromone Thorax from Infestation outside.'
+        score: 1
+      '1':
+        check: Wrongly advice to wait until Infested Weedwood Bush spawns an Infestation.
+        metadata:
+          comment: You get only 1 infestation that drops 0-1 Pheromone Thorax which
+            is less than the resources spent on infesting the bush.
+        score: -1
   metadata:
-    reasoning_type: factual
+    reasoning_type: factual reasoning
   reference_answers:
-  - The charge is drained, you need to recharge it by right-clicking.
-- text: Is it true that silk production requires constant farming of pheromone thorax
-    from mobs outside? So the process can't be self-sustaining, like farming?
-  eval_rules:
-  - score: 1
-    check: 'Answer positively: silk production is not a closed loop and requires farming
-      Pheromone Thorax from Infestation outside.'
-  - score: -1
-    check: Wrongly advice to wait until Infested Weedwood Bush spawns an Infestation.
-    metadata:
-      comment: You get only 1 infestation that drops 0-1 Pheromone Thorax which is
-        less than the resources spent on infesting the bush.
+  - Yes, it requires Pheromone Thorax that is dropped from Infestations only. While
+    Infestation can be spawned at home at the final stage of the Infested Weedwood
+    Bush, you get only 1 infestation that drops 0-1 Pheromone Thorax which is less
+    than the resources spent on infesting the bush. So, you cannot get infinite production
+    starting with finite Pheromone Thorax, but your limit is 3 Silk Threads per 1
+    Pheromone Thorax.
   relevant:
   - doc_id: Silk Grub
     loc:
@@ -1200,47 +1394,54 @@
     - Infestations are swarms of bugs that
     - They will also spawn when an
     - <Infestation>
+  text: Is it true that silk production requires constant farming of pheromone thorax
+    from mobs outside? So the process can't be self-sustaining, like farming?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention corrosion. Optionally mention the possibility to clean in the
+          Purifier.
+        score: 1
+      '1':
+        check: Mention a Weakbow Draught.
+        score: 1
+      '2':
+        check: Wrongly mention other reasons besides corrosion and a Weakbow Draught.
+        score: -1
   metadata:
-    reasoning_type: factual reasoning
+    reasoning_type: factual
   reference_answers:
-  - Yes, it requires Pheromone Thorax that is dropped from Infestations only. While
-    Infestation can be spawned at home at the final stage of the Infested Weedwood
-    Bush, you get only 1 infestation that drops 0-1 Pheromone Thorax which is less
-    than the resources spent on infesting the bush. So, you cannot get infinite production
-    starting with finite Pheromone Thorax, but your limit is 3 Silk Threads per 1
-    Pheromone Thorax.
-- text: Why my bow shoots only shoot arrows 5 meters?
-  eval_rules:
-  - score: 1
-    check: Mention corrosion. Optionally mention the possibility to clean in the Purifier.
-  - score: 1
-    check: Mention a Weakbow Draught.
-  - score: -1
-    check: Wrongly mention other reasons besides corrosion and a Weakbow Draught.
+  - Your bow has become corroded and need to be cleaned in the Purifier.
   relevant:
   - doc_id: Weedwood Bow
     loc:
     - Corrosion decreases its maximum pullback power.
     - A corroded Weedwood Bow can be cleaned
+  text: Why my bow shoots only shoot arrows 5 meters?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Valonite Armor is the next tier.
+        score: 2
+      '1':
+        check: Wrongly mention Ancient Armor as the next tier, without clarifying
+          that this set is a special treasure and not just the next tier.
+        score: -1
+      '2':
+        check: Wrongly mention The Armor of Legends as the next tier, without clarifying
+          that it is not implemented yet.
+        score: -1
+      '3':
+        check: Wrongly mention Lurker Skin Armor, Bone Armor or Amphibious Armor as
+          the next tier, which are actually weaker.
+        score: -1
+      '4':
+        check: Wrongly mention armor sets not listed above.
+        score: -2
   metadata:
     reasoning_type: factual
   reference_answers:
-  - Your bow has become corroded and need to be cleaned in the Purifier.
-- text: What is the next armor tier after Syrmorite?
-  eval_rules:
-  - score: 2
-    check: Mention that Valonite Armor is the next tier.
-  - score: -1
-    check: Wrongly mention Ancient Armor as the next tier, without clarifying that
-      this set is a special treasure and not just the next tier.
-  - score: -1
-    check: Wrongly mention The Armor of Legends as the next tier, without clarifying
-      that it is not implemented yet.
-  - score: -1
-    check: Wrongly mention Lurker Skin Armor, Bone Armor or Amphibious Armor as the
-      next tier, which are actually weaker.
-  - score: -2
-    check: Wrongly mention armor sets not listed above.
+  - Valonite Armor is the next tier.
   relevant:
   - doc_id: Syrmorite Armor
     loc:
@@ -1263,189 +1464,218 @@
   - doc_id: Armor of Legends
     loc:
     - The Armor of Legends is a very powerful
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - Valonite Armor is the next tier.
-- text: Are 2 varieties of food enough to prevent food sickness?
-  eval_rules:
-  - score: 1
-    check: Report the lack of an answer.
-  relevant:
-  - doc_id: Food Sickness
-    loc:
-    - Eating a different type of food will help to bring
+  text: What is the next armor tier after Syrmorite?
+- eval_rules:
+    checks:
+      '0':
+        check: Report the lack of an answer.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - This is not clearly stated in the wiki. Eating a food increasing its sickness
     counter by 5. Eating a different type of food will bring the sickness level down
     on the other food, but it is not stated how much.
-- text: Are Simulacra wearable items?
-  eval_rules:
-  - score: 1
-    check: Answer negatively. Optionally concretize that they have effects only when
-      placed down.
   relevant:
-  - doc_id: Simulacra
+  - doc_id: Food Sickness
     loc:
-    - Any effect the Simulacrum has will not
+    - Eating a different type of food will help to bring
+  text: Are 2 varieties of food enough to prevent food sickness?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively. Optionally concretize that they have effects only
+          when placed down.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - No, they have no effect until broken and placed down again.
-- text: So it turns out that mushrooms spores can't be multiplied? I mean 1 planted
-    mushroom seed produces no more than 1 seed when grown and harvested.
-  eval_rules:
-  - score: 1
-    check: Answer that they can be multiplied.
+  relevant:
+  - doc_id: Simulacra
+    loc:
+    - Any effect the Simulacrum has will not
+  text: Are Simulacra wearable items?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer that they can be multiplied.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - Then can. When harvested at full maturity, the Yellow Dotted Fungus will drop
+    more Spores.
   relevant:
   - doc_id: Spores
     loc:
     - Spores are seed-like items that can be grown
     - When harvested at full maturity
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - Then can. When harvested at full maturity, the Yellow Dotted Fungus will drop more
-    Spores.
-- text: What is that smoldering peat in a mire?
-  eval_rules:
-  - score: 2
-    check: Mention using Smoldering Peat as a heat source for devices.
-  - score: 1
-    check: Mention using Smoldering Peat for Volarkite flights.
-  - score: 0
-    check: Optionally mention using Smoldering Peat for decoration or for black smoke
-      particles.
-  - score: -1
-    check: Wrongly mention other uses not listed above.
-  relevant:
-  - doc_id: Smoldering Peat
-    loc:
-    - Smoldering Peat can act as a heat source
-    - Placing a Weedwood Chip Path on top
-    - If a player using a Volarkite glides closely
+  text: So it turns out that mushrooms spores can't be multiplied? I mean 1 planted
+    mushroom seed produces no more than 1 seed when grown and harvested.
+- eval_rules:
+    checks:
+      '0':
+        check: Mention using Smoldering Peat as a heat source for devices.
+        score: 2
+      '1':
+        check: Mention using Smoldering Peat for Volarkite flights.
+        score: 1
+      '2':
+        check: Optionally mention using Smoldering Peat for decoration or for black
+          smoke particles.
+        score: 0
+      '3':
+        check: Wrongly mention other uses not listed above.
+        score: -1
   metadata:
     reasoning_type: factual
   reference_answers:
   - It occasionally generates naturally, or can be made by lighting Peat on fire and
     extinguishing it. It acts as a heat source for the Infuser and a Smoking Rack,
     for Volarkite flights, and for Decoration.
-- text: Does a boss mummy spawns naturally?
-  eval_rules:
-  - score: 1
-    check: Answer negatively.
-  - score: 0
-    check: Optionally mention that it can be summoned.
   relevant:
-  - doc_id: Dreadful Peat Mummy
+  - doc_id: Smoldering Peat
     loc:
-    - The Dreadful Peat Mummy is a boss that
-    - It can be summoned by dropping
+    - Smoldering Peat can act as a heat source
+    - Placing a Weedwood Chip Path on top
+    - If a player using a Volarkite glides closely
+  text: What is that smoldering peat in a mire?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively.
+        score: 1
+      '1':
+        check: Optionally mention that it can be summoned.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
   - No, it can be summoned by dropping Mummy Bait on the surface ground in a Marsh
     or Sludge Plains biome.
-- text: How to ignite that big torches on the top of the Sludgeon?
-  eval_rules:
-  - score: 2
-    check: Mention dropping Moss, Lichen, or Thorn (or at least mentioning Moss) and
-      holding right click with an Octine Ingot.
-  - score: 1
-    check: Mention Pyrad Flames or Fire Charges.
   relevant:
-  - doc_id: Sludgeon
+  - doc_id: Dreadful Peat Mummy
     loc:
-    - <Sludgeon Tower>
+    - The Dreadful Peat Mummy is a boss that
+    - It can be summoned by dropping
+  text: Does a boss mummy spawns naturally?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention dropping Moss, Lichen, or Thorn (or at least mentioning Moss)
+          and holding right click with an Octine Ingot.
+        score: 2
+      '1':
+        check: Mention Pyrad Flames or Fire Charges.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - 'To light the braziers, you need to start a fire in a usual way: Drop Moss, Cave
     Moss, Lichen, or Thorn on top of the Brazier, then hold right click with an Octine
     Ingot. Alternatively, you can use a Pyrad Flame or vanilla Fire Charge.'
-- text: Are long tongue animals infinite on the second Sludgeon level?
-  eval_rules:
-  - score: 1
-    check: Report the lack of an answer.
   relevant:
   - doc_id: Sludgeon
     loc:
-    - The second layer is a layer filled with
-    - Other than the different mobs, it
+    - <Sludgeon Tower>
+  text: How to ignite that big torches on the top of the Sludgeon?
+- eval_rules:
+    checks:
+      '0':
+        check: Report the lack of an answer.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - It is not stated in the wiki if the enemies respawn or not in the levels of the
     Sludgeon.
-- text: How to prevent that long tongue animal from pulling me from distance?
-  eval_rules:
-  - score: 1
-    check: Mention holding down the sneak key.
   relevant:
-  - doc_id: Shambler
+  - doc_id: Sludgeon
     loc:
-    - Upon spotting a target, a Shambler will open
-    - Holding down the sneak key
+    - The second layer is a layer filled with
+    - Other than the different mobs, it
+  text: Are long tongue animals infinite on the second Sludgeon level?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention holding down the sneak key.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Holding down the sneak key prevents the Shambler from pulling the player into
     melee range.
-- text: Is it a good idea to speedrun that spiky traps in a Sludgeon?
-  metadata:
-    reasoning_type: vague
+  relevant:
+  - doc_id: Shambler
+    loc:
+    - Upon spotting a target, a Shambler will open
+    - Holding down the sneak key
+  text: How to prevent that long tongue animal from pulling me from distance?
+- metadata:
     comment: It depends on the speed of such a traps or their prevalence at the level,
       as well as other factors such as level geometry or mob counts, which is unknown
       from the wiki. However, an assistant may reason and come to some conclusions,
       and the answer and reasoning is hard to evaluate.
-- text: What to expect on the next sludgeon level, after the level with spiky traps?
-  eval_rules:
-  - score: 1
-    check: Mention Sludge Jet Turrets.
-  - score: 1
-    check: Mention Barrishee, or just a secret door/area (so as not to spoil).
-  - score: 0
-    check: Optionally mention Broken Mud Tiles.
-  relevant:
-  - doc_id: Sludgeon
-    loc:
-    - The third layer is filled with Lampreys
-    - The fourth layer is filled with Sludge Jet Turrets
+    reasoning_type: vague
+  text: Is it a good idea to speedrun that spiky traps in a Sludgeon?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Sludge Jet Turrets.
+        score: 1
+      '1':
+        check: Mention Barrishee, or just a secret door/area (so as not to spoil).
+        score: 1
+      '2':
+        check: Optionally mention Broken Mud Tiles.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
   - The next level is filled with Sludge Jet Turrets and more Broken Mud Tiles on
     the floor.
-- text: I hear someone grunting behind the walls in sludgeon. I explored the entire
-    level but didn't find these mobs. Is this some kind of secret level?
-  eval_rules:
-  - score: 1
-    check: Mention that there are side crypt tunnels and winding corridors (or synonymous
-      words).
-  - score: 0
-    check: Optionally mention Barrishee.
   relevant:
   - doc_id: Sludgeon
     loc:
-    - In this layer, there is also an extra Dungeon Door
-    - Unlocking it will cause numerous Crypt Crawlers
+    - The third layer is filled with Lampreys
+    - The fourth layer is filled with Sludge Jet Turrets
+  text: What to expect on the next sludgeon level, after the level with spiky traps?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that there are side crypt tunnels and winding corridors (or
+          synonymous words).
+        score: 1
+      '1':
+        check: Optionally mention Barrishee.
+        score: 0
   metadata:
     reasoning_type: factual
   reference_answers:
   - There are indeed secret locations in the Sludgeon, one of them leads from the
     sixth layer to the crypt tunnels and winding corridors. Numerous Crypt Crawlers
     are spawned inside.
-- text: I tried to open the door to the sludgeon but a big mechanical monster appeared,
-    if I run away and block a corridor with solid blocks, will I stop it from chasing
-    me?
-  eval_rules:
-  - score: 1
-    check: Mention that the monster is able to break blocks.
-  - score: -1
-    check: Misidentify the monster, calling it anything other than Barrishee. Do not
-      call the monster name is a valid option, since this was not asked.
+  relevant:
+  - doc_id: Sludgeon
+    loc:
+    - In this layer, there is also an extra Dungeon Door
+    - Unlocking it will cause numerous Crypt Crawlers
+  text: I hear someone grunting behind the walls in sludgeon. I explored the entire
+    level but didn't find these mobs. Is this some kind of secret level?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the monster is able to break blocks.
+        score: 1
+      '1':
+        check: Misidentify the monster, calling it anything other than Barrishee.
+          Do not call the monster name is a valid option, since this was not asked.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - No, the Barrishee is able to break blocks.
   relevant:
   - doc_id: Sludgeon
     loc:
@@ -1455,60 +1685,60 @@
     loc:
     - When targeting a player, the Barrishee
     - 'Sonic Blast: It will scream and emit a sonic blast'
+  text: I tried to open the door to the sludgeon but a big mechanical monster appeared,
+    if I run away and block a corridor with solid blocks, will I stop it from chasing
+    me?
+- eval_rules:
+    checks:
+      '0':
+        check: Report the lack of an answer.
+        score: 1
   metadata:
-    reasoning_type: factual
+    comment: While Barrishee is not described as metallic in wiki, it is clearly identified
+      from the question.
+    reasoning_type: aggregating by negation
   reference_answers:
-  - No, the Barrishee is able to break blocks.
-- text: If I flee to the previous Sludgeon layer, will I be out of reach for the metallic
-    beast boss that appeared when I tried to open the door?
-  eval_rules:
-  - score: 1
-    check: Report the lack of an answer.
+  - It's hard to say from the wiki information only.
   relevant:
   - doc_id: Sludgeon
     loc:
     - On the fourth layer, there is also a secret door
     - When unlocking the false Dungeon Door
   - doc_id: Barrishee
+  text: If I flee to the previous Sludgeon layer, will I be out of reach for the metallic
+    beast boss that appeared when I tried to open the door?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that placing the statue is generally safe. Optionally mention
+          that the statues are called Simulacra (sing. Simulacrum). Optionally mention
+          possible minor negative effects, such as resurrecting a hostile mob.
+        score: 1
+      '1':
+        check: Misidentify the statue, calling it anything other than Simulacra (sing.
+          Simulacrum).
+        score: -1
   metadata:
-    reasoning_type: aggregating by negation
-    comment: While Barrishee is not described as metallic in wiki, it is clearly identified
-      from the question.
+    reasoning_type: factual
   reference_answers:
-  - It's hard to say from the wiki information only.
-- text: I have found a stone statue in caves, is it dangerous to place it at home?
-  eval_rules:
-  - score: 1
-    check: Mention that placing the statue is generally safe. Optionally mention that
-      the statues are called Simulacra (sing. Simulacrum). Optionally mention possible
-      minor negative effects, such as resurrecting a hostile mob.
-  - score: -1
-    check: Misidentify the statue, calling it anything other than Simulacra (sing.
-      Simulacrum).
+  - It is not dangerous. When placed, a Simulacrum statue may show various effects,
+    but these effects are peaceful.
   relevant:
   - doc_id: Simulacra
     loc:
     - Simulacra are mysterious statuettes with various
     - Deepman Simulacra generate in the
     - <Effects>
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - It is not dangerous. When placed, a Simulacrum statue may show various effects,
-    but these effects are peaceful.
-- text: If I died on the last Sludgeon level, or just want to return home and back,
-    do I have to go through all the levels again? Are there hidden shortcut exits?
-  eval_rules:
-  - score: 1
-    check: Clarify that there are no such exits, or at least there is no info about
-      this.
-  - score: 1
-    check: Clarify that you have to go through all the levels again.
-  relevant:
-  - doc_id: Sludgeon
-    loc:
-    - Most of the blocks of the Sludgeon are protected from
-    - A dungeon door to the next layer is always
+  text: I have found a stone statue in caves, is it dangerous to place it at home?
+- eval_rules:
+    checks:
+      '0':
+        check: Clarify that there are no such exits, or at least there is no info
+          about this.
+        score: 1
+      '1':
+        check: Clarify that you have to go through all the levels again.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
@@ -1516,22 +1746,39 @@
     until the Sludgeon is cleared. A dungeon door to the next layer is always on the
     opposite corner of the staircase leading down from the previous floor, so you
     need to run through all the levels again.
-- text: 'Which dungeon requires more preparation: Sludgeon or Wight Fortress?'
-  metadata:
-    reasoning_type: unclear
+  relevant:
+  - doc_id: Sludgeon
+    loc:
+    - Most of the blocks of the Sludgeon are protected from
+    - A dungeon door to the next layer is always
+  text: If I died on the last Sludgeon level, or just want to return home and back,
+    do I have to go through all the levels again? Are there hidden shortcut exits?
+- metadata:
     comment: The difficulty level is indicated for the Wight Fortress ("great preparation
       required"), but not indicated for Sludgeon. An assistant may reason and come
       to some conclusions (that they are equal or not), and the answer and reasoning
       is hard to evaluate.
-- text: Why I see a piece of a blue sky in the Betweenlands? What is the lore behind
-    this?
-  eval_rules:
-  - score: 2
-    check: Mention the Rift event.
-  - score: 1
-    check: Mention that rift is interdimensional (connects dimensions).
-  - score: 1
-    check: Mention that rift is a source of lifeforce in the Betweenlands.
+    reasoning_type: unclear
+  text: 'Which dungeon requires more preparation: Sludgeon or Wight Fortress?'
+- eval_rules:
+    checks:
+      '0':
+        check: Mention the Rift event.
+        score: 2
+      '1':
+        check: Mention that rift is interdimensional (connects dimensions).
+        score: 1
+      '2':
+        check: Mention that rift is a source of lifeforce in the Betweenlands.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - This is a Rift event when a crack appears in the Betweenlands sky, and the Overworld's
+    Sky is visible through the Rift. According to the Lore, this is an interdimensional
+    rift between the two realms. Earlier lifeforce surged through the rift from the
+    Overworld to the Betweenlands, but later a disaster happened and the darkness
+    consumed the Betweenlands.
   relevant:
   - doc_id: Rift
     loc:
@@ -1541,40 +1788,44 @@
     - As the fabric of reality shifted, a thin
     - This crack was an interdimensional rift
     - Lifeforce surged through the rift from the Overworld
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - This is a Rift event when a crack appears in the Betweenlands sky, and the Overworld's
-    Sky is visible through the Rift. According to the Lore, this is an interdimensional
-    rift between the two realms. Earlier lifeforce surged through the rift from the
-    Overworld to the Betweenlands, but later a disaster happened and the darkness
-    consumed the Betweenlands.
-- text: Can I disassemble or grind the amulet after a gem is inserted?
-  eval_rules:
-  - score: 1
-    check: Clarify that it is not possible, and the gem cannot be removed, or at least
-      such a possibility is not mentioned in the wiki.
-  relevant:
-  - doc_id: Amulet
-    loc:
-    - <Crafting Recipes>
+  text: Why I see a piece of a blue sky in the Betweenlands? What is the lore behind
+    this?
+- eval_rules:
+    checks:
+      '0':
+        check: Clarify that it is not possible, and the gem cannot be removed, or
+          at least such a possibility is not mentioned in the wiki.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - No such ways found in the wiki.
-- text: Is there anything rare, that animator produces from scrolls with a small chance?
-    BTW, I'm tired of getting the same items again.
-  eval_rules:
-  - score: 1
-    check: 'Answer positively. Optionally describe some of the items obtained: Music
-      Discs, Staff of the Mist Walker, Staff of the Shadow Walker, Ring of Power,
-      Amulet Socket, Magic Item Magnet, Voodoo Doll, Valonite Shard, Sludge Slicer,
-      Critter Cruncher, Hag Hacker, Wight''s Bane, Swift Pick, Skull Mask, Syrmorite
-      Ingot, Octine Ingot.'
-  - score: 0
-    check: Optionally mention Fabricated Scroll.
-  - score: -1
-    check: Describe items not listed above.
+  relevant:
+  - doc_id: Amulet
+    loc:
+    - <Crafting Recipes>
+  text: Can I disassemble or grind the amulet after a gem is inserted?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Answer positively. Optionally describe some of the items obtained:
+          Music Discs, Staff of the Mist Walker, Staff of the Shadow Walker, Ring
+          of Power, Amulet Socket, Magic Item Magnet, Voodoo Doll, Valonite Shard,
+          Sludge Slicer, Critter Cruncher, Hag Hacker, Wight''s Bane, Swift Pick,
+          Skull Mask, Syrmorite Ingot, Octine Ingot.'
+        score: 1
+      '1':
+        check: Optionally mention Fabricated Scroll.
+        score: 0
+      '2':
+        check: Describe items not listed above.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - 'Yes, Music Discs have 2.59% chance to obtain, and several items have 5.18% chance:
+    Staff of the Mist Walker, Staff of the Shadow Walker, Ring of Power, Amulet Socket,
+    Magic Item Magnet, Voodoo Doll.'
   relevant:
   - doc_id: Animator
     loc:
@@ -1583,42 +1834,57 @@
     loc:
     - When animated in an Animator, both Item
     - <Loot>
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - 'Yes, Music Discs have 2.59% chance to obtain, and several items have 5.18% chance:
-    Staff of the Mist Walker, Staff of the Shadow Walker, Ring of Power, Amulet Socket,
-    Magic Item Magnet, Voodoo Doll.'
-- text: Hag Hacker - what type of enemies does it have bonuses against?
-  eval_rules:
-  - score: 1
-    check: Mention Swamp Hag.
-  relevant:
-  - doc_id: Hag Hacker
-    loc:
-    - Against most mobs, the Hag Hacker
+  text: Is there anything rare, that animator produces from scrolls with a small chance?
+    BTW, I'm tired of getting the same items again.
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Swamp Hag.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Against Swamp Hags (a zombie-like common creatures).
-- text: Which things help to move and fight effectively in the water?
-  eval_rules:
-  - score: 2
-    check: Mention Lurker Skin Armor.
-  - score: 2
-    check: Mention Amphibious Armor. Optionally mention its various upgrades.
-  - score: 1
-    check: Mention Lake Broth.
-  - score: 1
-    check: Mention Brew of the Cat's Eye.
-  - score: 1
-    check: Mention Lightweight Draught.
-  - score: 1
-    check: Mention Boots of the Marsh Runner.
-  - score: 1
-    check: Mention Harlequin Toad.
-  - score: 1
-    check: Mention a Weedwood Rowboat (or simply a "boat").
+  relevant:
+  - doc_id: Hag Hacker
+    loc:
+    - Against most mobs, the Hag Hacker
+  text: Hag Hacker - what type of enemies does it have bonuses against?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Lurker Skin Armor.
+        score: 2
+      '1':
+        check: Mention Amphibious Armor. Optionally mention its various upgrades.
+        score: 2
+      '2':
+        check: Mention Lake Broth.
+        score: 1
+      '3':
+        check: Mention Brew of the Cat's Eye.
+        score: 1
+      '4':
+        check: Mention Lightweight Draught.
+        score: 1
+      '5':
+        check: Mention Boots of the Marsh Runner.
+        score: 1
+      '6':
+        check: Mention Harlequin Toad.
+        score: 1
+      '7':
+        check: Mention a Weedwood Rowboat (or simply a "boat").
+        score: 1
+  metadata:
+    comment: This is hard to make an exhaustive list of things.
+    reasoning_type: factual wide
+  reference_answers:
+  - You can use Lurker Skin Armor or more advanced Amphibious Armor that is upgradable.
+    You can also use a Weedwood Rowboat. You can craft a Lake Broth drinkable brew
+    for Water Breathing. You can make a Brew of the Cat's Eye infusion for Night Vision.
+    You can use Lightweight Draught infusion or Boots of the Marsh Runner to walk
+    on water. Finally, you can tame a Harlequin Toad to swim on.
   relevant:
   - doc_id: Lurker Skin Armor
     loc:
@@ -1650,21 +1916,21 @@
   - doc_id: Harlequin Toad
     loc:
     - The toad transports its player very
+  text: Which things help to move and fight effectively in the water?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Glowing Goop
+        score: 1
+      '1':
+        check: Mention Lantern
+        score: 1
   metadata:
     reasoning_type: factual wide
-    comment: This is hard to make an exhaustive list of things.
   reference_answers:
-  - You can use Lurker Skin Armor or more advanced Amphibious Armor that is upgradable.
-    You can also use a Weedwood Rowboat. You can craft a Lake Broth drinkable brew
-    for Water Breathing. You can make a Brew of the Cat's Eye infusion for Night Vision.
-    You can use Lightweight Draught infusion or Boots of the Marsh Runner to walk
-    on water. Finally, you can tame a Harlequin Toad to swim on.
-- text: What can be used as a torch underwater?
-  eval_rules:
-  - score: 1
-    check: Mention Glowing Goop
-  - score: 1
-    check: Mention Lantern
+  - One example is a Glowing Goop that is crafted from Sludge Ball + Ground Bulb-capped
+    Mushroom. It can also be placed underwater and provides a light level of 12, slightly
+    less than a Sulfur Torch. Another example is a Lantern.
   relevant:
   - doc_id: Glowing Goop
     loc:
@@ -1674,35 +1940,42 @@
     loc:
     - Lanterns are craftable blocks that
     - Unlike Sulfur Torches, they can be oriented
-  metadata:
-    reasoning_type: factual wide
-  reference_answers:
-  - One example is a Glowing Goop that is crafted from Sludge Ball + Ground Bulb-capped
-    Mushroom. It can also be placed underwater and provides a light level of 12, slightly
-    less than a Sulfur Torch. Another example is a Lantern.
-- text: Are there any giant fish?
-  metadata:
-    reasoning_type: skip
+  text: What can be used as a torch underwater?
+- metadata:
     comment: Not clear from the wiki.
-- text: How to collect a loot from the tar beast, do I have to swim in the tar?
-  eval_rules:
-  - score: 2
-    check: Mention pouring water on tar.
-    metadata:
-      comment: The easiest way.
-  - score: 1
-    check: Mention Magic Item Magnet.
-  - score: 0
-    check: Optionally mention extracting tar with buckets.
-    metadata:
-      comment: This is impractial as requires many buckets.
-  - score: 0
-    check: Optionally mention killing Tar Beast on the land.
-    metadata:
-      comment: If a player wants to collect loot, they probably killed a Tar Beast
-        already.
-  - score: -1
-    check: Wrongly mention ways not listed above.
+    reasoning_type: skip
+  text: Are there any giant fish?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention pouring water on tar.
+        metadata:
+          comment: The easiest way.
+        score: 2
+      '1':
+        check: Mention Magic Item Magnet.
+        score: 1
+      '2':
+        check: Optionally mention extracting tar with buckets.
+        metadata:
+          comment: This is impractial as requires many buckets.
+        score: 0
+      '3':
+        check: Optionally mention killing Tar Beast on the land.
+        metadata:
+          comment: If a player wants to collect loot, they probably killed a Tar Beast
+            already.
+        score: 0
+      '4':
+        check: Wrongly mention ways not listed above.
+        score: -1
+  metadata:
+    reasoning_type: factual reasoning wide
+  reference_answers:
+  - Not necessarily. First, you can extract the tar with buckets, because tar is not
+    capable of creating infinite source blocks. Second, you can pour water on it,
+    and it will turn into a solid tar which you can mine. Third, you can use a Magic
+    Item Magnet if you have one.
   relevant:
   - doc_id: Tar Beast
     loc:
@@ -1719,20 +1992,20 @@
   - doc_id: Magic Item Magnet
     loc:
     - This allows players to pick up items from
+  text: How to collect a loot from the tar beast, do I have to swim in the tar?
+- eval_rules:
+    checks:
+      '0':
+        check: Clarify that you have to catch with a rod Anadia to trim (cut up) it.
+        score: 1
+      '1':
+        check: Clarify that when just killed, it drops only a meat.
+        score: 1
   metadata:
-    reasoning_type: factual reasoning wide
+    reasoning_type: factual reasoning
   reference_answers:
-  - Not necessarily. First, you can extract the tar with buckets, because tar is not
-    capable of creating infinite source blocks. Second, you can pour water on it,
-    and it will turn into a solid tar which you can mine. Third, you can use a Magic
-    Item Magnet if you have one.
-- text: To cut up a fish, do I have to catch it with a rod? Can't I just kill it underwater
-    with a sword?
-  eval_rules:
-  - score: 1
-    check: Clarify that you have to catch with a rod Anadia to trim (cut up) it.
-  - score: 1
-    check: Clarify that when just killed, it drops only a meat.
+  - Yes, if you just kill it, it drops only Anadia Meat. You need to catch it to get
+    more loot on a Trimming Table.
   relevant:
   - doc_id: Anadia
     loc:
@@ -1743,19 +2016,27 @@
     loc:
     - Trimming an Anadia has a variety of potential
     - After chopping a fish, 3 outputs are shown
+  text: To cut up a fish, do I have to catch it with a rod? Can't I just kill it underwater
+    with a sword?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention using a shovel to dig.
+        score: 1
+      '1':
+        check: Mention using Net to catch.
+        score: 1
+      '2':
+        check: Optionally mention Sludgeon or Tunnel Entrances during the Heavy Rain
+          event.
+        score: 0
   metadata:
-    reasoning_type: factual reasoning
+    reasoning_type: factual wide
   reference_answers:
-  - Yes, if you just kill it, it drops only Anadia Meat. You need to catch it to get
-    more loot on a Trimming Table.
-- text: How do I get a worm for a fishing rod?
-  eval_rules:
-  - score: 1
-    check: Mention using a shovel to dig.
-  - score: 1
-    check: Mention using Net to catch.
-  - score: 0
-    check: Optionally mention Sludgeon or Tunnel Entrances during the Heavy Rain event.
+  - The most easy way is to right-click with a shovel on a dirt, a Tiny Sludge Worm
+    will spawn with 10% chance, and you can catch it with a Net. As more complex alternatives,
+    you can find a Tiny Sludge Worm in a Sludgeon or at the Tunnel Entrances during
+    the Heavy Rain event.
   relevant:
   - doc_id: Weedwood Fishing Rod
     loc:
@@ -1784,19 +2065,19 @@
     loc:
     - Dug Swamp Dirt is created by right-clicking
     - Right-clicking on Dug Swamp Dirt with Compost
+  text: How do I get a worm for a fishing rod?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention using a Net.
+        score: 2
+      '1':
+        check: Additionally mention that you need to right-click with a Net, not left-click.
+        score: 1
   metadata:
-    reasoning_type: factual wide
+    reasoning_type: factual
   reference_answers:
-  - The most easy way is to right-click with a shovel on a dirt, a Tiny Sludge Worm
-    will spawn with 10% chance, and you can catch it with a Net. As more complex alternatives,
-    you can find a Tiny Sludge Worm in a Sludgeon or at the Tunnel Entrances during
-    the Heavy Rain event.
-- text: How do I catch a worm for fishing without killing it?
-  eval_rules:
-  - score: 2
-    check: Mention using a Net.
-  - score: 1
-    check: Additionally mention that you need to right-click with a Net, not left-click.
+  - Use right-click with a Net.
   relevant:
   - doc_id: Weedwood Fishing Rod
     loc:
@@ -1807,21 +2088,23 @@
   - doc_id: Net
     loc:
     - Right-clicking on one of these creatures
+  text: How do I catch a worm for fishing without killing it?
+- metadata:
+    comment: You need Anadia as a mob to be close, but this is not clearly stated
+      in the wiki. So, the assistant reasoning may be hard to evaluate.
+    reasoning_type: skip
+  text: I cast a rod with a worm into the sea, but nothing has caught for 10 minutes.
+    What am I doing wrong?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Amphibious Armor is upgradable.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
-  - Use right-click with a Net.
-- text: I cast a rod with a worm into the sea, but nothing has caught for 10 minutes.
-    What am I doing wrong?
-  metadata:
-    reasoning_type: skip
-    comment: You need Anadia as a mob to be close, but this is not clearly stated
-      in the wiki. So, the assistant reasoning may be hard to evaluate.
-- text: What is the point of Amphibious Armor, if it gives the same stats as Lurker
-    armor?
-  eval_rules:
-  - score: 1
-    check: Mention that Amphibious Armor is upgradable.
+  - Amphibious Armor can be upgraded with upgrades obtained from Fishing, Anadia Parts,
+    or Middle Gems, to provide unique abilities.
   relevant:
   - doc_id: Lurker Skin Armor
     loc:
@@ -1831,15 +2114,19 @@
     - A full set of Amphibious Armor provides
     - Aside from block breaking speed, the
     - Amphibious Armor can be upgraded with upgrades
+  text: What is the point of Amphibious Armor, if it gives the same stats as Lurker
+    armor?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Yellow Dotted Fungus crops spawn Sporelings when they
+          decay.
+        score: 1
   metadata:
-    reasoning_type: factual
+    reasoning_type: factual reasoning
   reference_answers:
-  - Amphibious Armor can be upgraded with upgrades obtained from Fishing, Anadia Parts,
-    or Middle Gems, to provide unique abilities.
-- text: Why so much living mushrooms start spawning around my house?
-  eval_rules:
-  - score: 1
-    check: Mention that Yellow Dotted Fungus crops spawn Sporelings when they decay.
+  - The probable reason is that you have multiple decayed Yellow Dotted Fungus crops
+    that spawn Sporelings. Also they spawn naturally on Shelf Fungus.
   relevant:
   - doc_id: Sporeling
     loc:
@@ -1850,18 +2137,19 @@
     - Spores are seed-like items that can be
     - However, a Yellow Dotted Fungus crop's growth will halt
     - If the crop is mature when this happens
+  text: Why so much living mushrooms start spawning around my house?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention trimming Anadia.
+        score: 2
+      '1':
+        check: Mention that Anadia should have a Stubby type.
+        score: 1
   metadata:
-    reasoning_type: factual reasoning
+    reasoning_type: factual
   reference_answers:
-  - The probable reason is that you have multiple decayed Yellow Dotted Fungus crops
-    that spawn Sporelings. Also they spawn naturally on Shelf Fungus.
-- text: Where to find the Amphibious Armor upgrade that allows high jumping under
-    the water?
-  eval_rules:
-  - score: 2
-    check: Mention trimming Anadia.
-  - score: 1
-    check: Mention that Anadia should have a Stubby type.
+  - It drops with 7.5% chance when you trim a Stubby Anadia on the Trimming Table.
   relevant:
   - doc_id: Amphibious Armor
     loc:
@@ -1869,39 +2157,52 @@
   - doc_id: Trimming Table
     loc:
     - <Trimming Outputs>
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - It drops with 7.5% chance when you trim a Stubby Anadia on the Trimming Table.
-- text: Can I automate fishing by breeding Anadia in a pool?
-  eval_rules:
-  - score: 1
-    check: Answer negatively, ot say that such a possibility is not found in the wiki.
-  relevant:
-  - doc_id: Anadia
+  text: Where to find the Amphibious Armor upgrade that allows high jumping under
+    the water?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively, ot say that such a possibility is not found in the
+          wiki.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - No, such a possibility is not mentioned in the wiki.
-- text: Which armor sets exist in the Betweenlands?
-  eval_rules:
-  - score: 1
-    check: Mention Amphibious armor.
-  - score: 1
-    check: Mention Ancient armor.
-  - score: 1
-    check: Mention Bone armor.
-  - score: 1
-    check: Mention Lurker Skin armor.
-  - score: 1
-    check: Mention Syrmorite armor.
-  - score: 1
-    check: Mention Valonite armor.
-  - score: -2
-    check: Wrongly mention Armor of Legends without clarifying that it is not implemented
-      yet.
-  - score: -2
-    check: Wrongly mention other armor sets not listed above.
+  relevant:
+  - doc_id: Anadia
+  text: Can I automate fishing by breeding Anadia in a pool?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Amphibious armor.
+        score: 1
+      '1':
+        check: Mention Ancient armor.
+        score: 1
+      '2':
+        check: Mention Bone armor.
+        score: 1
+      '3':
+        check: Mention Lurker Skin armor.
+        score: 1
+      '4':
+        check: Mention Syrmorite armor.
+        score: 1
+      '5':
+        check: Mention Valonite armor.
+        score: 1
+      '6':
+        check: Wrongly mention Armor of Legends without clarifying that it is not
+          implemented yet.
+        score: -2
+      '7':
+        check: Wrongly mention other armor sets not listed above.
+        score: -2
+  metadata:
+    reasoning_type: factual wide
+  reference_answers:
+  - Amphibious, Ancient, Bone, Lurker Skin, Syrmorite, Valonite.
   relevant:
   - doc_id: Syrmorite Armor
     loc:
@@ -1924,18 +2225,23 @@
   - doc_id: Armor of Legends
     loc:
     - The Armor of Legends is a very powerful
+  text: Which armor sets exist in the Betweenlands?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Valonite Armor.
+        score: 1
+      '1':
+        check: Optionally mention The Ancient Armor.
+        score: 0
+      '2':
+        check: Wrongly mention other armor sets not listed above.
+        score: -1
   metadata:
-    reasoning_type: factual wide
+    reasoning_type: null
   reference_answers:
-  - Amphibious, Ancient, Bone, Lurker Skin, Syrmorite, Valonite.
-- text: Is there an analog of diamond armor?
-  eval_rules:
-  - score: 1
-    check: Mention Valonite Armor.
-  - score: 0
-    check: Optionally mention The Ancient Armor.
-  - score: -1
-    check: Wrongly mention other armor sets not listed above.
+  - Yes, Valonite Armor. There is also The Ancient Armor, but it is a rare treasure
+    and not craftable.
   relevant:
   - doc_id: Valonite Armor
     loc:
@@ -1959,44 +2265,52 @@
   - doc_id: Armor of Legends
     loc:
     - The Armor of Legends is a very powerful
-  metadata:
-    reasoning_type: null
-  reference_answers:
-  - Yes, Valonite Armor. There is also The Ancient Armor, but it is a rare treasure
-    and not craftable.
-- text: Can I hold a sword, a shield and a torch at the same time?
-  metadata:
-    reasoning_type: out of scope
+  text: Is there an analog of diamond armor?
+- metadata:
     comment: This has nothing to do with this mod, this is a question about basic
       game mechanics.
-- text: What if I continue eating mushrooms, despite that "I feel terrible, I cannot
-    eat this anymore"?
-  eval_rules:
-  - score: 2
-    check: Mention reducing the amount of hunger restored.
-  - score: 1
-    check: Clarify that the Food Sickness mechanics is because of eating the same
-      food type, and not only for mushrooms.
-  - score: -1
-    check: Wrongly mention negative effects besides reducing the amount of hunger
-      restored.
-  relevant:
-  - doc_id: Food Sickness
-    loc:
-    - While in the Betweenlands, players
-    - They can continue to eat it if they wish, but
+    reasoning_type: out of scope
+  text: Can I hold a sword, a shield and a torch at the same time?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention reducing the amount of hunger restored.
+        score: 2
+      '1':
+        check: Clarify that the Food Sickness mechanics is because of eating the same
+          food type, and not only for mushrooms.
+        score: 1
+      '2':
+        check: Wrongly mention negative effects besides reducing the amount of hunger
+          restored.
+        score: -1
   metadata:
     reasoning_type: factual
   reference_answers:
   - If you continue eating the same food, you get a Food Sickness, the benefits will
     be greatly diminished, only restoring 1/3 hunger it normally would. You better
     switch to another food, including another mushrooms.
-- text: I break all 4 beams in the Sludgeon last level, why did they reappear?
-  eval_rules:
-  - score: 2
-    check: Mention that the player should repeat the process, keep hitting the lenses.
-  - score: 1
-    check: Mention that this should be repeated until the mechanism drops completely.
+  relevant:
+  - doc_id: Food Sickness
+    loc:
+    - While in the Betweenlands, players
+    - They can continue to eat it if they wish, but
+  text: What if I continue eating mushrooms, despite that "I feel terrible, I cannot
+    eat this anymore"?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the player should repeat the process, keep hitting the
+          lenses.
+        score: 2
+      '1':
+        check: Mention that this should be repeated until the mechanism drops completely.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - They do reappear multiple times, and you must repeat breaking them continuously
+    until the mechanism drops to the ground.
   relevant:
   - doc_id: Sludgeon
     loc:
@@ -2006,25 +2320,38 @@
     - When all four sides are done, the mechanism
     - The platform will slowly rise again, rising up
     - The player must repeat this process continuously
+  text: I break all 4 beams in the Sludgeon last level, why did they reappear?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the Sludgeon plants contain Aspects.
+        score: 1
+      '1':
+        check: Clarify that the aspects are randomized, so their comparative usefulness
+          is not known in advance in principle (and not just "not stated").
+        score: 1
+      '2':
+        check: Mention that the Ground Pale Grass is the only Sludgeon plant with
+          Aspect Tier II.
+        score: 1
+      '3':
+        check: Mention that the Edge Leaves is the only Sludgeon plant with 4 aspects.
+        score: 1
+      '4':
+        check: Mention that the Pale Grass is the only Sludgeon plant used to craft
+          dyes.
+        score: 1
   metadata:
-    reasoning_type: factual
+    reasoning_type: factual reasoning
   reference_answers:
-  - They do reappear multiple times, and you must repeat breaking them continuously
-    until the mechanism drops to the ground.
-- text: Which of the growable plants found in sludgeon is the most beneficial?
-  eval_rules:
-  - score: 1
-    check: Mention that the Sludgeon plants contain Aspects.
-  - score: 1
-    check: Clarify that the aspects are randomized, so their comparative usefulness
-      is not known in advance in principle (and not just "not stated").
-  - score: 1
-    check: Mention that the Ground Pale Grass is the only Sludgeon plant with Aspect
-      Tier II.
-  - score: 1
-    check: Mention that the Edge Leaves is the only Sludgeon plant with 4 aspects.
-  - score: 1
-    check: Mention that the Pale Grass is the only Sludgeon plant used to craft dyes.
+  - There are 8 varieties (Cryptweed, Edge Leaf, Edge Moss, Edge Shrooms, Pale Grass,
+    Rotbulb, String Roots, and Tall Sludgecreep), each can be ground and composted
+    into ground items that contain Aspects. However, aspects are randomized at the
+    world generation, and should be discovered through a Gecko testing. So, it is
+    not possible to say in advance which of the Sludgeon plants contains more beneficial
+    Aspects. However, Ground Pale Grass is the only Sludgeon plant with Aspect Tier
+    II, and Edge Leaves are the only Sludgeon plant that contains 4 aspects. So, these
+    two have the highest probability to be beneficial.
   relevant:
   - doc_id: Farming
     loc:
@@ -2048,29 +2375,28 @@
   - doc_id: Dyes
     loc:
     - <List of Dyes>
+  text: Which of the growable plants found in sludgeon is the most beneficial?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Dried Swamp Reed.
+        score: 1
+      '1':
+        check: Mention Dry Bark.
+        score: 1
+      '2':
+        check: Optionally mention Anadia.
+        metadata:
+          comment: It is not a food by its own.
+        score: 0
+      '3':
+        check: Wrongly mention anything not listed above.
+        score: -1
   metadata:
-    reasoning_type: factual reasoning
+    reasoning_type: factual wide
   reference_answers:
-  - There are 8 varieties (Cryptweed, Edge Leaf, Edge Moss, Edge Shrooms, Pale Grass,
-    Rotbulb, String Roots, and Tall Sludgecreep), each can be ground and composted
-    into ground items that contain Aspects. However, aspects are randomized at the
-    world generation, and should be discovered through a Gecko testing. So, it is
-    not possible to say in advance which of the Sludgeon plants contains more beneficial
-    Aspects. However, Ground Pale Grass is the only Sludgeon plant with Aspect Tier
-    II, and Edge Leaves are the only Sludgeon plant that contains 4 aspects. So, these
-    two have the highest probability to be beneficial.
-- text: What can I cook on a Smoking rack, besides food?
-  eval_rules:
-  - score: 1
-    check: Mention Dried Swamp Reed.
-  - score: 1
-    check: Mention Dry Bark.
-  - score: 0
-    check: Optionally mention Anadia.
-    metadata:
-      comment: It is not a food by its own.
-  - score: -1
-    check: Wrongly mention anything not listed above.
+  - Besides food, you can prepare a Smoked Anadia (a preserved Anadia for trimming
+    that produces not only food), Dried Swamp Reed and Dry Bark.
   relevant:
   - doc_id: Smoking Rack
     loc:
@@ -2112,24 +2438,30 @@
   - doc_id: Trimming Table
     loc:
     - <Properties>
+  text: What can I cook on a Smoking rack, besides food?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Smoked Anadia should be trimmed.
+        score: 1
+      '1':
+        check: Mention that Anadia is smoked to preserve it.
+        metadata:
+          comment: This needs to be explained because raw Anadia also can be trimmed,
+            so why to smoke?
+        score: 1
+      '2':
+        check: Wrongly mention that smoked Anadia can be eaten directly.
+        score: -1
+      '3':
+        check: Wrongly mention food sickness.
+        score: -1
   metadata:
-    reasoning_type: factual wide
+    reasoning_type: factual
   reference_answers:
-  - Besides food, you can prepare a Smoked Anadia (a preserved Anadia for trimming
-    that produces not only food), Dried Swamp Reed and Dry Bark.
-- text: Why can't I eat a smoked Anadia, what to do with it?
-  eval_rules:
-  - score: 1
-    check: Mention that Smoked Anadia should be trimmed.
-  - score: 1
-    check: Mention that Anadia is smoked to preserve it.
-    metadata:
-      comment: This needs to be explained because raw Anadia also can be trimmed,
-        so why to smoke?
-  - score: -1
-    check: Wrongly mention that smoked Anadia can be eaten directly.
-  - score: -1
-    check: Wrongly mention food sickness.
+  - You smoke Anadia just to preserve it (to prevent rotting). Then you need to trim
+    it on the Trimming Table, just like raw Anadia. This provides you with food and
+    other potential outputs.
   relevant:
   - doc_id: Anadia
     loc:
@@ -2139,45 +2471,63 @@
   - doc_id: Smoked Anadia Meat
     loc:
     - Smoked Anadia Meat is a smoked food item.
+  text: Why can't I eat a smoked Anadia, what to do with it?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a Pink Marshmallow.
+        score: 1
+      '1':
+        check: Mention Tamed Chiromaw for doing a double jump.
+        score: 1
+      '10':
+        check: Mention the Glide Upgrade for Amphibious Armor.
+        score: 1
+      '11':
+        check: Mention a Ring of Ascent.
+        score: 1
+      '12':
+        check: Mention a Ring of Dispersion.
+        score: 1
+      '13':
+        check: Optionally mention ladders (too obvious).
+        score: 0
+      '14':
+        check: Wrongly mention other tools not listed above.
+        score: -3
+      '2':
+        check: Mention a Pear Cordial.
+        score: 1
+      '3':
+        check: Mention a Frog Leg Extract.
+        score: 1
+      '4':
+        check: Mention a Spiderbreed Draught.
+        score: 1
+      '5':
+        check: Mention a Climbing Rope or Caving Rope.
+        score: 1
+      '6':
+        check: Mention a Draeton.
+        score: 1
+      '7':
+        check: Mention a Volarkite.
+        score: 1
+      '8':
+        check: Mention using a heat source with Volarkite.
+        score: 1
+      '9':
+        check: Mention the Ascent Upgrade for Amphibious Armor.
+        score: 1
   metadata:
-    reasoning_type: factual
+    reasoning_type: factual wide
   reference_answers:
-  - You smoke Anadia just to preserve it (to prevent rotting). Then you need to trim
-    it on the Trimming Table, just like raw Anadia. This provides you with food and
-    other potential outputs.
-- text: What aids to efficiently ascend or descend (for vertical mobility) exist in
-    the Betweenlands?
-  eval_rules:
-  - score: 1
-    check: Mention a Pink Marshmallow.
-  - score: 1
-    check: Mention Tamed Chiromaw for doing a double jump.
-  - score: 1
-    check: Mention a Pear Cordial.
-  - score: 1
-    check: Mention a Frog Leg Extract.
-  - score: 1
-    check: Mention a Spiderbreed Draught.
-  - score: 1
-    check: Mention a Climbing Rope or Caving Rope.
-  - score: 1
-    check: Mention a Draeton.
-  - score: 1
-    check: Mention a Volarkite.
-  - score: 1
-    check: Mention using a heat source with Volarkite.
-  - score: 1
-    check: Mention the Ascent Upgrade for Amphibious Armor.
-  - score: 1
-    check: Mention the Glide Upgrade for Amphibious Armor.
-  - score: 1
-    check: Mention a Ring of Ascent.
-  - score: 1
-    check: Mention a Ring of Dispersion.
-  - score: 0
-    check: Optionally mention ladders (too obvious).
-  - score: -3
-    check: Wrongly mention other tools not listed above.
+  - You can jump higher with a Frog Leg Extract, a Pink Marshmallow or Ascent Upgrade
+    for Amphibious Armor, do a double jump with a tamed Chiromaw sitting on your head,
+    climb inside solid blocks with a Ring of Dispersion, reduce fall damage with a
+    Pear Cordial, climb with Spiderbreed Draught, Climbing Ropes, Caving Ropes or
+    just ladders, fly up with a Draeton, a Ring of Ascent or a Volarkite with a heat
+    source below, glide down with a Volarkite or Glide Upgrade for Amphibious Armor.
   relevant:
   - doc_id: Volarkite
     loc:
@@ -2214,43 +2564,47 @@
     loc:
     - Tamed Chiromaws will follow and teleport to the
     - When right clicked, they will sit on the
+  text: What aids to efficiently ascend or descend (for vertical mobility) exist in
+    the Betweenlands?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Purifier uses Swamp Water.
+        score: 1
+      '1':
+        check: Optionally mention collecting rainwater.
+        score: 0
+      '2':
+        check: Wrongly mention other solutions not listed above.
+        score: -1
   metadata:
-    reasoning_type: factual wide
+    reasoning_type: factual
   reference_answers:
-  - You can jump higher with a Frog Leg Extract, a Pink Marshmallow or Ascent Upgrade
-    for Amphibious Armor, do a double jump with a tamed Chiromaw sitting on your head,
-    climb inside solid blocks with a Ring of Dispersion, reduce fall damage with a
-    Pear Cordial, climb with Spiderbreed Draught, Climbing Ropes, Caving Ropes or
-    just ladders, fly up with a Draeton, a Ring of Ascent or a Volarkite with a heat
-    source below, glide down with a Volarkite or Glide Upgrade for Amphibious Armor.
-- text: Why I cannot pour a clean water into a purifier?
-  eval_rules:
-  - score: 1
-    check: Mention that Purifier uses Swamp Water.
-  - score: 0
-    check: Optionally mention collecting rainwater.
-  - score: -1
-    check: Wrongly mention other solutions not listed above.
+  - A Purifier is filled by Swamp Water, or can collect rainwater.
   relevant:
   - doc_id: Purifier
     loc:
     - Swamp Water, which can be put inside
     - The Purifier can also collect rainwater
+  text: Why I cannot pour a clean water into a purifier?
+- metadata:
+    comment: This has nothing to do with this mod.
+    reasoning_type: out of scope
+  text: What is the difference between hunger and saturation?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Advice to use intermediate storage: Barrel, Filtered Silt Glass Jars
+          or Steeping Pot (mention at least one of these).'
+        score: 1
+      '1':
+        check: Wrongly mention other solutions not listed above.
+        score: -1
   metadata:
     reasoning_type: factual
   reference_answers:
-  - A Purifier is filled by Swamp Water, or can collect rainwater.
-- text: What is the difference between hunger and saturation?
-  metadata:
-    reasoning_type: out of scope
-    comment: This has nothing to do with this mod.
-- text: How to pour a soup from a bucket into a bowl?
-  eval_rules:
-  - score: 1
-    check: 'Advice to use intermediate storage: Barrel, Filtered Silt Glass Jars or
-      Steeping Pot (mention at least one of these).'
-  - score: -1
-    check: Wrongly mention other solutions not listed above.
+  - Pour it into a Barrel, Filtered Silt Glass Jar or Steeping Pots, then shift-right
+    clicking with a Weedwood Bowl.
   relevant:
   - doc_id: Drinkable Brews
     loc:
@@ -2260,49 +2614,57 @@
     - Drinkable Brew Fluids can be collected by right-clicking
     - Drinkable Brew Fluids can be stored in Barrels
     - They can be extracted back into empty
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - Pour it into a Barrel, Filtered Silt Glass Jar or Steeping Pots, then shift-right
-    clicking with a Weedwood Bowl.
-- text: Why can't I grind Mire Coral if I have a mortar and pestle?
-  eval_rules:
-  - score: 1
-    check: Advice to use Sickle to harvest.
-  relevant:
-  - doc_id: Mire Coral
-    loc:
-    - Mire Coral must be harvested with
-    - When harvested with a Sickle, it instead
+  text: How to pour a soup from a bucket into a bowl?
+- eval_rules:
+    checks:
+      '0':
+        check: Advice to use Sickle to harvest.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - You need to harvested it with a Sickle (not a Syrmorite Shears) to obtain a Mire
     Coral item you can grind.
-- text: I'm climbing up to the floating island. Why does my whole screen suddenly
-    "closes" at the bottom and top when I sneak?
-  eval_rules:
-  - score: 1
-    check: Mention a Ring of Dispersion.
   relevant:
-  - doc_id: Ring of Dispersion
+  - doc_id: Mire Coral
     loc:
-    - While equipped, the Ring of Dispersion will allow
-    - As the player moves into a block
+    - Mire Coral must be harvested with
+    - When harvested with a Sickle, it instead
+  text: Why can't I grind Mire Coral if I have a mortar and pestle?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a Ring of Dispersion.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - This has nothing to do with the floating island. You seem to wear a Ring of Dispersion
     that allows you to go through blocks while sneaking, with the described animation.
-- text: I see 3 giant chiromaws fighting each other, can I rob their nests at this
-    time, and how?
-  eval_rules:
-  - score: 2
-    check: Answer positively.
-  - score: 1
-    check: Mention that the nest is protected until you stand on the center block.
-  - score: 1
-    check: Mention that you can steal the eggs (Hatchlings) with a Net.
+  relevant:
+  - doc_id: Ring of Dispersion
+    loc:
+    - While equipped, the Ring of Dispersion will allow
+    - As the player moves into a block
+  text: I'm climbing up to the floating island. Why does my whole screen suddenly
+    "closes" at the bottom and top when I sneak?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively.
+        score: 2
+      '1':
+        check: Mention that the nest is protected until you stand on the center block.
+        score: 1
+      '2':
+        check: Mention that you can steal the eggs (Hatchlings) with a Net.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - Yes, you can. The nest is protected from destruction until you stand on the center
+    block of it. Also, you can steal eggs with a Net without standing on the center
+    block.
   relevant:
   - doc_id: Chiromaw Matriarch
     loc:
@@ -2319,34 +2681,39 @@
     - Chiromaw Hatchlings are giant egg entities
     - When initially found in Chiromaw Matriarch Nests
     - Non-wild Chiromaw Hatchlings can be right-clicked
+  text: I see 3 giant chiromaws fighting each other, can I rob their nests at this
+    time, and how?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively, or say that this outcome is not described in the
+          wiki.
+        score: 1
+      '1':
+        check: Wrongly answer that you can feed it with another food.
+        score: -1
   metadata:
-    reasoning_type: factual
+    reasoning_type: aggregating by negation
   reference_answers:
-  - Yes, you can. The nest is protected from destruction until you stand on the center
-    block of it. Also, you can steal eggs with a Net without standing on the center
-    block.
-- text: What if the hatched chiromaw wants a gecko and I don't have one, will it starve
-    to death?
-  eval_rules:
-  - score: 1
-    check: Answer negatively, or say that this outcome is not described in the wiki.
-  - score: -1
-    check: Wrongly answer that you can feed it with another food.
+  - No. At least the wiki doesn't say that it will starve to death.
   relevant:
   - doc_id: Chiromaw Hatchling
     loc:
     - Non-wild Chiromaw Hatchlings need to be placed
     - When they hatch, Chiromaw Hatchling juveniles
     - When a Chiromaw Hatchling juvenile becomes
+  text: What if the hatched chiromaw wants a gecko and I don't have one, will it starve
+    to death?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention evaporating Infuser as a way to spawn Shallowbreath.
+        score: 1
   metadata:
-    reasoning_type: aggregating by negation
+    reasoning_type: factual
   reference_answers:
-  - No. At least the wiki doesn't say that it will starve to death.
-- text: Can I farm Draeton fuel at home, without a need to constantly kill environmental
-    mobs?
-  eval_rules:
-  - score: 1
-    check: Mention evaporating Infuser as a way to spawn Shallowbreath.
+  - To obtain a Bottled Shallowbreath, you can spawn a Shallowbreath manually by letting
+    the Infuser when a boiling infusion evaporate.
   relevant:
   - doc_id: Draeton
     loc:
@@ -2357,32 +2724,40 @@
   - doc_id: Shallowbreath
     loc:
     - Shallowbreaths are dangerous mobs that spawn
+  text: Can I farm Draeton fuel at home, without a need to constantly kill environmental
+    mobs?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the Tunnel Entrances are just mob spawners, optionally
+          clarify that they are not enterable.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
-  - To obtain a Bottled Shallowbreath, you can spawn a Shallowbreath manually by letting
-    the Infuser when a boiling infusion evaporate.
-- text: Why I cannot enter a tunnel that appeared during a rain?
-  eval_rules:
-  - score: 1
-    check: Mention that the Tunnel Entrances are just mob spawners, optionally clarify
-      that they are not enterable.
+  - These are just mob spawners which are not enterable.
   relevant:
   - doc_id: Tunnel Entrances
     loc:
     - Tunnel Entrances are small structures that temporarily
     - These holes may spawn anywhere
     - During the Heavy Rain event, these entrances will spawn
+  text: Why I cannot enter a tunnel that appeared during a rain?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Pheromone Thorax.
+        score: 1
+      '1':
+        check: Mention a Weedwood Bush.
+        score: 1
   metadata:
-    reasoning_type: factual
+    reasoning_type: factual reasoning
   reference_answers:
-  - These are just mob spawners which are not enterable.
-- text: To farm silk, where do I start?
-  eval_rules:
-  - score: 1
-    check: Mention Pheromone Thorax.
-  - score: 1
-    check: Mention a Weedwood Bush.
+  - To start a process, you need a Weedwood Bush and a Pheromone Thorax (and optionally
+    a Moth House to increase production rate). Weedwood Bush can be transported to
+    your house via Syrmorite Shears. Pheromone Thorax is obtained from killing Infestations
+    in caves.
   relevant:
   - doc_id: Silk Thread
     loc:
@@ -2412,22 +2787,18 @@
   - doc_id: Weedwood Bush
     loc:
     - Weedwood Bushes are plant blocks that generate
-  metadata:
-    reasoning_type: factual reasoning
-  reference_answers:
-  - To start a process, you need a Weedwood Bush and a Pheromone Thorax (and optionally
-    a Moth House to increase production rate). Weedwood Bush can be transported to
-    your house via Syrmorite Shears. Pheromone Thorax is obtained from killing Infestations
-    in caves.
-- text: Can I make a Nether portal in the Betweenlands?
-  eval_rules:
-  - score: 1
-    check: Answer negatively.
-  relevant:
-  - doc_id: Octine Ingot
-    loc:
-    - Note that fire cannot be used to create
+  text: To farm silk, where do I start?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - No, fire cannot be used to create a Nether portal in The Betweenlands.
+  relevant:
+  - doc_id: Octine Ingot
+    loc:
+    - Note that fire cannot be used to create
+  text: Can I make a Nether portal in the Betweenlands?

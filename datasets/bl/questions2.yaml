@@ -1,15 +1,31 @@
-- text: Why my wind chime stopped showing a weather?
-  eval_rules:
-  - score: 1
-    check: 'Mention a possible reason: you shift right-clicked it to attune to a specific weather event.'
-  - score: 1
-    check: 'Mention a possible reason: the weather will not change in the next 5 minutes.'
-  - score: 0
-    check: 'Optionally mention a possible reason: you use it in another dimension so it does not work.'
-  - score: 0
-    check: 'Optionally mention a possible reason: weather changed via console command or seasonal event.'
-  - score: -1
-    check: 'Wrongly mention another reasons.'
+- eval_rules:
+    checks:
+      '0':
+        check: 'Mention a possible reason: you shift right-clicked it to attune to
+          a specific weather event.'
+        score: 1
+      '1':
+        check: 'Mention a possible reason: the weather will not change in the next
+          5 minutes.'
+        score: 1
+      '2':
+        check: 'Optionally mention a possible reason: you use it in another dimension
+          so it does not work.'
+        score: 0
+      '3':
+        check: 'Optionally mention a possible reason: weather changed via console
+          command or seasonal event.'
+        score: 0
+      '4':
+        check: Wrongly mention another reasons.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - It predicts the weather 5 minutes ahead, so possibly the weather will not change
+    in the next 5 minutes. Also you could shift right-click it to attune to a specific
+    weather event. Finally, note that it does not work outside of the Betweenlands
+    dimension.
   relevant:
   - doc_id: Wind Chime
     loc:
@@ -19,76 +35,92 @@
     - Events triggered by commands do not trigger
     - The chime can accurately predict events from anywhere
     - The Wind Chime can be shift right-clicked to cycle
+  text: Why my wind chime stopped showing a weather?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the player will be teleported down if attempts to scale
+          the Tower without completing each room first.
+        score: 1
   metadata:
-    reasoning_type: factual
+    reasoning_type: X
   reference_answers:
-  - It predicts the weather 5 minutes ahead, so possibly the weather will not change in the next 5 minutes. Also you could shift right-click it to attune to a specific weather event. Finally, note that it does not work outside of the Betweenlands dimension.
-
-- text: can I conquer the tall tower climbing to its top from the outside?
-  eval_rules:
-  - score: 1
-    check: Mention that the player will be teleported down if attempts to scale the Tower without completing each room first.
+  - Attempting to scale the Tower without completing each room first will teleport
+    the player back to the base of the tower. However, the wiki does not say whether
+    you can open the chests from afar, being outside the tower.
   relevant:
   - doc_id: Cragrock Tower
     loc:
     - Cragrock Towers are large, extremely tall
     - Additionally, attempting to scale the Tower
-  metadata:
-    reasoning_type: X
-  reference_answers:
-  - Attempting to scale the Tower without completing each room first will teleport the player back to the base of the tower. However, the wiki does not say whether you can open the chests from afar, being outside the tower.
-
-- text: will rain extinguish smoldering peat?
-  eval_rules:
-  - score: 1
-    check: Answer negatively, ot say that such a mechanics is not found in the wiki.
-  relevant:
-  - doc_id: Smoldering Peat
-  - doc_id: Heavy Rain
+  text: can I conquer the tall tower climbing to its top from the outside?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively, ot say that such a mechanics is not found in the
+          wiki.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - No, the wiki doesn't say this.
-
-- text: does a forbidden fruit always applies blindness anf weakness?
-  eval_rules:
-  - score: 1
-    check: Answer positively.
   relevant:
-  - doc_id: Forbidden Fig
-    loc:
-    - However, beware, for those who eat
+  - doc_id: Smoldering Peat
+  - doc_id: Heavy Rain
+  text: will rain extinguish smoldering peat?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Yes.
-
-- text: Are there any underground inhabitants who left these statuettes in the caves? Can I find them?
-  metadata:
+  relevant:
+  - doc_id: Forbidden Fig
+    loc:
+    - However, beware, for those who eat
+  text: does a forbidden fruit always applies blindness anf weakness?
+- metadata:
+    comment: The statues were probably left by intelligent beings. There are no intelligent
+      civilizations in ordinary caves, but there are greeblings on the surface, crypt
+      crawlers in Sludgeons and wormholes and some other human-like creatures, so
+      the assistant's reasoning may be hard to evaluate.
     reasoning_type: unclear
-    comment: The statues were probably left by intelligent beings. There are no intelligent civilizations in ordinary caves, but there are greeblings on the surface, crypt crawlers in Sludgeons and wormholes and some other human-like creatures, so the assistant's reasoning may be hard to evaluate.
-
-- text: how to ascent from the 1st floor of the wight fortress to the 2nd?
-  eval_rules:
-  - score: 1
-    check: Advide using the main stairs of the Fortress.
-  - score: -1
-    check: Wrongly advice another options to ascent to from the 1st to the 2nd floor.
+  text: Are there any underground inhabitants who left these statuettes in the caves?
+    Can I find them?
+- eval_rules:
+    checks:
+      '0':
+        check: Advide using the main stairs of the Fortress.
+        score: 1
+      '1':
+        check: Wrongly advice another options to ascent to from the 1st to the 2nd
+          floor.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You need to go up the main stairs of the Fortress which is considered its official
+    entrance.
   relevant:
   - doc_id: Wight Fortress
     loc:
     - The second floor can only be accessed via the front staircase
+  text: how to ascent from the 1st floor of the wight fortress to the 2nd?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Critter Cruncher is what the player is asking about.
+        score: 1
+      '1':
+        check: Wrongly mention other weapons.
+        score: -1
   metadata:
     reasoning_type: factual
   reference_answers:
-  - You need to go up the main stairs of the Fortress which is considered its official entrance.
-
-- text: is there any analog for wights bane but for infestations?
-  eval_rules:
-  - score: 1
-    check: Mention that Critter Cruncher is what the player is asking about.
-  - score: -1
-    check: Wrongly mention other weapons.
+  - Yes, it's the Critter Cruncher.
   relevant:
   - doc_id: Wight's Bane
     loc:
@@ -96,19 +128,33 @@
   - doc_id: Critter Cruncher
     loc:
     - Against most mobs, the Critter Cruncher only deals
+  text: is there any analog for wights bane but for infestations?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention the fourth floor instead, where you need to break glowing block
+          (Item Cages) while standing directly underneath them.
+        score: 1
+      '1':
+        check: Optionally mention monster spawners or Glowing Betweenstone Tile on
+          the 3rd floor.
+        score: 0
+      '2':
+        check: Wrongly mention that the Glowing Betweenstone Tiles on the 3rd floor
+          have any use other than decorative.
+        score: -1
   metadata:
-    reasoning_type: factual
+    comment: Since there is nothing special on the 3rd floor but there is a puzzle
+      on the 4th floor with 4 glowing blocks, an assistant should guess that the player
+      mentioned the wrong floor.
+    reasoning_type: factual reasoning
   reference_answers:
-  - Yes, it's the Critter Cruncher.
-
-- text: what to do with that 4 glowing blocks hanging from the ceiling on the 3rd floor of the fortress?
-  eval_rules:
-  - score: 1
-    check: Mention the fourth floor instead, where you need to break glowing block (Item Cages) while standing directly underneath them.
-  - score: 0
-    check: Optionally mention monster spawners or Glowing Betweenstone Tile on the 3rd floor.
-  - score: -1
-    check: Wrongly mention that the Glowing Betweenstone Tiles on the 3rd floor have any use other than decorative.
+  - There is nothing special on the third floor, besides monster spawners you're probably
+    already familiar with. However, there is a puzzle on the fourth floor that you
+    might be talking about. You need to break each of the four glowing blocks emitting
+    blue shader light (Item Cages) but ONLY while standing directly underneath them
+    on the Glowing Betweenstone Tiles. After breaking all the Item Cages you receive
+    a Shockwave Sword.
   relevant:
   - doc_id: Wight Fortress
     loc:
@@ -132,36 +178,49 @@
   - doc_id: Glowing Betweenstone Tile
     loc:
     - The Glowing Betweenstone Tile is a building
+  text: what to do with that 4 glowing blocks hanging from the ceiling on the 3rd
+    floor of the fortress?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the Dreadful Peat Mummy can break blocks.
+        score: 1
+      '1':
+        check: Mention that the Dreadful Peat Mummy have a ranged attack.
+        score: 1
   metadata:
     reasoning_type: factual reasoning
-    comment: Since there is nothing special on the 3rd floor but there is a puzzle on the 4th floor with 4 glowing blocks, an assistant should guess that the player mentioned the wrong floor.
   reference_answers:
-  - There is nothing special on the third floor, besides monster spawners you're probably already familiar with. However, there is a puzzle on the fourth floor that you might be talking about. You need to break each of the four glowing blocks emitting blue shader light (Item Cages) but ONLY while standing directly underneath them on the Glowing Betweenstone Tiles. After breaking all the Item Cages you receive a Shockwave Sword.
-
-- text: can I face a dreadful peat mummy after making a block pillar with a ladder that I can attack from the top of?
-  eval_rules:
-  - score: 1
-    check: Mention that the Dreadful Peat Mummy can break blocks.
-  - score: 1
-    check: Mention that the Dreadful Peat Mummy have a ranged attack.
+  - Beware that The Dreadful Peat Mummy can break blocks in order to close distance
+    with its target (though it's not clear how exactly), and can shoot a sludge ball
+    projectile.
   relevant:
   - doc_id: Dreadful Peat Mummy
     loc:
     - It is an incredibly fast swimmer, can break blocks
     - It will shoot a sludge ball projectile
+  text: can I face a dreadful peat mummy after making a block pillar with a ladder
+    that I can attack from the top of?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Middle Gem Ores can be purified into Middle Gems.
+        score: 1
+      '1':
+        check: Mention that Middle Gem Ores generate underwater.
+        score: 1
+      '2':
+        check: Mention that Middle Gems can be found in the Sludgeon and Chiromaw
+          Matriarch Nests.
+        score: 1
   metadata:
-    reasoning_type: factual reasoning
+    reasoning_type: factual wide
   reference_answers:
-  - Beware that The Dreadful Peat Mummy can break blocks in order to close distance with its target (though it's not clear how exactly), and can shoot a sludge ball projectile.
-
-- text: what is the easiest way to obtain gems that improve armor?
-  eval_rules:
-  - score: 1
-    check: Mention that Middle Gem Ores can be purified into Middle Gems.
-  - score: 1
-    check: Mention that Middle Gem Ores generate underwater.
-  - score: 1
-    check: Mention that Middle Gems can be found in the Sludgeon and Chiromaw Matriarch Nests.
+  - The Middle Gem Ores (which can be purified into gems) generate "rarely" underwater.
+    However, the wiki does not say how exactly rare and visible they are, so try to
+    find some. They can be also detected by using a Gem Singer. Gems can also be obtained
+    from trimming Anadia with 2.5% chance and can be found as Loot in the Sludgeon
+    and Chiromaw Matriarch Nests.
   relevant:
   - doc_id: Middle Gems
     loc:
@@ -174,23 +233,33 @@
     loc:
     - Middle Gem Ores generate rarely as single blocks
     - Middle Gem Ores can be detected through blocks by
+  text: what is the easiest way to obtain gems that improve armor?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that you can summon only pets tamed while wearing the ring.
+        score: 1
+      '1':
+        check: Mention that you need to have enough experience (XP).
+        score: 1
+      '2':
+        check: Mention that you cannot summon dead pets, but can revive them by animating
+          the ring in an Animator.
+        score: 1
+      '3':
+        check: Mention that the the correct way to summon is to right-click the ring
+          item while unequipped.
+        score: 1
+      '4':
+        check: Wrongly mention reasons not listed above.
+        score: -2
   metadata:
-    reasoning_type: factual wide
+    reasoning_type: factual
   reference_answers:
-  - The Middle Gem Ores (which can be purified into gems) generate "rarely" underwater. However, the wiki does not say how exactly rare and visible they are, so try to find some. They can be also detected by using a Gem Singer. Gems can also be obtained from trimming Anadia with 2.5% chance and can be found as Loot in the Sludgeon and Chiromaw Matriarch Nests.
-
-- text: I found a Ring of Gathering, why cannot I summon anyone?
-  eval_rules:
-  - score: 1
-    check: Mention that you can summon only pets tamed while wearing the ring.
-  - score: 1
-    check: Mention that you need to have enough experience (XP).
-  - score: 1
-    check: Mention that you cannot summon dead pets, but can revive them by animating the ring in an Animator.
-  - score: 1
-    check: Mention that the the correct way to summon is to right-click the ring item while unequipped.
-  - score: -2
-    check: Wrongly mention reasons not listed above.
+  - 'You can summon only mobs tamed while wearing the ring at the cost of XP (check
+    that you have enough). If your pet dies, you cannot summon it, but can revive
+    it by animating the ring in an Animator.  Also, check that you use the ring correctly:
+    right-click the ring item while unequipped.'
   relevant:
   - doc_id: Ring of Gathering
     loc:
@@ -198,25 +267,33 @@
     - Tamed mobs that die while the ring is equipped
     - An indication that the ring can be used
     - A white color indicates a pet that can
+  text: I found a Ring of Gathering, why cannot I summon anyone?
+- eval_rules:
+    checks:
+      '0':
+        check: Menton Lurker Skin Pouch.
+        score: 2
+      '1':
+        check: Menton Fishing Tackle Box.
+        score: 1
+      '2':
+        check: Optionally mention Silk Bundle while making sure to note that it accepts
+          only items used in a Steeping recipes.
+        score: 0
+      '3':
+        check: Optionally mention combining items together, such as ingots to blocks,
+          weedwood buckets to barrels etc.
+        score: 0
+      '4':
+        check: Optionally mention vanilla ender chests or shulker boxes.
+        score: 0
+      '5':
+        check: Wrongly mention any utilities not listed above.
+        score: -1
   metadata:
-    reasoning_type: factual
+    reasoning_type: X
   reference_answers:
-  - 'You can summon only mobs tamed while wearing the ring at the cost of XP (check that you have enough). If your pet dies, you cannot summon it, but can revive it by animating the ring in an Animator.  Also, check that you use the ring correctly: right-click the ring item while unequipped.'
-
-- text: is there any storage that increases my inventory size while traveling?
-  eval_rules:
-  - score: 2
-    check: Menton Lurker Skin Pouch.
-  - score: 1
-    check: Menton Fishing Tackle Box.
-  - score: 0
-    check: Optionally mention Silk Bundle while making sure to note that it accepts only items used in a Steeping recipes.
-  - score: 0
-    check: Optionally mention combining items together, such as ingots to blocks, weedwood buckets to barrels etc.
-  - score: 0
-    check: Optionally mention vanilla ender chests or shulker boxes.
-  - score: -1
-    check: Wrongly mention any utilities not listed above.
+  - Yes, Lurker Skin Pouch and Fishing Tackle Box.
   relevant:
   - doc_id: Lurker Skin Pouch
     loc:
@@ -228,17 +305,22 @@
     loc:
     - A Silk Bundle has 4 inventory slots that can each hold one item
     - Other items will not be accepted.
+  text: is there any storage that increases my inventory size while traveling?
+- eval_rules:
+    checks:
+      '0':
+        check: As for the Harlequin Toad, say that there is no clear answer in wiki.
+        score: 1
+      '1':
+        check: Optionally reason about another pets.
+        score: 0
   metadata:
     reasoning_type: X
   reference_answers:
-  - Yes, Lurker Skin Pouch and Fishing Tackle Box.
-
-- text: will chirobarb erupter hurt my pets?
-  eval_rules:
-  - score: 1
-    check: As for the Harlequin Toad, say that there is no clear answer in wiki.
-  - score: 0
-    check: Optionally reason about another pets.
+  - 'This is not clearly stated in the wiki for various pets. For example, about the
+    Harlequin Toad: it "a player riding one cannot harm it", while Chirobarb Erupter
+    "deals 7 damage to any entity it touches". This information is somewhat contradictory,
+    so you better try it yourself.'
   relevant:
   - doc_id: Chirobarb Erupter
     loc:
@@ -246,30 +328,38 @@
   - doc_id: Harlequin Toad
     loc:
     - While ridden, the Harlequin
-  metadata:
-    reasoning_type: X
-  reference_answers:
-  - 'This is not clearly stated in the wiki for various pets. For example, about the Harlequin Toad: it "a player riding one cannot harm it", while Chirobarb Erupter "deals 7 damage to any entity it touches". This information is somewhat contradictory, so you better try it yourself.'
-
-- text: is there some kind of karma that drains when you kill a peaceful creature?
-  eval_rules:
-  - score: 1
-    check: Answer negatively, ot say that such a mechanics is not found in the wiki.
+  text: will chirobarb erupter hurt my pets?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively, ot say that such a mechanics is not found in the
+          wiki.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - There is no such mechanics.
-
-- text: I wear a rubber boots, why am I still slowed in a sludge plains?
-  eval_rules:
-  - score: 1
-    check: Mention that Rubber Boots do not negate Sludgy Dirt slowing effect.
-  - score: 0
-    check: Optionally mention that Rubber Boots do not negate slowing effect from sludge trails left behind Sludges.
-  - score: 0
-    check: Optionally mention that Rubber Boots could have already broken.
-  - score: -1
-    check: Wrongly mention another reasons not listed above.
+  text: is there some kind of karma that drains when you kill a peaceful creature?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Rubber Boots do not negate Sludgy Dirt slowing effect.
+        score: 1
+      '1':
+        check: Optionally mention that Rubber Boots do not negate slowing effect from
+          sludge trails left behind Sludges.
+        score: 0
+      '2':
+        check: Optionally mention that Rubber Boots could have already broken.
+        score: 0
+      '3':
+        check: Wrongly mention another reasons not listed above.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - Sludge Plains are composed partly of Sludgy Dirt, as well as from sludge trails
+    left behind Sludges (mobs). Rubber Boots do not negate their slowing effect.
   relevant:
   - doc_id: Rubber Boots
     loc:
@@ -284,59 +374,77 @@
     loc:
     - Sludge is a thin, layer-type block left behind
     - Unlike most other slowing blocks, there is no way to negate
+  text: I wear a rubber boots, why am I still slowed in a sludge plains?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that only one amulet can be equipped by default.
+        score: 1
+      '1':
+        check: Mention that up to 3 amulets (default + 2 additional) can be equipped
+          using the Amulet Slot item.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
-  - Sludge Plains are composed partly of Sludgy Dirt, as well as from sludge trails left behind Sludges (mobs). Rubber Boots do not negate their slowing effect.
-
-- text: How many amulets can I wear at once?
-  eval_rules:
-  - score: 1
-    check: Mention that only one amulet can be equipped by default.
-  - score: 1
-    check: Mention that up to 3 amulets (default + 2 additional) can be equipped using the Amulet Slot item.
+  - By default, only one Amulet can be equipped at a time. However, one can add up
+    to two extra slots using the Amulet Slot, for a maximum of three equipped Amulets
+    at once. Do realize that these extra slots will disappear upon death.
   relevant:
   - doc_id: Amulet
     loc:
     - By default, only one Amulet
     - However, one can add up to two extra
     - Do realize that these extra slots
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - By default, only one Amulet can be equipped at a time. However, one can add up to two extra slots using the Amulet Slot, for a maximum of three equipped Amulets at once. Do realize that these extra slots will disappear upon death.
-
-- text: is a lurker pouch a wearable that takes a ring slot? so the more pouches, the less rings can I wear?
-  eval_rules:
-  - score: 1
-    check: Answer negatively, that is, they are independent.
-  relevant:
-  - doc_id: Radial Equipment Menu
-    loc:
-    - Equipped items do not take up a normal
+  text: How many amulets can I wear at once?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer negatively, that is, they are independent.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - No, they are independent. You can equip one pouch and two rings at a time.
-
-- text: how much types of pets are there in the Betweenlands? Can I have all of them at once?
-  eval_rules:
-  - score: 1
-    check: Mention Emberling.
-  - score: 1
-    check: Mention Tarminion.
-  - score: 1
-    check: Mention tamed Chiromaw and optionally tamed Lightning Chiromaw.
-  - score: 1
-    check: Mention Harlequin Toad.
-  - score: 1
-    check: Mention Rock Snot.
-  - score: 0
-    check: Optionally mention using Fireflies and Dragonflies to pull the Draeton.
-  - score: 0
-    check: 'Optionally mention vanilla pets while making sure to note that they are not from the Betweenlands mod.'
-  - score: -2
-    check: Wrongly mention other pets not listed above.
+  relevant:
+  - doc_id: Radial Equipment Menu
+    loc:
+    - Equipped items do not take up a normal
+  text: is a lurker pouch a wearable that takes a ring slot? so the more pouches,
+    the less rings can I wear?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Emberling.
+        score: 1
+      '1':
+        check: Mention Tarminion.
+        score: 1
+      '2':
+        check: Mention tamed Chiromaw and optionally tamed Lightning Chiromaw.
+        score: 1
+      '3':
+        check: Mention Harlequin Toad.
+        score: 1
+      '4':
+        check: Mention Rock Snot.
+        score: 1
+      '5':
+        check: Optionally mention using Fireflies and Dragonflies to pull the Draeton.
+        score: 0
+      '6':
+        check: Optionally mention vanilla pets while making sure to note that they
+          are not from the Betweenlands mod.
+        score: 0
+      '7':
+        check: Wrongly mention other pets not listed above.
+        score: -2
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - 'There are 5 types of pets: Emberling, Tarminion, Chiromaw, Harlequin Toad, Rock
+    Snot. Also you can use Fireflies and Dragonflies to pull the Draeton. No restrictions
+    about having them all at once are mentioned in the wiki.'
   relevant:
   - doc_id: Emberling
     loc:
@@ -357,59 +465,71 @@
   - doc_id: Draeton
     loc:
     - The top slots can be filled with flying
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - 'There are 5 types of pets: Emberling, Tarminion, Chiromaw, Harlequin Toad, Rock Snot. Also you can use Fireflies and Dragonflies to pull the Draeton. No restrictions about having them all at once are mentioned in the wiki.'
-
-- text: can I make an iron golem from the Overworld in the Betweenlands?
-  eval_rules:
-  - score: 1
-    check: Say that this is not stated in the wiki.
+  text: how much types of pets are there in the Betweenlands? Can I have all of them
+    at once?
+- eval_rules:
+    checks:
+      '0':
+        check: Say that this is not stated in the wiki.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - There is no information about this in the wiki.
-
-- text: Can I grow the Overworld crops in the Betweenlands?
-  eval_rules:
-  - score: 1
-    check: Answer positively.
-  relevant:
-  - doc_id: Beta 2.0.3
-    loc:
-    - Crops from other mods can now grow
+  text: can I make an iron golem from the Overworld in the Betweenlands?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Yes, you can.
-
-- text: are pets actually helpful in fight, or are they weak?
-  metadata:
-    reasoning_type: unclear
-    comment: An assistant may reason and come to some conclusions, but the answer and reasoning is hard to evaluate.
-
-- text: how do I tame a greebling?
-  eval_rules:
-  - score: 1
-    check: Answer that it is not possible, or at least there is no info about this.
   relevant:
-  - doc_id: Greebling
-  - doc_id: Greebling Coracle
-  - doc_id: Greebling Rider
+  - doc_id: Beta 2.0.3
+    loc:
+    - Crops from other mods can now grow
+  text: Can I grow the Overworld crops in the Betweenlands?
+- metadata:
+    comment: An assistant may reason and come to some conclusions, but the answer
+      and reasoning is hard to evaluate.
+    reasoning_type: unclear
+  text: are pets actually helpful in fight, or are they weak?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer that it is not possible, or at least there is no info about
+          this.
+        score: 1
   metadata:
     reasoning_type: aggregating by negation
   reference_answers:
   - You cannot, this possibility is not mentioned in the wiki.
-
-- text: I went far from home but my rubber boots broke. What initial resources should I collect to craft new ones?
-  eval_rules:
-  - score: 1
-    check: Mention a Rubber Tree
-  - score: 1
-    check: Mention Weedwood Planks and Reed Rope
-  - score: 1
-    check: Mention furnace (or Betweenstone to craft it) and any fuel.
+  relevant:
+  - doc_id: Greebling
+  - doc_id: Greebling Coracle
+  - doc_id: Greebling Rider
+  text: how do I tame a greebling?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a Rubber Tree
+        score: 1
+      '1':
+        check: Mention Weedwood Planks and Reed Rope
+        score: 1
+      '2':
+        check: Mention furnace (or Betweenstone to craft it) and any fuel.
+        score: 1
+  metadata:
+    reasoning_type: factual reasoning
+  reference_answers:
+  - 1. Collect a Weedwood to make Wedwood Planks. 2. Collect Swamp Reed to make Reed
+    Rope. 3. Craft a bucket from Wedwood Planks and Reed Rope. 4. Find a Rubber Tree
+    and collect a rubber with a bucket. 5. Smelt a bucket with rubber in a furnace
+    (craft it from Betweenstone and use and wood or sulfur as a fuel). 6. Craft a
+    boots from the Rubber Balls obtained.
   relevant:
   - doc_id: Rubber Boots
     loc:
@@ -423,7 +543,7 @@
   - doc_id: Rubber Tree
     loc:
     - Rubber Trees are particularly useful because
-    - Once the bucket is filled, the rubber can be collected 
+    - Once the bucket is filled, the rubber can be collected
   - doc_id: Smelting
     loc:
     - The following is a list of all recipes that utilize
@@ -452,17 +572,22 @@
   - doc_id: Swamp Reed
     loc:
     - Swamp Reeds are tall plants that grow
+  text: I went far from home but my rubber boots broke. What initial resources should
+    I collect to craft new ones?
+- eval_rules:
+    checks:
+      '0':
+        check: Clarify that this is not a quest
+        score: 1
+      '1':
+        check: Clarify that Wights are mentioned in the document.
+        score: 1
   metadata:
-    reasoning_type: factual reasoning
+    reasoning_type: factual wide
   reference_answers:
-  - 1. Collect a Weedwood to make Wedwood Planks. 2. Collect Swamp Reed to make Reed Rope. 3. Craft a bucket from Wedwood Planks and Reed Rope. 4. Find a Rubber Tree and collect a rubber with a bucket. 5. Smelt a bucket with rubber in a furnace (craft it from Betweenstone and use and wood or sulfur as a fuel). 6. Craft a boots from the Rubber Balls obtained.
-
-- text: 'I''ve found "a note from a fallen shadow", where it is said that "i was a scholar dedicated to the preservation of knowledge" and "i was transformed into this hideous shape, as my fellow people have". Is this a start of some quest?'
-  eval_rules:
-  - score: 1
-    check: Clarify that this is not a quest
-  - score: 1
-    check: Clarify that Wights are mentioned in the document.
+  - This is not a quest but just a part of the lore. This document mentiones Wights,
+    a mobs once being members of a peaceful civilization that resided in the Betweenlands,
+    before the dimension was transformed.
   relevant:
   - doc_id: Lore Scrap
     loc:
@@ -480,17 +605,22 @@
   - doc_id: Prime Wight
     loc:
     - The Prime Wight is the currently unimplemented final boss
+  text: I've found "a note from a fallen shadow", where it is said that "i was a scholar
+    dedicated to the preservation of knowledge" and "i was transformed into this hideous
+    shape, as my fellow people have". Is this a start of some quest?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively.
+        score: 1
+      '1':
+        check: Concretize that you need to obtain a Shimmerstone from Peat Mummy.
+        score: 1
   metadata:
-    reasoning_type: factual wide
+    reasoning_type: factual reasoning
   reference_answers:
-  - This is not a quest but just a part of the lore. This document mentiones Wights, a mobs once being members of a peaceful civilization that resided in the Betweenlands, before the dimension was transformed.
-
-- text: do I need to kill mummies to summon the boss one?
-  eval_rules:
-  - score: 1
-    check: Answer positively.
-  - score: 1
-    check: Concretize that you need to obtain a Shimmerstone from Peat Mummy.
+  - Yes, you need to slay Peat Mummy to obtain a Shimmerstone. It is used to craft
+    a Mummy Bait to summon a Dreadful Peat Mummy.
   relevant:
   - doc_id: Dreadful Peat Mummy
     loc:
@@ -501,55 +631,71 @@
   - doc_id: Shimmerstone
     loc:
     - The Shimmerstone is a unique item that drops from
+  text: do I need to kill mummies to summon the boss one?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer that this is an Amulet with Middle Gem.
+        score: 1
   metadata:
-    reasoning_type: factual reasoning
+    reasoning_type: factual
   reference_answers:
-  - Yes, you need to slay Peat Mummy to obtain a Shimmerstone. It is used to craft a Mummy Bait to summon a Dreadful Peat Mummy.
-
-- text: what is that green crystal circling around a wight?
-  eval_rules:
-  - score: 1
-    check: Answer that this is an Amulet with Middle Gem.
+  - A Wight has a chance to spawn with Amulet containing a Middle Gem. This amulet
+    will not drop upon their death.
   relevant:
   - doc_id: Wight
     loc:
     - Wights have a chance to spawn applied with a random
   - doc_id: Middle Gem Circle
     loc:
-    -   Like an Amulet-wearing player, the applied Middle Gems
-  metadata:
-    reasoning_type: factual
-  reference_answers:
-  - A Wight has a chance to spawn with Amulet containing a Middle Gem. This amulet will not drop upon their death.
-
-- text: why i've found a gecko cage in the sludge plains ruins, does it appear naturally, or was it placed by me?
-  eval_rules:
-  - score: 1
-    check: Answer that it can appear naturally.
-  relevant:
-  - doc_id: Gecko Cage
-    loc:
-    - In addition to being crafted, it can also
+    - Like an Amulet-wearing player, the applied Middle Gems
+  text: what is that green crystal circling around a wight?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer that it can appear naturally.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Yes, the Gecko Cage appears naturally in Sludge Plains Ruins.
-
-- text: are there any rare naturally spawning mobs underground?
-  eval_rules:
-  - score: 1
-    check: Mention Stalker
-  - score: 1
-    check: Mention Infestation
-  - score: 1
-    check: Mention Harlequin Toad
-  - score: 1
-    check: Mention Tar Pool Dungeon
-  - score: 0
-    check: Optionally mention Wight, Olm, Swamp Hag, Chiromaw, Angler, Cave Fish, Cave Jellyfish, Boulder Sprites.
-    comment: 'These mobs are not listed as rare on the wiki (although in fact they may be so). Wight is mentioned as uncommon, but in reality, it''s not rare. Since information from the pretraining can supplement the wiki, mentioning Wight is optional.'
-  - score: -2
-    check: Wrongly mention mobs not listed above.
+  relevant:
+  - doc_id: Gecko Cage
+    loc:
+    - In addition to being crafted, it can also
+  text: why i've found a gecko cage in the sludge plains ruins, does it appear naturally,
+    or was it placed by me?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Stalker
+        score: 1
+      '1':
+        check: Mention Infestation
+        score: 1
+      '2':
+        check: Mention Harlequin Toad
+        score: 1
+      '3':
+        check: Mention Tar Pool Dungeon
+        score: 1
+      '4':
+        check: Optionally mention Wight, Olm, Swamp Hag, Chiromaw, Angler, Cave Fish,
+          Cave Jellyfish, Boulder Sprites.
+        comment: These mobs are not listed as rare on the wiki (although in fact they
+          may be so). Wight is mentioned as uncommon, but in reality, it's not rare.
+          Since information from the pretraining can supplement the wiki, mentioning
+          Wight is optional.
+        score: 0
+      '5':
+        check: Wrongly mention mobs not listed above.
+        score: -2
+  metadata:
+    reasoning_type: factual wide
+  reference_answers:
+  - 'Yes, there are underground mobs mentioned as "uncommon" or "rare": Wights, Infestations,
+    Stalkers, Harlequin Toads (spawn underground rarely). There are also rare Tar
+    Pool Dungeons underground.'
   relevant:
   - doc_id: Cavern
     loc:
@@ -565,111 +711,116 @@
     loc:
     - <Mobs>
     - <Structures>
-  metadata:
-    reasoning_type: factual wide
-  reference_answers:
-  - 'Yes, there are underground mobs mentioned as "uncommon" or "rare": Wights, Infestations, Stalkers, Harlequin Toads (spawn underground rarely). There are also rare Tar Pool Dungeons underground.'
-
-- text: can I ignite with octine a naturally growing moss?
-  eval_rules:
-  - score: 1
-    check: Answer positively.
-  relevant:
-  - doc_id: Moss
-    loc:
-    - Moss can be used to create fire by holding right-click.
+  text: are there any rare naturally spawning mobs underground?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively.
+        score: 1
   metadata:
     reasoning_type: factual
   reference_answers:
   - Yes, you can.
-
-- text: X
-  eval_rules:
-  - score: X
-    check: X
   relevant:
-  - doc_id: X
+  - doc_id: Moss
     loc:
-    - X
+    - Moss can be used to create fire by holding right-click.
+  text: can I ignite with octine a naturally growing moss?
+- eval_rules:
+    checks:
+      '0':
+        check: X
+        score: X
   metadata:
     reasoning_type: X
   reference_answers:
   - X
-
-- text: X
-  eval_rules:
-  - score: X
-    check: X
   relevant:
   - doc_id: X
     loc:
     - X
+  text: X
+- eval_rules:
+    checks:
+      '0':
+        check: X
+        score: X
   metadata:
     reasoning_type: X
   reference_answers:
   - X
-
-- text: X
-  eval_rules:
-  - score: X
-    check: X
   relevant:
   - doc_id: X
     loc:
     - X
+  text: X
+- eval_rules:
+    checks:
+      '0':
+        check: X
+        score: X
   metadata:
     reasoning_type: X
   reference_answers:
   - X
-
-- text: X
-  eval_rules:
-  - score: X
-    check: X
   relevant:
   - doc_id: X
     loc:
     - X
+  text: X
+- eval_rules:
+    checks:
+      '0':
+        check: X
+        score: X
   metadata:
     reasoning_type: X
   reference_answers:
   - X
-
-- text: X
-  eval_rules:
-  - score: X
-    check: X
   relevant:
   - doc_id: X
     loc:
     - X
+  text: X
+- eval_rules:
+    checks:
+      '0':
+        check: X
+        score: X
   metadata:
     reasoning_type: X
   reference_answers:
   - X
-
-- text: X
-  eval_rules:
-  - score: X
-    check: X
   relevant:
   - doc_id: X
     loc:
     - X
+  text: X
+- eval_rules:
+    checks:
+      '0':
+        check: X
+        score: X
   metadata:
     reasoning_type: X
   reference_answers:
   - X
-
-- text: X
-  eval_rules:
-  - score: X
-    check: X
   relevant:
   - doc_id: X
     loc:
     - X
+  text: X
+- eval_rules:
+    checks:
+      '0':
+        check: X
+        score: X
   metadata:
     reasoning_type: X
   reference_answers:
   - X
+  relevant:
+  - doc_id: X
+    loc:
+    - X
+  text: X

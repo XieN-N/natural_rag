@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -76,12 +76,10 @@ class Question(BaseModel):
         ),
     )
     
-    eval_rules: list[LLMJudgeEvalCheck] | None = Field(
+    eval_rules: LLMJudgeEvalChecklist | None = Field(
         default=None,
         description=(
-            'A list of `LLMJudgeEvalCheck` if the question supports'
-            ' fine-grained evaluation based on a set of rules. The LLM judge'
-            ' evaluates the answer according to each of the rules.'
+            'One or more checks if the question supports fine-grained evaluation.'
         )
     )
     
@@ -96,6 +94,17 @@ class Question(BaseModel):
         ' explain why the qustion have some tag, or why it lacks the ground'
         ' truch answer etc. Is for practioners to read. By default is also'
         ' used by LLM-as-judge.'
+    ))
+
+
+class LLMJudgeEvalChecklist(BaseModel):
+    """A list of `LLMJudgeEvalCheck` if the question supports
+    fine-grained evaluation based on a set of rules. The LLM judge
+    evaluates the answer according to each of the rules.
+    """
+
+    checks: dict[str, LLMJudgeEvalCheck] = Field(default_factory=dict, description=(
+        'Checks and their identifiers that are unique within the question.'
     ))
 
 
@@ -119,4 +128,31 @@ class LLMJudgeEvalCheck(BaseModel):
         'Any additional metadata. May contain "comment" field in the same way'
         ' as the `Question` may contain it. By default is also used by'
         ' LLM-as-judge.'
+    ))
+
+
+
+# classes for LLM judge response:
+
+
+class ChecklistEvaluated(BaseModel):
+    """Evaluated LLMJudgeEvalChecklist."""
+
+    checks: dict[str, CheckEvaluated] = Field(default_factory=dict, description=(
+        'Identifiers and evaluations for each check.'
+    ))
+
+class CheckEvaluated(BaseModel):
+    """Evaluated LLMJudgeEvalCheck."""
+
+    reasoning: str = Field(description=(
+        'One or two sentences to justify your decision.'
+    ))
+
+    confidence: Literal['low', 'moderate', 'high'] = Field(description=(
+        'Lower your confidence if you are not sure, or the check is ambiguous.'
+    ))
+
+    decision: bool = Field(description=(
+        'Is this check true for the given answer? Yes or no.'
     ))
