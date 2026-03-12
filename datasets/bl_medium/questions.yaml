@@ -1,0 +1,1016 @@
+- metadata:
+    comment: This has nothing to do with this mod.
+    reasoning_type: out of scope
+  text: How to know if Minecraft uses GPU?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that main Betweenlands creatures are resistant to non-Betweenlands
+          (Overworld) weapons.
+        metadata:
+          comment: An assistant should understand that such a vague question can be
+            asked in early game, so should be related to using non-Betweenlands weapons.
+            But additional reasoning about specific mobs is okay.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You probably use non-Betweenlands weapons to which Betweenlands creatures are
+    resistant.
+  relevant:
+  - doc_id: Basic Guide to Survival
+    loc:
+    - Tools and weapons can be brought but are
+  text: Why all the enemies are so tough to kill?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively and mention the concept of Drinkable Brews.
+        score: 1
+      '1':
+        check: Answer positively and mention the concept of Infusions (potions) made
+          with Herblore.
+        score: 1
+  metadata:
+    comment: 'A wide question that is hard to evaluate: an assistant may list either
+      ingredients, or the resulting driks, or both. But a player at least needs to
+      know about the concepts of Drinkable Brew and Infusion.'
+    reasoning_type: factual wide
+  reference_answers:
+  - There are plenty of drikable brews, as well as infusions. Some of them require
+    plants. One simple example is Nettle Tea that can be crafted from nettle only
+    in a steeping pot.
+  relevant:
+  - doc_id: Drinkable Brews
+    loc:
+    - There are 11 varieties of Drinkable Brew
+  - doc_id: Herblore
+    loc:
+    - Herblore is the process of combining and refining
+  - doc_id: Plant Items
+    loc:
+    - Plant Items are a variety of items
+    - They are primarily used in making
+  text: Are there any plants that can be used to make drinks?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention crafting Betweenlands tools and weapons. Optionally may mention
+          weedwood, bone or octine varieties; do not mention other tool varieties.
+        metadata:
+          comment: Mentioning other tool varieties is a mistake for early game.
+        score: 1
+      '1':
+        check: Mention crafting Betweenlands armour. Optionally may mention bone,
+          lurker skin or syrmorite varieties; do not mention other armour varieties.
+        metadata:
+          comment: Mentioning other armor varieties is a mistake for early game.
+        score: 1
+      '2':
+        check: Mention Sulfur Torches or Bulb-Capped Mushroom (at lest one of them).
+        metadata:
+          comment: While torches are not mentioned in the Basic Guide to Survival,
+            the guide says that the realm is dark. Also the wiki says that Sulfur
+            Torch provides a light source.
+        score: 1
+      '3':
+        check: Mention that you need more than one food source.
+        score: 1
+      '4':
+        check: Mention that you need to cure decay with Balls of Sap or Weeping Blue
+          Petals (mention at least one of these options).
+        score: 1
+  metadata:
+    comment: There are some necessary things to mention, but the assitant can complement
+      the answer arbitrarily.
+    reasoning_type: factual wide
+  reference_answers:
+  - The non-Betweenlands tools and weapons are much less effective here, so you need
+    to craft Betweenlands tools, weapons and armour. You need to collect multiple
+    varieties of foods, such as mushrooms, to Food Sickness. You need Balls of Sap
+    or Weeping Blue Petals to restore a Decay bar. You need sulfur torches to see
+    better in the dark. You may need Swamp Reeds for other useful tools such as Buckets.
+  relevant:
+  - doc_id: Basic Guide to Survival
+    loc:
+    - Attempting to place Torches in the dimension
+    - Tools and weapons can be brought but are
+    - While in the Betweenlands, players have
+    - It can be refilled with
+    - Beware that most foods are affected by
+    - Some of the most important resources to look
+    - If in a Marsh biome, look for
+    - Swamp Hags are common hostile mobs
+    - The Betweenlands is at its darkest when there
+    - It is very difficult to see at this time
+    - When a suitable location is found, players can set up
+  - doc_id: Sulfur Torch
+    loc:
+    - Sulfur Torches are blocks that act as primary sources
+  text: What are the most important items in the early game, to make the realm exploration
+    easier?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that you need Weedwood Sticks (not just "sticks").
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - Sulfur Torch is crafted using Weedwood Stick. You probably carry normal sticks,
+    not weedwood ones.
+  relevant:
+  - doc_id: Sulfur Torch
+    loc:
+    - <Crafting Recipe>
+  text: I went down into the cave with a supply of sticks, got some sulfur, why I
+    cannot craft a torch?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that this is the decay bar.
+        score: 3
+      '1':
+        check: Mention that depletion of the decay bar reduces the maximum health,
+          optionally mention that this also applies slowness.
+        score: 1
+      '2':
+        check: Mention the Sap Tree as the cure for the decay.
+        score: 1
+      '3':
+        check: Mention the Weeping Blue as the cure for the decay.
+        score: 1
+  metadata:
+    comment: While the question is only about the bar itself, asking such a question
+      means that the player does not understand the mechanics of this bar, and it
+      also needs to be explained.
+    reasoning_type: factual
+  reference_answers:
+  - This is the decay bar. Simply existing in the dimension slowly causes it to decrease.
+    As decay points drop, the player's maximum health is reduced and slowness is applied.
+    You need to consume Balls of Sap that is harvested them from the Sap Tree, or
+    consume petals collected from the Weeping Blue flower to replenish the decay bar.
+    There are also other sources to replenish the decay bar.
+  relevant:
+  - doc_id: Decay
+    loc:
+    - The decay bar is represented as a line of Sap Balls
+    - As decay points drop, the player's maximum
+    - The most reliable method is to avoid threats
+    - Decay can also be reversed by consuming
+  text: What is this bar made of circles above the hunger bar?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention the Decay bar, depletion of which reduces the maximum health.
+        score: 2
+      '1':
+        check: Mention the Sap Tree as the cure for the decay.
+        score: 1
+      '2':
+        check: Mention the Weeping Blue as the cure for the decay.
+        score: 1
+  metadata:
+    comment: The question requires not only explaining what happens, but also explaining
+      how to cure.
+    reasoning_type: factual
+  reference_answers:
+  - Note the decay bar above you hunger bar. Simply existing in the dimension slowly
+    causes it to decrease. As decay points drop, the player's maximum health is reduced
+    and slowness is applied. You need to consume Balls of Sap that is harvested them
+    from the Sap Tree, or consume petals collected from the Weeping Blue flower to
+    replenish the decay bar. There are also other sources to replenish the decay bar.
+  relevant:
+  - doc_id: Decay
+    loc:
+    - The decay bar is represented as a line of Sap Balls
+    - As decay points drop, the player's maximum
+    - The most reliable method is to avoid threats
+    - Decay can also be reversed by consuming
+  text: Why my maximum health got reduced, am I sick?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that no mobs spawn specifically in the ruins (meaning the small
+          Ruins in the Marsh and Sludge Plains).
+        score: 1
+      '1':
+        check: Mention hostile Termites that spawn when breaking loot pots in these
+          ruins.
+        score: 1
+      '2':
+        check: 'Mention naturally spawning hostile mobs for the biomes where the small
+          Ruins are found. Optionally concretize: Wight, Peat Mummy, Chiromaw, Shallowbreath,
+          Leech or Sludge.'
+        score: 1
+      '3':
+        check: Wrongly mention any mobs not listed above.
+        score: -1
+      '4':
+        check: Optionally discuss other structures which may be called "ruins", except
+          the small ruins, and their mobs and hazards.
+        score: 0
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You are probably talking about small ruins in Marsh and Sludge Plains biomes.
+    They are generally safe, except the environmental mobs in the biome. However,
+    small hostile Termites may spawn when breaking loot pots, but they are easy to
+    kill.
+  relevant:
+  - doc_id: Ruins
+    loc:
+    - Ruins are a variety of small, dilapidated structures
+    - <Marsh Composition>
+  text: Is it dangerous to approach the ruins?
+- eval_rules:
+    checks:
+      '0':
+        check: Either answer negatively (not possible to skip, even with the Moss
+          Bed), or tell that no such mechanics is found in the wiki.
+        score: 2
+      '1':
+        check: Clarify that there is no "night" in the Betweenlands, while making
+          sure to mention that some events affect luminosity.
+        metadata:
+          comment: Mentioning both these facts at once will help avoid confusing the
+            player.
+        score: 1
+  metadata:
+    reasoning_type: aggregating by negation
+  reference_answers:
+  - There is no proper day/night cycle in the Betweenlands. There are some events
+    which can affect luminosity , but no possibilities are found in the wiki to skip
+    them.
+  relevant:
+  - doc_id: Moss Bed
+    loc:
+    - However, since there is no proper day/night cycle
+  text: Is it possible to skip the night?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Menhir can be linked with a Bone Wayfinder to fast travel.
+        score: 1
+  metadata:
+    comment: While visual reasoning is desired, the Menhir can still be identified
+      from the text corpus only by the "particles around it".
+    reasoning_type: factual
+  reference_answers:
+  - You found a Menhir, which can be linked for fast travel by right-clicking it with
+    a Bone Wayfinder, which is an item found as loot.
+  relevant:
+  - doc_id: Menhir
+    loc:
+    - The Menhir is a special utility block that generates
+    - Black particles will linger in the area surrounding a Menhir.
+    - A Menhir can be linked for fast travel by right-clicking
+  text: How do I interact with a stone which has two holes inside, with particles
+    around it?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Mention at least one of the simplest ways: shake your head, jump,
+          sneak, swing.'
+        score: 2
+      '1':
+        check: 'Optionally mention another ways: submerge or set yourself on fire.'
+        score: 0
+      '2':
+        check: Optionally mention that the swarm (Infestation) will reapply the effect
+          on touch.
+        score: 0
+      '3':
+        check: Wrongly mention other ways not listed above.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You need to either shake your head, or jump, sneak, swing, submerge or set yourself
+    on fire.
+  relevant:
+  - doc_id: Infestation
+    loc:
+    - The player can slowly get rid of the on-screen
+    - They can also get rid of them faster
+  text: 5 minutes after fighting a swarm of insects, they are still crawling across
+    my screen. How do I remove them?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that ghosts ("Them") are not interactable entities.
+        score: 1
+      '1':
+        check: 'Optionally discuss another type of disappearing entities: Wisps.'
+        metadata:
+          comment: Wiki says that Wisps give off colored light and disappear on approach,
+            which is ambiguously related to "creepy ghosts". So, mentioning Wisps
+            is definitely not a mistake. However, "Them" are descibed as more creepy
+            (distorted, staring silhouettes), and without mentioning "Them" the answer
+            is incomplete.
+        score: 0
+  metadata:
+    reasoning_type: null
+  reference_answers:
+  - The black distorted, staring silhouettes referred to as "Them" are purely aesthetic.
+    The luminous wisps are collectable during the Auroras event, when they stop disappearing
+    as you get close.
+  relevant:
+  - doc_id: Dense Fog
+    loc:
+    - A small distance away from the player, distorted
+    - They will seem to float slowly towards the player
+    - They are purely aesthetic.
+  text: Can I interact with creepy ghosts that disappear as I get close to them?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that there are many of structures, optionally with specific
+          examples.
+        metadata:
+          comment: The question is wide, but at least mentioning structures is necessary.
+        score: 1
+  metadata:
+    reasoning_type: factual wide
+  reference_answers:
+  - There are plenty of structures, even massive ones. You're probably just unlucky
+    with random generation, keep exploring.
+  relevant:
+  - doc_id: Structures
+    loc:
+    - <Buildings>
+  text: What can I find in this dimension? I've been walking for an hour and I can't
+    find anything interesting.
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that you need Moss and Weedwood Planks. Optionally mention
+          a Cave Moss variation.
+        score: 1
+      '1':
+        check: Mention that moss can be harvested with a Syrmorite Shears. Optionally
+          also mention harvesting with a Sickle.
+        metadata:
+          comment: It is not obvious how to get a Moss, so this also needs to be mentioned
+            as a part of the process.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You need 3 moss and 3 Weedwood Planks. Moss can be harvested with a Syrmorite
+    Shears or a Sickle.
+  relevant:
+  - doc_id: Moss Bed
+    loc:
+    - When placed in The Betweenlands, the Moss Bed
+    - <Crafting Recipe>
+  - doc_id: Moss
+    loc:
+    - The block itself must be broken with
+  text: How do I craft a bed to set a respawn point?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that a Weedwood Bow can be crafted from Weedwood Stick and
+          Reed Rope.
+        score: 1
+      '1':
+        check: Optionally mention Predator Bow that is not craftable.
+        score: 0
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - A Weedwood Bow can be crafted from Weedwood Stick and Reed Rope.
+  relevant:
+  - doc_id: Weedwood Bow
+    loc:
+    - <Crafting Recipe>
+  text: I have found arrows, how to craft a bow?
+- metadata:
+    comment: This is a Minecraft mechanics not controlled by the Betweenlands mod.
+    reasoning_type: out of scope
+  text: How to switch arrow types?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that it can be found as loot.
+        score: 2
+      '1':
+        check: 'Mention at least one of the possible sources: Shrine, Cragrock Tower
+          or Wight Fortress.'
+        score: 1
+      '2':
+        check: Optionally mention that it can be obtained via animating Item Scroll.
+        metadata:
+          comment: It requires player efforts, so is not relevant to the question.
+        score: 0
+  metadata:
+    reasoning_type: null
+  reference_answers:
+  - You have found it as Loot from chests in Shrine, Cragrock Tower or Wight Fortress.
+    It can also be obtained via animating Item Scroll.
+  relevant:
+  - doc_id: Critter Cruncher
+    loc:
+    - The Critter Cruncher is a unique melee weapon
+    - It can also be found as Loot
+  text: I have found Critter Cruncher in my inventory, where could I have gotten it
+    from?
+- eval_rules:
+    checks:
+      '0':
+        check: Answer positively.
+        score: 1
+      '1':
+        check: Optionally mention that some aspects are fixed.
+        score: 0
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - Yes.
+  relevant:
+  - doc_id: Aspects
+    loc:
+    - The distribution depends on the world seed.
+  text: Do items have different aspects depending on the world?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a Greebling.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - This is a Stringed Greebling musician playing, which is a peaceful elusive mob.
+  relevant:
+  - doc_id: Greebling
+    loc:
+    - Upon entering the range of a Greebling, ambient music
+    - Greeblings can spawn in two variants; one with
+    - The string instrument of the red-clothed Greebling
+  text: I heard a fiddle playing and then it suddenly stopped. Is it just ambient
+    music or some kind of mob or event?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention orange Dentrothyst variety (not just "Dentrothyst").
+        score: 1
+      '1':
+        check: Optionally mention Pyrads.
+        score: 0
+  metadata:
+    comment: "While an asssistant can mention other resources, the orange Dentrothyst\
+      \ shard is the most important one, and is rarer than green variety the player\
+      \ mentioned. \u041Ether resources are just simple wood of fungus."
+    reasoning_type: factual
+  reference_answers:
+  - In the Giant Weedwood Tree roots, you also can find Orange Dentrothyst which is
+    rarer than Green Dentrothyst. You can also fight Pyrads that drop Pyrad Flame.
+  relevant:
+  - doc_id: Giant Weedwood Tree
+    loc:
+    - Even moreso than regular Weedwood Trees
+    - They are also the main sources of Dentrothyst
+    - Pyrads occasionally spawn on and around
+  - doc_id: Dentrothysts
+    loc:
+    - Dentrothysts are unique amber-like blocks
+    - There are two varieties - a more common
+  text: What can I find in a giant tree, except green crystals and white pear seeds?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Wights will not be able to use their "possession" attack
+          on any player that is wearing the mask.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - Wights will not be able to use their "possession" attack on any player that is
+    wearing the mask, making them easier to deal with.
+  relevant:
+  - doc_id: Skull Mask
+    loc:
+    - Wights will not be able to use their
+  text: What is the skull mask for?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Answer positively: silk production is not a closed loop and requires
+          farming Pheromone Thorax from Infestation outside.'
+        score: 1
+      '1':
+        check: Wrongly advice to wait until Infested Weedwood Bush spawns an Infestation.
+        metadata:
+          comment: You get only 1 infestation that drops 0-1 Pheromone Thorax which
+            is less than the resources spent on infesting the bush.
+        score: -1
+  metadata:
+    reasoning_type: factual reasoning
+  reference_answers:
+  - Yes, it requires Pheromone Thorax that is dropped from Infestations only. While
+    Infestation can be spawned at home at the final stage of the Infested Weedwood
+    Bush, you get only 1 infestation that drops 0-1 Pheromone Thorax which is less
+    than the resources spent on infesting the bush. So, you cannot get infinite production
+    starting with finite Pheromone Thorax, but your limit is 3 Silk Threads per 1
+    Pheromone Thorax.
+  relevant:
+  - doc_id: Silk Grub
+    loc:
+    - Silk Grubs drop from breaking
+    - Silk Grubs are harvested by shearing
+    - Silk Grubs are automatically and near-instantly
+  - doc_id: Infested Weedwood Bush
+    loc:
+    - Infested Bushes can be obtained by right-clicking
+    - Grub Hubs filled with Pheromone Extract can
+  - doc_id: Pheromone Thorax
+    loc:
+    - Pheromone Thoraxes can drop from
+    - <Crafting Recipes>
+  - doc_id: Infestation
+    loc:
+    - Infestations are swarms of bugs that
+    - They will also spawn when an
+    - <Infestation>
+  text: Is it true that silk production requires constant farming of pheromone thorax
+    from mobs outside? So the process can't be self-sustaining, like farming?
+- eval_rules:
+    checks:
+      '0':
+        check: Report the lack of an answer.
+        score: 1
+  metadata:
+    reasoning_type: aggregating by negation
+  reference_answers:
+  - This is not clearly stated in the wiki. Eating a food increasing its sickness
+    counter by 5. Eating a different type of food will bring the sickness level down
+    on the other food, but it is not stated how much.
+  relevant:
+  - doc_id: Food Sickness
+    loc:
+    - Eating a different type of food will help to bring
+  text: Are 2 varieties of food enough to prevent food sickness?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that there are side crypt tunnels and winding corridors (or
+          synonymous words).
+        score: 1
+      '1':
+        check: Optionally mention Barrishee.
+        score: 0
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - There are indeed secret locations in the Sludgeon, one of them leads from the
+    sixth layer to the crypt tunnels and winding corridors. Numerous Crypt Crawlers
+    are spawned inside.
+  relevant:
+  - doc_id: Sludgeon
+    loc:
+    - In this layer, there is also an extra Dungeon Door
+    - Unlocking it will cause numerous Crypt Crawlers
+  text: I hear someone grunting behind the walls in sludgeon. I explored the entire
+    level but didn't find these mobs. Is this some kind of secret level?
+- eval_rules:
+    checks:
+      '0':
+        check: Report the lack of an answer.
+        score: 1
+  metadata:
+    comment: While Barrishee is not described as metallic in wiki, it is clearly identified
+      from the question.
+    reasoning_type: aggregating by negation
+  reference_answers:
+  - It's hard to say from the wiki information only.
+  relevant:
+  - doc_id: Sludgeon
+    loc:
+    - On the fourth layer, there is also a secret door
+    - When unlocking the false Dungeon Door
+  - doc_id: Barrishee
+  text: If I flee to the previous Sludgeon layer, will I be out of reach for the metallic
+    beast boss that appeared when I tried to open the door?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention the Rift event.
+        score: 2
+      '1':
+        check: Mention that rift is interdimensional (connects dimensions).
+        score: 1
+      '2':
+        check: Mention that rift is a source of lifeforce in the Betweenlands.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - This is a Rift event when a crack appears in the Betweenlands sky, and the Overworld's
+    Sky is visible through the Rift. According to the Lore, this is an interdimensional
+    rift between the two realms. Earlier lifeforce surged through the rift from the
+    Overworld to the Betweenlands, but later a disaster happened and the darkness
+    consumed the Betweenlands.
+  relevant:
+  - doc_id: Rift
+    loc:
+    - The Overworld's Sky will be visible
+  - doc_id: Lore
+    loc:
+    - As the fabric of reality shifted, a thin
+    - This crack was an interdimensional rift
+    - Lifeforce surged through the rift from the Overworld
+  text: Why I see a piece of a blue sky in the Betweenlands? What is the lore behind
+    this?
+- eval_rules:
+    checks:
+      '0':
+        check: 'Answer positively. Optionally describe some of the items obtained:
+          Music Discs, Staff of the Mist Walker, Staff of the Shadow Walker, Ring
+          of Power, Amulet Socket, Magic Item Magnet, Voodoo Doll, Valonite Shard,
+          Sludge Slicer, Critter Cruncher, Hag Hacker, Wight''s Bane, Swift Pick,
+          Skull Mask, Syrmorite Ingot, Octine Ingot.'
+        score: 1
+      '1':
+        check: Optionally mention Fabricated Scroll.
+        score: 0
+      '2':
+        check: Describe items not listed above.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - 'Yes, Music Discs have 2.59% chance to obtain, and several items have 5.18% chance:
+    Staff of the Mist Walker, Staff of the Shadow Walker, Ring of Power, Amulet Socket,
+    Magic Item Magnet, Voodoo Doll.'
+  relevant:
+  - doc_id: Animator
+    loc:
+    - It is primarily used to repair damaged
+  - doc_id: Item Scroll
+    loc:
+    - When animated in an Animator, both Item
+    - <Loot>
+  text: Is there anything rare, that animator produces from scrolls with a small chance?
+    BTW, I'm tired of getting the same items again.
+- eval_rules:
+    checks:
+      '0':
+        check: Clarify that you have to catch with a rod Anadia to trim (cut up) it.
+        score: 1
+      '1':
+        check: Clarify that when just killed, it drops only a meat.
+        score: 1
+  metadata:
+    reasoning_type: factual reasoning
+  reference_answers:
+  - Yes, if you just kill it, it drops only Anadia Meat. You need to catch it to get
+    more loot on a Trimming Table.
+  relevant:
+  - doc_id: Anadia
+    loc:
+    - A Weedwood Fishing Rod and Net is required
+    - Once an Anadia is caught, it can be Smoked
+    - <Anadia>
+  - doc_id: Trimming Table
+    loc:
+    - Trimming an Anadia has a variety of potential
+    - After chopping a fish, 3 outputs are shown
+  text: To cut up a fish, do I have to catch it with a rod? Can't I just kill it underwater
+    with a sword?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Amphibious armor.
+        score: 1
+      '1':
+        check: Mention Ancient armor.
+        score: 1
+      '2':
+        check: Mention Bone armor.
+        score: 1
+      '3':
+        check: Mention Lurker Skin armor.
+        score: 1
+      '4':
+        check: Mention Syrmorite armor.
+        score: 1
+      '5':
+        check: Mention Valonite armor.
+        score: 1
+      '6':
+        check: Wrongly mention Armor of Legends without clarifying that it is not
+          implemented yet.
+        score: -2
+      '7':
+        check: Wrongly mention other armor sets not listed above.
+        score: -2
+  metadata:
+    reasoning_type: factual wide
+  reference_answers:
+  - Amphibious, Ancient, Bone, Lurker Skin, Syrmorite, Valonite.
+  relevant:
+  - doc_id: Syrmorite Armor
+    loc:
+    - Syrmorite Armor is an intermediate armor set.
+  - doc_id: Valonite Armor
+    loc:
+    - Valonite Armor is a powerful armor set.
+  - doc_id: Amphibious Armor
+    loc:
+    - Amphibious Armor is an armor that allows
+  - doc_id: Ancient Armor
+    loc:
+    - The Ancient Armor is a endgame armor
+  - doc_id: Lurker Skin Armor
+    loc:
+    - Lurker Skin Armor is a basic armor set
+  - doc_id: Bone Armor
+    loc:
+    - Bone Armor is a basic armor set.
+  - doc_id: Armor of Legends
+    loc:
+    - The Armor of Legends is a very powerful
+  text: Which armor sets exist in the Betweenlands?
+- metadata:
+    comment: This has nothing to do with this mod, this is a question about basic
+      game mechanics.
+    reasoning_type: out of scope
+  text: Can I hold a sword, a shield and a torch at the same time?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention reducing the amount of hunger restored.
+        score: 2
+      '1':
+        check: Clarify that the Food Sickness mechanics is because of eating the same
+          food type, and not only for mushrooms.
+        score: 1
+      '2':
+        check: Wrongly mention negative effects besides reducing the amount of hunger
+          restored.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - If you continue eating the same food, you get a Food Sickness, the benefits will
+    be greatly diminished, only restoring 1/3 hunger it normally would. You better
+    switch to another food, including another mushrooms.
+  relevant:
+  - doc_id: Food Sickness
+    loc:
+    - While in the Betweenlands, players
+    - They can continue to eat it if they wish, but
+  text: What if I continue eating mushrooms, despite that "I feel terrible, I cannot
+    eat this anymore"?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that the Sludgeon plants contain Aspects.
+        score: 1
+      '1':
+        check: Clarify that the aspects are randomized, so their comparative usefulness
+          is not known in advance in principle (and not just "not stated").
+        score: 1
+      '2':
+        check: Mention that the Ground Pale Grass is the only Sludgeon plant with
+          Aspect Tier II.
+        score: 1
+      '3':
+        check: Mention that the Edge Leaves is the only Sludgeon plant with 4 aspects.
+        score: 1
+      '4':
+        check: Mention that the Pale Grass is the only Sludgeon plant used to craft
+          dyes.
+        score: 1
+  metadata:
+    reasoning_type: factual reasoning
+  reference_answers:
+  - There are 8 varieties (Cryptweed, Edge Leaf, Edge Moss, Edge Shrooms, Pale Grass,
+    Rotbulb, String Roots, and Tall Sludgecreep), each can be ground and composted
+    into ground items that contain Aspects. However, aspects are randomized at the
+    world generation, and should be discovered through a Gecko testing. So, it is
+    not possible to say in advance which of the Sludgeon plants contains more beneficial
+    Aspects. However, Ground Pale Grass is the only Sludgeon plant with Aspect Tier
+    II, and Edge Leaves are the only Sludgeon plant that contains 4 aspects. So, these
+    two have the highest probability to be beneficial.
+  relevant:
+  - doc_id: Farming
+    loc:
+    - Sludgeon plants (Cryptweed, Edge Leaf
+  - doc_id: Cryptweed
+  - doc_id: Edge Moss
+  - doc_id: Edge Shrooms
+  - doc_id: Pale Grass
+  - doc_id: Rotbulb
+  - doc_id: String Roots
+  - doc_id: Tall Sludgecreep
+  - doc_id: Ground Items
+    loc:
+    - Every Ground Item (except for Ground
+    - The types of Aspects found on a Ground Item are
+  - doc_id: Aspects
+    loc:
+    - Aspects are randomly distributed to
+    - The distribution depends on the world seed.
+    - Aspects themselves don't have a defined effect
+  - doc_id: Dyes
+    loc:
+    - <List of Dyes>
+  text: Which of the growable plants found in sludgeon is the most beneficial?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Dried Swamp Reed.
+        score: 1
+      '1':
+        check: Mention Dry Bark.
+        score: 1
+      '2':
+        check: Optionally mention Anadia.
+        metadata:
+          comment: It is not a food by its own.
+        score: 0
+      '3':
+        check: Wrongly mention anything not listed above.
+        score: -1
+  metadata:
+    reasoning_type: factual wide
+  reference_answers:
+  - Besides food, you can prepare a Smoked Anadia (a preserved Anadia for trimming
+    that produces not only food), Dried Swamp Reed and Dry Bark.
+  relevant:
+  - doc_id: Smoking Rack
+    loc:
+    - The Smoking Rack is used to Smoke various items.
+  - doc_id: Smoking
+    loc:
+    - <Smoking>
+  - doc_id: Smoked Anadia Meat
+    loc:
+    - Smoked Anadia Meat is a smoked food item.
+  - doc_id: Smoked Barnacle Flesh
+    loc:
+    - Smoked Barnacle Flesh is a smoked food item.
+  - doc_id: Smoked Crabstick
+    loc:
+    - Smoked Crabsticks are smoked food items.
+  - doc_id: Smoked Frog's Leg
+    loc:
+    - Smoked Frog's Legs are smoked food items.
+  - doc_id: Smoked Puffshroom Tendril
+    loc:
+    - Smoked Puffshroom Tendrils are smoked food items.
+  - doc_id: Smoked Crab Claw
+    loc:
+    - Smoked Crab Claws are smoked food items.
+  - doc_id: Smoked Snail Flesh
+    loc:
+    - Smoked Snail Flesh is a smoked food item.
+  - doc_id: Dried Swamp Reed
+    loc:
+    - Dried Swamp Reeds are items primarily
+  - doc_id: Dry Bark
+    loc:
+    - Dry Bark is an item primarily used
+  - doc_id: Anadia
+    loc:
+    - The Anadia can be Smoked or contained
+    - <Anadia (item)>
+  - doc_id: Trimming Table
+    loc:
+    - <Properties>
+  text: What can I cook on a Smoking rack, besides food?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention that Smoked Anadia should be trimmed.
+        score: 1
+      '1':
+        check: Mention that Anadia is smoked to preserve it.
+        metadata:
+          comment: This needs to be explained because raw Anadia also can be trimmed,
+            so why to smoke?
+        score: 1
+      '2':
+        check: Wrongly mention that smoked Anadia can be eaten directly.
+        score: -1
+      '3':
+        check: Wrongly mention food sickness.
+        score: -1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You smoke Anadia just to preserve it (to prevent rotting). Then you need to trim
+    it on the Trimming Table, just like raw Anadia. This provides you with food and
+    other potential outputs.
+  relevant:
+  - doc_id: Anadia
+    loc:
+    - Once an Anadia is caught, it can be Smoked, processed
+    - The Anadia can be Smoked or contained
+    - <Processing>
+  - doc_id: Smoked Anadia Meat
+    loc:
+    - Smoked Anadia Meat is a smoked food item.
+  text: Why can't I eat a smoked Anadia, what to do with it?
+- eval_rules:
+    checks:
+      '0':
+        check: Advice to use Sickle to harvest.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - You need to harvested it with a Sickle (not a Syrmorite Shears) to obtain a Mire
+    Coral item you can grind.
+  relevant:
+  - doc_id: Mire Coral
+    loc:
+    - Mire Coral must be harvested with
+    - When harvested with a Sickle, it instead
+  text: Why can't I grind Mire Coral if I have a mortar and pestle?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention a Ring of Dispersion.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - This has nothing to do with the floating island. You seem to wear a Ring of Dispersion
+    that allows you to go through blocks while sneaking, with the described animation.
+  relevant:
+  - doc_id: Ring of Dispersion
+    loc:
+    - While equipped, the Ring of Dispersion will allow
+    - As the player moves into a block
+  text: I'm climbing up to the floating island. Why does my whole screen suddenly
+    "closes" at the bottom and top when I sneak?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention evaporating Infuser as a way to spawn Shallowbreath.
+        score: 1
+  metadata:
+    reasoning_type: factual
+  reference_answers:
+  - To obtain a Bottled Shallowbreath, you can spawn a Shallowbreath manually by letting
+    the Infuser when a boiling infusion evaporate.
+  relevant:
+  - doc_id: Draeton
+    loc:
+    - The Draeton is a craftable airship fueled
+  - doc_id: Bottled Shallowbreath
+    loc:
+    - Bottled Shallowbreath can be obtained by killing
+  - doc_id: Shallowbreath
+    loc:
+    - Shallowbreaths are dangerous mobs that spawn
+  text: Can I farm Draeton fuel at home, without a need to constantly kill environmental
+    mobs?
+- eval_rules:
+    checks:
+      '0':
+        check: Mention Pheromone Thorax.
+        score: 1
+      '1':
+        check: Mention a Weedwood Bush.
+        score: 1
+  metadata:
+    reasoning_type: factual reasoning
+  reference_answers:
+  - To start a process, you need a Weedwood Bush and a Pheromone Thorax (and optionally
+    a Moth House to increase production rate). Weedwood Bush can be transported to
+    your house via Syrmorite Shears. Pheromone Thorax is obtained from killing Infestations
+    in caves.
+  relevant:
+  - doc_id: Silk Thread
+    loc:
+    - Silk Threads are produced over time by
+    - <Crafting Recipes>
+  - doc_id: Moth House
+    loc:
+    - <Crafting Recipe>
+  - doc_id: Silk Grub
+    loc:
+    - Silk Grubs drop from breaking
+    - Silk Grubs are harvested by shearing
+  - doc_id: Silk Grub Cocoon
+    loc:
+    - Silk Grub Cocoons drop from breaking
+    - Silk Grub Cocoons are harvested by shearing
+  - doc_id: Syrmorite Shears
+    loc:
+    - <Crafting Recipe>
+  - doc_id: Infested Weedwood Bush
+    loc:
+    - Infested Bushes can be obtained by right-clicking
+    - The bush will then progress through the stages
+  - doc_id: Pheromone Thorax
+    loc:
+    - Pheromone Thoraxes can drop from Infestations upon death.
+  - doc_id: Weedwood Bush
+    loc:
+    - Weedwood Bushes are plant blocks that generate
+  text: To farm silk, where do I start?
