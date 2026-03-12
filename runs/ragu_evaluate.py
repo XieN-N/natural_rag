@@ -60,9 +60,11 @@ async def evaluate_with_llm_as_judge(question: Question, answer: str, llm: LLM) 
         output_schema=ChecklistEvaluated,
     ))
 
+dataset_name = 'bl_tiny'
 
-dataset = RAGDataset.load_from_dir('datasets/bl_small')
+dataset = RAGDataset.load_from_dir(f'datasets/{dataset_name}')
 
+answers_dir = Path(f'generated/ragu_{dataset_name}/answers')
 
 
 judge_llm = LLMOpenAI(
@@ -80,7 +82,7 @@ judge_llm = LLMOpenAI(
 
 answers = {
     int(path.stem): path.read_text()
-    for path in Path('generated/ragu/answers').glob('*.txt')
+    for path in answers_dir.glob('*.txt')
 }
 
 async def run_evals() -> list[ChecklistEvaluated]:
@@ -143,5 +145,5 @@ for (q_idx, question, answer), group in df.groupby(['q_idx', 'question', 'answer
 summary_df = pd.DataFrame(summary_df_rows)
 
 
-df.to_csv('generated/ragu/evals.csv', index=False)
-summary_df.to_csv('generated/ragu/evals_summary.csv', index=False)
+df.to_csv(answers_dir.parent / 'evals.csv', index=False)
+summary_df.to_csv(answers_dir.parent / 'evals_summary.csv', index=False)

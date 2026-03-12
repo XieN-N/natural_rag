@@ -7,11 +7,12 @@ from ragu.models.embedder import EmbedderOpenAI
 from natural_rag.dataset import RAGDataset
 from natural_rag.pipelines.ragu_pipelines import RAGUPipeline
 
+dataset_name = 'bl_tiny'
 
-dataset = RAGDataset.load_from_dir('datasets/bl_small')
+dataset = RAGDataset.load_from_dir(f'datasets/{dataset_name}')
 
-index_dir = Path('generated/ragu/index')
-answers_dir = Path('generated/ragu/answers')
+index_dir = Path(f'generated/ragu_{dataset_name}/index')
+answers_dir = Path(f'generated/ragu_{dataset_name}/answers')
 
 index_dir.mkdir(parents=True, exist_ok=True)
 answers_dir.mkdir(parents=True, exist_ok=True)
