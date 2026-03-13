@@ -1,49 +1,3 @@
-from __future__ import annotations
-from dataclasses import dataclass
-from typing import Iterable, Literal
-
-from pydantic import BaseModel, Field
-
-from natural_rag.baseline.baseline import Change, Entry
-
-class Entry(BaseModel):
-    name: str
-    summary: str
-    text: str
-    keywords: list[str]
-    parent: str | None  # use None for root/unknown parent
-
-    def model_post_init(self, __context: object):
-        if self.parent == 'none':
-            self.parent = None
-    
-    def get_all_fields(self) -> list[str]:
-        return [self.name, self.summary, self.text] + self.keywords
-
-
-class EntriesList(BaseModel):
-    entries: list[Entry]
-
-
-class Names(BaseModel):
-    names: list[str]
-
-
-class Change(BaseModel):
-    entry: str
-    new_parent: str | None = Field(description="New parent entry name, use None for root.")
-
-    def model_post_init(self, __context: object):
-        if self.new_parent in ('none', '<root>', 'root'):
-            self.new_parent = None
-
-
-class Changes(BaseModel):
-    changes: list[Change]
-
-
-# A database structure description included in various prompts
-
 SCHEMA_DESCRIPTION = f"""\
 The knowledge base consists of entries (name, summary, text, keywords, parent):
 
@@ -101,7 +55,18 @@ quickly through the list of summaries. **Keywords** is a list of words of \
 phrases to perform semantic search.\
 """
 
-# For BUILD_PROMPT output_schema is EntriesList
+# KEYWORDS_PROMPT = f"""\
+# I have a document, and want to query relevant documents in a large database. \
+# I will provide the document, exctact keywords that may serve as search terms \
+# for text or vector search. Provide main keywords and up to several dozens \
+# additional keywords. For empty document return empty list.
+
+# The document:
+
+# {{document}}
+
+# <document end>\
+# """
 
 BUILD_PROMPT = f"""\
 Your task is to convert a plain text document into a structured knowledge base. \
@@ -118,8 +83,6 @@ The document:
 
 <document end>\
 """
-
-# For CLARIFY_PROMPT output_schema is Names
 
 CLARIFY_PROMPT = f"""\
 I am building a structured knowledge base. {SCHEMA_DESCRIPTION}
@@ -147,8 +110,6 @@ The database excerpt:
 So, now tell me a list of entry names in the excerpt to study in more details, \
 possibly empty.\
 """
-
-# For INSERT_PROMPT output_schema is EntriesList
 
 INSERT_PROMPT = f"""\
 I am building a structured knowledge base. {SCHEMA_DESCRIPTION}
@@ -187,8 +148,6 @@ Also, you can **merge** the new entry and the entry from excerpt, if they are \
 duplicate. To do so, return the entry with the name from excerpt, and the merged \
 text.\
 """
-
-# For database optimizing
 
 OPTIMIZE_PROMPT = f"""\
 I am building a structured knowledge base. {SCHEMA_DESCRIPTION}

@@ -1,6 +1,7 @@
 tmp/
 generated/
 .vscode/
+llm_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

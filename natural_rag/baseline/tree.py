@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Iterable, Literal
 
 from natural_rag.baseline.vector_index import VectorIndex
-from natural_rag.baseline.baseline import Entry
+from natural_rag.baseline.struct import Entry
 
 
 class TreeKnowledgeBase:
