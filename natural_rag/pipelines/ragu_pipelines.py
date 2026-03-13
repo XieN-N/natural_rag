@@ -4,10 +4,12 @@ from pathlib import Path
 import sys
 import os
 import shutil
+from typing import Any
 
 from ragu.common.logger import logger as ragu_logger
 from ragu import (
     SimpleChunker,
+    SmartSemanticChunker,
     KnowledgeGraph,
     BuilderArguments,
     Settings,
@@ -46,7 +48,7 @@ class RAGUPipeline(RAGPipeline):
         Settings.storage_folder = self.index_dir
         Settings.language = self.language
 
-        self.chunker = SimpleChunker(max_chunk_size=1000)
+        self.chunker = SmartSemanticChunker()
 
         self.artifact_extractor = ArtifactsExtractorLLM(
             llm=self.builder_llm,
@@ -77,5 +79,7 @@ class RAGUPipeline(RAGPipeline):
         docs = [doc.text for doc in documents if doc.text]
         asyncio.run(self.knowledge_graph.build_from_docs(docs))
 
-    def generate_answer(self, question: str) -> str:
-        return asyncio.run(self.local_search.a_query(question)).response # type: ignore
+    def generate_answer(self, question: str) -> tuple[str, Any]:
+        context = asyncio.run(self.local_search.a_search(question))
+        answer = asyncio.run(self.local_search.a_query(question)).response # type: ignore
+        return answer, context

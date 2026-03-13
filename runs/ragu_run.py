@@ -7,7 +7,7 @@ from ragu.models.embedder import EmbedderOpenAI
 from natural_rag.dataset import RAGDataset
 from natural_rag.pipelines.ragu_pipelines import RAGUPipeline
 
-dataset_name = 'bl_tiny'
+dataset_name = 'bl_medium'
 
 dataset = RAGDataset.load_from_dir(f'datasets/{dataset_name}')
 
@@ -25,6 +25,7 @@ client = CachedAsyncOpenAI(
     retry_times_sec=(2, 2, 2, 2, 2),
     cache='tmp/llm_cache',
     debug_errors_storage='tmp/llm_debug_cache',
+    max_completion_tokens=100_000,
 )
 
 pipeline = RAGUPipeline(
@@ -34,10 +35,10 @@ pipeline = RAGUPipeline(
     assistant_llm=LLMOpenAI(client, 'mistralai/mistral-medium-3'),
     embedder=EmbedderOpenAI(client, 'emb-qwen/qwen3-embedding-8b', dim=4096),
 )
-pipeline.build_index(documents=list(dataset.documents.values()))
+# pipeline.build_index(documents=list(dataset.documents.values()))
 
 for q_idx, question in enumerate(dataset.questions):
     answer_path = answers_dir / f'{q_idx}.txt'
     if not answer_path.exists():
-        answer = pipeline.generate_answer(question.text)
+        answer, _ = pipeline.generate_answer(question.text)
         answer_path.write_text(answer)

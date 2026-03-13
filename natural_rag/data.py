@@ -156,3 +156,22 @@ class CheckEvaluated(BaseModel):
     decision: bool = Field(description=(
         'Is this check true for the given answer? Yes or no.'
     ))
+
+
+class RAGAnswerAndEvals(BaseModel):
+    """Container for RAG assistant prompt, answer and evaluation.
+    
+    Typically one forms a dict from question index to RAGAnswerAndEvals.
+    """
+
+    prompt: str | None = Field(default=None, description=(
+        'Optional: a prompt passed into RAG assistant that generated the answer.'
+    ))
+
+    answer: str = Field(description=(
+        'RAG assistant answer.'
+    ))
+
+    evals: ChecklistEvaluated | None = Field(default=None, description=(
+        'Evaluated checklist for the answer.'
+    ))

@@ -11,5 +11,7 @@ dependencies = [
     "openai",
     "httpx[socks]",  # if using HTTP_PROXY with sentence_transformers
     "bigtree",
-    "graph-ragu @ git+https://github.com/sedol1339/RAGU.git@caching",
+    # "graph-ragu @ git+https://github.com/sedol1339/RAGU.git@caching",
+    "dash>=4.0.0",
+    "dash-bootstrap-components>=2.0.4",
 ]

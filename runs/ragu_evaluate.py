@@ -4,10 +4,12 @@ from pathlib import Path
 import sys
 from typing import cast, Any
 
+import yaml
+
 from ragu.models.llm import LLM, CachedAsyncOpenAI, LLMOpenAI
 import pandas as pd
 
-from natural_rag.data import ChecklistEvaluated, LLMJudgeEvalChecklist, Question
+from natural_rag.data import ChecklistEvaluated, LLMJudgeEvalChecklist, Question, RAGAnswerAndEvals
 from natural_rag.dataset import RAGDataset
 
 
@@ -45,7 +47,6 @@ Finally, I repeat the answer to evaluate: {{answer}}
 
 async def evaluate_with_llm_as_judge(question: Question, answer: str, llm: LLM) -> ChecklistEvaluated:
     assert question.eval_rules
-    question.eval_rules.model_dump_json
     
     return cast(ChecklistEvaluated, await llm.chat_completion(
         [
@@ -60,7 +61,7 @@ async def evaluate_with_llm_as_judge(question: Question, answer: str, llm: LLM) 
         output_schema=ChecklistEvaluated,
     ))
 
-dataset_name = 'bl_tiny'
+dataset_name = 'bl_medium'
 
 dataset = RAGDataset.load_from_dir(f'datasets/{dataset_name}')
 
@@ -85,6 +86,12 @@ answers = {
     for path in answers_dir.glob('*.txt')
 }
 
+answers = {
+    question_idx: answer
+    for question_idx, answer in answers.items()
+    if dataset.questions[question_idx].eval_rules is not None
+}
+
 async def run_evals() -> list[ChecklistEvaluated]:
     return await asyncio.gather(*[
         evaluate_with_llm_as_judge(
@@ -97,6 +104,16 @@ async def run_evals() -> list[ChecklistEvaluated]:
 
 evaluated = dict(zip(answers, asyncio.run(run_evals())))
 
+(answers_dir.parent / 'evals').mkdir(exist_ok=True, parents=True)
+for question_idx, evals in evaluated.items():
+    to_save = RAGAnswerAndEvals(
+        prompt=None,
+        answer=answers[question_idx],
+        evals=evals,
+    )
+    (answers_dir.parent / f'evals/{question_idx}.yaml').write_text(
+        yaml.dump(to_save.model_dump())
+    )
 
 df_rows: list[dict[str, Any]] = []
 
