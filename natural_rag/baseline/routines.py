@@ -1,4 +1,6 @@
 from __future__ import annotations
+import logging
+from pathlib import Path
 from typing import cast
 from collections import defaultdict
 from itertools import chain, islice
@@ -9,14 +11,47 @@ from ragu.models.llm import LLM
 
 from natural_rag.baseline.tree import TreeKnowledgeBase, Excerpt
 from natural_rag.baseline.prompts import (
-    CLARIFY_PROMPT, INSERT_PROMPT, BUILD_PROMPT, OPTIMIZE_PROMPT # , KEYWORDS_PROMPT
+    CLARIFY_PROMPT, INSERT_PROMPT, BUILD_PROMPT, OPTIMIZE_PROMPT, SPLITTING_PROMPT # , KEYWORDS_PROMPT
 )
 from natural_rag.baseline.struct import (
-    Change, Changes, EntriesList, Entry, Names #, Keywords
+    Change, Changes, EntriesList, Entry, Names, SplitDocument #, Keywords
 )
+from natural_rag.baseline.utils import redirect_to_stdout
 
+routines_logger = logging.getLogger("routines")
+routines_logger.propagate = False
+redirect_to_stdout(routines_logger)
 
 # llm routines
+
+async def split_large_document(llm: LLM, doc: str) -> list[tuple[str, str]]:
+    sections = doc.split('\n\n')
+    doc_with_marked_sections = '\n\n'.join([
+        f'(Sec {i})\n' + sec for i, sec in enumerate(sections)
+    ])
+    split_rules = cast(SplitDocument, await llm.chat_completion(
+        [{"role": "user", "content": SPLITTING_PROMPT.format(
+            document_with_marked_sections=doc_with_marked_sections,
+        )}],
+        output_schema=SplitDocument,
+    ))
+    if split_rules.parts is None:
+        return [('', doc)]
+
+    for part in split_rules.parts or []:
+        routines_logger.info(f'Extracted part: {part}')
+    
+    results: list[tuple[str, str]] = []
+    for part_idx, part_info in enumerate(split_rules.parts):
+        end_section_idx = (
+            split_rules.parts[part_idx + 1].starting_section_id
+            if part_idx != len(split_rules.parts) - 1
+            else None
+        )
+        part = '\n\n'.join(sections[part_info.starting_section_id:end_section_idx])
+        results.append((part_info.header, part))
+    
+    return results
 
 
 # async def extract_keywords(llm: LLM, doc: str) -> Keywords:
@@ -24,20 +59,21 @@ from natural_rag.baseline.struct import (
 #         [{"role": "user", "content": KEYWORDS_PROMPT.format(document=doc)}],
 #         output_schema=Keywords,
 #     ))
-#     print(f'Main keywords:', keywords.main)
-#     print(f'Additional keywords:', keywords.additional)
+#     logger.info(f'Main keywords:', keywords.main)
+#     logger.info(f'Additional keywords:', keywords.additional)
 #     return keywords
 
 
-async def extract_entries(llm: LLM, doc: str) -> list[Entry]:
+async def extract_entries(llm: LLM, doc: str, doc_header: str = '') -> list[Entry]:
     new_entries = cast(EntriesList, await llm.chat_completion(
         [{"role": "user", "content": BUILD_PROMPT.format(
+            document_metainfo=doc_header,
             document=doc,
             # excerpt_tree='\n'.join(excerpt.to_lines()),
         )}],
         output_schema=EntriesList,
     )).entries
-    print(f'Extracted {len(new_entries)} entries')
+    routines_logger.info(f'Extracted {len(new_entries)} entries')
     return new_entries
 
 
@@ -49,7 +85,7 @@ async def select_entries_of_interest(llm: LLM, new_entries: list[Entry], excerpt
         )}],
         output_schema=Names,
     )).names
-    print(f'{names_to_clarify=}')
+    routines_logger.info(f'{names_to_clarify=}')
     return names_to_clarify
 
 
@@ -88,7 +124,7 @@ async def refine_entries(
         'display.max_colwidth', None,
         'display.width', None,
     ):
-        print(diff_df)
+        routines_logger.info(diff_df)
 
     return refined_new_entries
 
@@ -122,7 +158,7 @@ async def propose_optimizations(llm: LLM, base: TreeKnowledgeBase, excerpt: Exce
         'display.max_colwidth', None,
         'display.width', None,
     ):
-        print(diff_df)
+        routines_logger.info(diff_df)
     
     return proposed_changes
 
@@ -145,7 +181,7 @@ async def propose_optimizations(llm: LLM, base: TreeKnowledgeBase, excerpt: Exce
 #         found_relevant_entries.items(),
 #         key=lambda item: -item[1]
 #     )[:50]
-#     print(f'Top relevant entries from keywords: {top_relevant_entries}')
+#     logger.info(f'Top relevant entries from keywords: {top_relevant_entries}')
 #     return [name for name, _score in top_relevant_entries]
 
 
@@ -160,7 +196,7 @@ def find_similar_entries(base: TreeKnowledgeBase, entries: list[Entry]) -> list[
         found_relevant_entries.items(),
         key=lambda item: -item[1]
     )[:50]
-    print(f'Top relevant entries: {top_relevant_entries}')
+    routines_logger.info(f'Top relevant entries: {top_relevant_entries}')
     return [name for name, _score in top_relevant_entries]
 
 
@@ -168,12 +204,12 @@ def insert_entries_inplace(base: TreeKnowledgeBase, new_entries: list[Entry]):
     for entry in new_entries:
         base.add_or_replace_entry(entry)
     base.check_if_entry_tree_valid()
-    print(f'Inserted/modified entries: {[entry.name for entry in new_entries]}')
+    routines_logger.info(f'Inserted/modified entries: {[entry.name for entry in new_entries]}')
 
 
 def get_random_excerpt(base: TreeKnowledgeBase, seed: int, n_seed_entries: int = 5, max_siblings: int = 20):
     seed_entries = np.random.default_rng(seed).choice(list(base._entries), n_seed_entries) # pyright: ignore[reportPrivateUsage]
-    print(f'Seed entries: {seed_entries}')
+    routines_logger.info(f'Seed entries: {seed_entries}')
     seed_entries_with_parents = list(set([
         e.name for e in chain(*[base.get_full_path(e) for e in seed_entries])
     ]))
@@ -181,7 +217,7 @@ def get_random_excerpt(base: TreeKnowledgeBase, seed: int, n_seed_entries: int =
         islice(base.get_siblings(e), max_siblings) for e in seed_entries_with_parents
     ])))
     excerpt = base.get_excerpt(all_entries_to_include)
-    print(f'Total excerpt lines: {len(excerpt.to_lines())}')
+    routines_logger.info(f'Total excerpt lines: {len(excerpt.to_lines())}')
     return excerpt
 
 

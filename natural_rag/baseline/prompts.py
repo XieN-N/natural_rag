@@ -55,6 +55,23 @@ quickly through the list of summaries. **Keywords** is a list of words of \
 phrases to perform semantic search.\
 """
 
+SPLITTING_PROMPT = f"""\
+I have a potentially large document, and want to split it into self-sufficient smaller \
+Documents. I will provide the document auto-splitted into sections, with additional \
+marks like (Sec (i)). You need to group it into several smalled documents \
+by indicating starting section index for each group. To give additional context, you \
+should provide a header for each group which describes what was said earlier.
+
+Each group should be around 3-4 pages of text. If there is no need to split, or splitting \
+is impossible without breaking formatting, return `parts=None`.
+
+The document:
+
+{{document_with_marked_sections}}
+
+<document end>\
+"""
+
 # KEYWORDS_PROMPT = f"""\
 # I have a document, and want to query relevant documents in a large database. \
 # I will provide the document, exctact keywords that may serve as search terms \
@@ -76,6 +93,8 @@ Return only list[Entry] as json. Try to achieve full document coverage, prefer t
 cite the document text without changes. Parent may be another returned entry or none. \
 Importantly: each entry should be at least a paragraph of text! Don't increase the \
 number of entries unnecessarily; instead, supplement the entry descriptions.
+
+Document metainfo (do not process): <metainfo>{{document_metainfo}}</metainfo>
 
 The document:
 
