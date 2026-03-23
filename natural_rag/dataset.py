@@ -151,7 +151,8 @@ class RAGDataset(BaseModel):
         )
 
         report_lines.append(f'Symbols: {len(joint_text)}')
-        report_lines.append(f'Words: {len(re.findall(r'\w+', joint_text))}')
+        word_count = len(re.findall(r"\w+", joint_text))
+        report_lines.append(f"Words: {word_count}")
         report_lines.append(
             f'Pages (assuming 1800 chars/page): {len(joint_text) // 1800}'
         )
