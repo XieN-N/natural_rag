@@ -61,106 +61,109 @@ async def evaluate_with_llm_as_judge(question: Question, answer: str, llm: LLM) 
         output_schema=ChecklistEvaluated,
     ))
 
-dataset_name = 'bl_medium'
+def create_judge_llm() -> LLMOpenAI:
+    return LLMOpenAI(
+        client=CachedAsyncOpenAI(
+            base_url=os.environ['OPENAI_BASE_URL'],
+            api_key=os.environ['OPENAI_API_KEY'],
+            rate_min_delay=2,
+            rate_max_simultaneous=10,
+            retry_times_sec=(2, 2, 2, 2, 2),
+            cache='tmp/judge_llm_cache',
+            debug_errors_storage='tmp/judge_llm_debug_cache',
+        ),
+        model_name=os.environ.get('JUDGE_MODEL_NAME', 'google/gemini-3.1-flash-lite-pre'),
+    )
 
-dataset = RAGDataset.load_from_dir(f'datasets/{dataset_name}')
 
-answers_dir = Path(f'generated/ragu_{dataset_name}/answers')
-
-
-judge_llm = LLMOpenAI(
-    client = CachedAsyncOpenAI(
-        base_url=os.environ['OPENAI_BASE_URL'],
-        api_key=os.environ['OPENAI_API_KEY'],
-        rate_min_delay=2,
-        rate_max_simultaneous=10,
-        retry_times_sec=(2, 2, 2, 2, 2),
-        cache='tmp/judge_llm_cache',
-        debug_errors_storage='tmp/judge_llm_debug_cache',
-    ),
-    model_name='google/gemini-3.1-flash-lite-pre',
-)
-
-answers = {
-    int(path.stem): path.read_text()
-    for path in answers_dir.glob('*.txt')
-}
-
-answers = {
-    question_idx: answer
-    for question_idx, answer in answers.items()
-    if dataset.questions[question_idx].eval_rules is not None
-}
-
-async def run_evals() -> list[ChecklistEvaluated]:
+async def run_evals(dataset: RAGDataset, answers: dict[int, str], llm: LLM) -> list[ChecklistEvaluated]:
     return await asyncio.gather(*[
         evaluate_with_llm_as_judge(
             question=dataset.questions[question_idx],
             answer=answer,
-            llm=judge_llm,
+            llm=llm,
         )
         for question_idx, answer in answers.items()
     ])
 
-evaluated = dict(zip(answers, asyncio.run(run_evals())))
+def run_benchmark_evaluation(dataset_name: str, answers_dir: Path) -> None:
+    dataset = RAGDataset.load_from_dir(f'datasets/{dataset_name}')
 
-(answers_dir.parent / 'evals').mkdir(exist_ok=True, parents=True)
-for question_idx, evals in evaluated.items():
-    to_save = RAGAnswerAndEvals(
-        prompt=None,
-        answer=answers[question_idx],
-        evals=evals,
-    )
-    (answers_dir.parent / f'evals/{question_idx}.yaml').write_text(
-        yaml.dump(to_save.model_dump())
-    )
+    answers = {
+        int(path.stem): path.read_text()
+        for path in answers_dir.glob('*.txt')
+    }
+    answers = {
+        question_idx: answer
+        for question_idx, answer in answers.items()
+        if dataset.questions[question_idx].eval_rules is not None
+    }
 
-df_rows: list[dict[str, Any]] = []
+    judge_llm = create_judge_llm()
+    evaluated = dict(zip(answers, asyncio.run(run_evals(dataset, answers, judge_llm))))
 
-for question_idx, answer in answers.items():
-    question = dataset.questions[question_idx]
-    evaluation = evaluated[question_idx]
-    assert question.eval_rules
+    (answers_dir.parent / 'evals').mkdir(exist_ok=True, parents=True)
+    for question_idx, evals in evaluated.items():
+        to_save = RAGAnswerAndEvals(
+            prompt=None,
+            answer=answers[question_idx],
+            evals=evals,
+        )
+        (answers_dir.parent / f'evals/{question_idx}.yaml').write_text(
+            yaml.dump(to_save.model_dump())
+        )
 
-    keys = set(question.eval_rules.checks.keys()) | set(evaluation.checks.keys())
-    for key in keys:
-        df_rows.append(row := {
-            'q_idx': question_idx,
-            'question': question.text.replace('\n', '\\n'),
-            'answer': answer.replace('\n', '\\n'),
-            'chk_idx': key,
+    df_rows: list[dict[str, Any]] = []
+
+    for question_idx, answer in answers.items():
+        question = dataset.questions[question_idx]
+        evaluation = evaluated[question_idx]
+        assert question.eval_rules
+
+        keys = set(question.eval_rules.checks.keys()) | set(evaluation.checks.keys())
+        for key in keys:
+            df_rows.append(row := {
+                'q_idx': question_idx,
+                'question': question.text.replace('\n', '\\n'),
+                'answer': answer.replace('\n', '\\n'),
+                'chk_idx': key,
+            })
+            if (check := question.eval_rules.checks.get(key, None)) is not None:
+                row |= check
+                if check.score < 0:
+                    row['check_type'] = 'penalty'
+                elif check.score == 0:
+                    row['check_type'] = 'ignore'
+                else:
+                    row['check_type'] = 'reward'
+            if (check_eval := evaluation.checks.get(key, None)) is not None:
+                row |= check_eval
+
+    df = pd.DataFrame(df_rows)
+
+    summary_df_rows: list[dict[str, Any]] = []
+
+    for (q_idx, question, answer), group in df.groupby(['q_idx', 'question', 'answer']):
+        max_score = sum([x for x in group['score'] if x > 0])
+        actual_score = group['score'][group['decision']].sum()
+        score_ratio = actual_score / max_score
+        summary_df_rows.append({
+            'q_idx': q_idx,
+            'score_ratio': score_ratio,
+            'max_score': max_score,
+            'actual_score': actual_score,
+            'question': question,
+            'answer': answer,
         })
-        if (check := question.eval_rules.checks.get(key, None)) is not None:
-            row |= check
-            if check.score < 0:
-                row['check_type'] = 'penalty'
-            elif check.score == 0:
-                row['check_type'] = 'ignore'
-            else:
-                row['check_type'] = 'reward'
-        if (check_eval := evaluation.checks.get(key, None)) is not None:
-            row |= check_eval
 
-df = pd.DataFrame(df_rows)
+    summary_df = pd.DataFrame(summary_df_rows)
+
+    df.to_csv(answers_dir.parent / 'evals.csv', index=False)
+    summary_df.to_csv(answers_dir.parent / 'evals_summary.csv', index=False)
 
 
-summary_df_rows: list[dict[str, Any]] = []
-
-for (q_idx, question, answer), group in df.groupby(['q_idx', 'question', 'answer']):
-    max_score = sum([x for x in group['score'] if x > 0])
-    actual_score = group['score'][group['decision']].sum()
-    score_ratio = actual_score / max_score
-    summary_df_rows.append({
-        'q_idx': q_idx,
-        'score_ratio': score_ratio,
-        'max_score': max_score,
-        'actual_score': actual_score,
-        'question': question,
-        'answer': answer,
-    })
-
-summary_df = pd.DataFrame(summary_df_rows)
-
-
-df.to_csv(answers_dir.parent / 'evals.csv', index=False)
-summary_df.to_csv(answers_dir.parent / 'evals_summary.csv', index=False)
+if __name__ == '__main__':
+    run_benchmark_evaluation(
+        dataset_name='bl_medium',
+        answers_dir=Path('generated/ragu_bl_medium/answers'),
+    )
