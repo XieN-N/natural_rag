@@ -141,7 +141,8 @@ class RAGDataset(BaseModel):
         - `answer` (optional)
         - `related_pages` (optional list of doc ids)
         - `metadata` (optional dict)
-        - `id` (optional, saved in metadata)
+        - `id` (optional, saved in metadata if metadata does not
+          already have `id`)
 
         Expected fields in documents JSONL:
         - `id` (required)
@@ -173,14 +174,22 @@ class RAGDataset(BaseModel):
                 try:
                     parsed = json.loads(line)
                 except json.JSONDecodeError as e:
+                    snippet = line[:120].replace('\n', '\\n')
                     raise ValueError(
-                        f'Invalid JSONL line in {path} at line {line_idx}'
+                        f'Invalid JSONL line in {path} at line {line_idx}: {snippet}'
                     ) from e
                 if not isinstance(parsed, dict):
                     raise ValueError(
                         f'JSONL entry in {path} at line {line_idx} is not an object'
                     )
                 yield parsed
+
+        def merge_metadata_with_raw(
+            metadata: dict,
+            raw: dict,
+        ) -> dict:
+            # Keep explicit metadata values from the `metadata` field for duplicate keys.
+            return raw | metadata
 
         docs_path = find_jsonl_file(docs_jsonl_path, 'documents')
         questions_path = find_jsonl_file(questions_jsonl_path, 'questions')
@@ -192,7 +201,8 @@ class RAGDataset(BaseModel):
             raw_doc = dict(raw_doc)
             doc_id = str(raw_doc.pop('id'))
             text = raw_doc.pop('text', None)
-            source_ext = str(raw_doc.pop('source_ext', ''))
+            source_ext_raw = raw_doc.pop('source_ext', None)
+            source_ext = '' if source_ext_raw is None else str(source_ext_raw)
             title = raw_doc.pop('title', None)
             metadata = raw_doc.pop('metadata', {})
             if metadata is None:
@@ -201,7 +211,7 @@ class RAGDataset(BaseModel):
                 raise ValueError(f'Document metadata must be an object for doc_id={doc_id}')
             if title is None and isinstance(metadata.get('title'), str):
                 title = metadata['title']
-            metadata = metadata | raw_doc
+            metadata = merge_metadata_with_raw(metadata=metadata, raw=raw_doc)
             docs.append(Document(
                 id=doc_id,
                 title=title,
@@ -214,7 +224,10 @@ class RAGDataset(BaseModel):
         for raw_question in iter_jsonl(questions_path):
             raw_question = dict(raw_question)
             q_id = raw_question.pop('id', None)
-            text = raw_question.pop('question', raw_question.pop('text', None))
+            if 'question' in raw_question:
+                text = raw_question.pop('question')
+            else:
+                text = raw_question.pop('text', None)
             if text is None:
                 raise ValueError(f'Question entry has no "question" / "text": {raw_question}')
 
@@ -231,6 +244,8 @@ class RAGDataset(BaseModel):
                 ref_answers = [str(x) for x in ref_answers]
 
             related_pages = raw_question.pop('related_pages', None)
+            if isinstance(related_pages, str):
+                related_pages = [related_pages]
             relevant = (
                 [{'doc_id': str(doc_id)} for doc_id in related_pages]
                 if related_pages is not None
@@ -241,10 +256,13 @@ class RAGDataset(BaseModel):
             if metadata is None:
                 metadata = {}
             if not isinstance(metadata, dict):
-                raise ValueError(f'Question metadata must be an object for question id={q_id}')
+                q_id_for_err = '<missing>' if q_id is None else str(q_id)
+                raise ValueError(
+                    f'Question metadata must be an object for question id={q_id_for_err}'
+                )
+            metadata = merge_metadata_with_raw(metadata=metadata, raw=raw_question)
             if q_id is not None:
-                metadata = {'id': str(q_id)} | metadata
-            metadata = metadata | raw_question
+                metadata.setdefault('id', str(q_id))
 
             qa.append(Question.model_validate({
                 'text': text,
