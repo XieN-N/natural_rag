@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+import json
 from typing import Self
 import re
 
@@ -119,6 +120,145 @@ class RAGDataset(BaseModel):
                 if (path := ROOT_DIR / sources_dir / rel_path).exists():
                     doc.source = path.read_bytes()
         
+        return cls(
+            documents={doc.id: doc for doc in docs},
+            questions=qa,
+        )
+
+    @classmethod
+    def load_multiq_chegeka_jsonl_from_dir(
+        cls,
+        dir: str | Path,
+        load_sources: bool = False,
+        docs_jsonl_path: str | None = None,
+        questions_jsonl_path: str | None = None,
+        sources_dir: str = 'sources',
+    ) -> Self:
+        """Loads multiq/chegeka-style datasets from JSONL files.
+
+        Expected fields in questions JSONL:
+        - `question` (required)
+        - `answer` (optional)
+        - `related_pages` (optional list of doc ids)
+        - `metadata` (optional dict)
+        - `id` (optional, saved in metadata)
+
+        Expected fields in documents JSONL:
+        - `id` (required)
+        - `text` (optional)
+        - `metadata` (optional dict)
+        - `title` (optional, if missing may be read from metadata.title)
+        """
+
+        ROOT_DIR = Path(dir)
+
+        def find_jsonl_file(explicit: str | None, prefix: str) -> Path:
+            if explicit is not None:
+                return ROOT_DIR / explicit
+            candidates = sorted(ROOT_DIR.glob(f'{prefix}*.jsonl'))
+            if len(candidates) == 1:
+                return candidates[0]
+            if (default_candidate := ROOT_DIR / f'{prefix}.jsonl').exists():
+                return default_candidate
+            raise FileNotFoundError(
+                f'Could not uniquely resolve {prefix} JSONL in {ROOT_DIR}. '
+                f'Found candidates: {[x.name for x in candidates]}'
+            )
+
+        def iter_jsonl(path: Path):
+            for line_idx, line in enumerate(path.read_text().splitlines(), start=1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    parsed = json.loads(line)
+                except json.JSONDecodeError as e:
+                    raise ValueError(
+                        f'Invalid JSONL line in {path} at line {line_idx}'
+                    ) from e
+                if not isinstance(parsed, dict):
+                    raise ValueError(
+                        f'JSONL entry in {path} at line {line_idx} is not an object'
+                    )
+                yield parsed
+
+        docs_path = find_jsonl_file(docs_jsonl_path, 'documents')
+        questions_path = find_jsonl_file(questions_jsonl_path, 'questions')
+
+        docs: list[Document] = []
+        for raw_doc in iter_jsonl(docs_path):
+            if 'id' not in raw_doc:
+                raise ValueError(f'Document entry has no "id": {raw_doc}')
+            raw_doc = dict(raw_doc)
+            doc_id = str(raw_doc.pop('id'))
+            text = raw_doc.pop('text', None)
+            source_ext = str(raw_doc.pop('source_ext', ''))
+            title = raw_doc.pop('title', None)
+            metadata = raw_doc.pop('metadata', {})
+            if metadata is None:
+                metadata = {}
+            if not isinstance(metadata, dict):
+                raise ValueError(f'Document metadata must be an object for doc_id={doc_id}')
+            if title is None and isinstance(metadata.get('title'), str):
+                title = metadata['title']
+            metadata = metadata | raw_doc
+            docs.append(Document(
+                id=doc_id,
+                title=title,
+                text=text,
+                source_ext=source_ext,
+                metadata=metadata,
+            ))
+
+        qa: list[Question] = []
+        for raw_question in iter_jsonl(questions_path):
+            raw_question = dict(raw_question)
+            q_id = raw_question.pop('id', None)
+            text = raw_question.pop('question', raw_question.pop('text', None))
+            if text is None:
+                raise ValueError(f'Question entry has no "question" / "text": {raw_question}')
+
+            ref_answers = raw_question.pop('reference_answers', None)
+            if ref_answers is None:
+                answer = raw_question.pop('answer', None)
+                if answer is None:
+                    ref_answers = []
+                else:
+                    ref_answers = [str(answer)]
+            elif isinstance(ref_answers, str):
+                ref_answers = [ref_answers]
+            else:
+                ref_answers = [str(x) for x in ref_answers]
+
+            related_pages = raw_question.pop('related_pages', None)
+            relevant = (
+                [{'doc_id': str(doc_id)} for doc_id in related_pages]
+                if related_pages is not None
+                else None
+            )
+
+            metadata = raw_question.pop('metadata', {})
+            if metadata is None:
+                metadata = {}
+            if not isinstance(metadata, dict):
+                raise ValueError(f'Question metadata must be an object for question id={q_id}')
+            if q_id is not None:
+                metadata = {'id': str(q_id)} | metadata
+            metadata = metadata | raw_question
+
+            qa.append(Question.model_validate({
+                'text': text,
+                'reference_answers': ref_answers,
+                'relevant': relevant,
+                'metadata': metadata,
+            }))
+
+        if load_sources:
+            for doc in docs:
+                rel_path = f'{doc.id}{doc.source_ext}'
+                if (path := ROOT_DIR / sources_dir / rel_path).exists():
+                    doc.source = path.read_bytes()
+
         return cls(
             documents={doc.id: doc for doc in docs},
             questions=qa,
