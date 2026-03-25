@@ -130,41 +130,16 @@ class RAGDataset(BaseModel):
         cls,
         dir: str | Path,
         load_sources: bool = False,
-        docs_jsonl_path: str | None = None,
-        questions_jsonl_path: str | None = None,
         sources_dir: str = 'sources',
     ) -> Self:
-        """Loads multiq/chegeka-style datasets from JSONL files.
+        """Loads multiq/chegeka datasets from JSONL files in the given folder.
 
-        Expected fields in questions JSONL:
-        - `question` (required)
-        - `answer` (optional)
-        - `related_pages` (optional list of doc ids)
-        - `metadata` (optional dict)
-        - `id` (optional, saved in metadata if metadata does not
-          already have `id`)
-
-        Expected fields in documents JSONL:
-        - `id` (required)
-        - `text` (optional)
-        - `metadata` (optional dict)
-        - `title` (optional, if missing may be read from metadata.title)
+        The directory must contain exactly one of the supported pairs:
+        - documents_multiq.jsonl + questions_multiq.jsonl
+        - documents_chegeka.jsonl + questions_chegeka.jsonl
         """
 
         ROOT_DIR = Path(dir)
-
-        def find_jsonl_file(explicit: str | None, prefix: str) -> Path:
-            if explicit is not None:
-                return ROOT_DIR / explicit
-            candidates = sorted(ROOT_DIR.glob(f'{prefix}*.jsonl'))
-            if len(candidates) == 1:
-                return candidates[0]
-            if (default_candidate := ROOT_DIR / f'{prefix}.jsonl').exists():
-                return default_candidate
-            raise FileNotFoundError(
-                f'Could not uniquely resolve {prefix} JSONL in {ROOT_DIR}. '
-                f'Found candidates: {[x.name for x in candidates]}'
-            )
 
         def iter_jsonl(path: Path):
             for line_idx, line in enumerate(path.read_text().splitlines(), start=1):
@@ -191,8 +166,24 @@ class RAGDataset(BaseModel):
             # Keep explicit metadata values from the `metadata` field for duplicate keys.
             return raw | metadata
 
-        docs_path = find_jsonl_file(docs_jsonl_path, 'documents')
-        questions_path = find_jsonl_file(questions_jsonl_path, 'questions')
+        multiq_docs_path = ROOT_DIR / 'documents_multiq.jsonl'
+        multiq_questions_path = ROOT_DIR / 'questions_multiq.jsonl'
+        chegeka_docs_path = ROOT_DIR / 'documents_chegeka.jsonl'
+        chegeka_questions_path = ROOT_DIR / 'questions_chegeka.jsonl'
+
+        if multiq_docs_path.exists() and multiq_questions_path.exists():
+            docs_path = multiq_docs_path
+            questions_path = multiq_questions_path
+        elif chegeka_docs_path.exists() and chegeka_questions_path.exists():
+            docs_path = chegeka_docs_path
+            questions_path = chegeka_questions_path
+        else:
+            raise FileNotFoundError(
+                'Dataset directory must contain either '
+                'documents_multiq.jsonl + questions_multiq.jsonl '
+                'or documents_chegeka.jsonl + questions_chegeka.jsonl. '
+                f'Got directory: {ROOT_DIR}'
+            )
 
         docs: list[Document] = []
         for raw_doc in iter_jsonl(docs_path):
