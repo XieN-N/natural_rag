@@ -126,17 +126,17 @@ class RAGDataset(BaseModel):
         )
 
     @classmethod
-    def load_multiq_chegeka_jsonl_from_dir(
+    def load_jsonl_from_dir(
         cls,
         dir: str | Path,
         load_sources: bool = False,
         sources_dir: str = 'sources',
     ) -> Self:
-        """Loads multiq/chegeka datasets from JSONL files in the given folder.
+        """Loads dataset from JSONL files in the given folder.
 
-        The directory must contain exactly one of the supported pairs:
-        - documents_multiq.jsonl + questions_multiq.jsonl
-        - documents_chegeka.jsonl + questions_chegeka.jsonl
+        The directory must contain:
+        - one file matching `documents_*.jsonl`
+        - one file matching `questions_*.jsonl`
         """
 
         ROOT_DIR = Path(dir)
@@ -166,24 +166,16 @@ class RAGDataset(BaseModel):
             # `raw` are top-level JSON fields; values from `metadata` override duplicates.
             return raw | metadata
 
-        multiq_docs_path = ROOT_DIR / 'documents_multiq.jsonl'
-        multiq_questions_path = ROOT_DIR / 'questions_multiq.jsonl'
-        chegeka_docs_path = ROOT_DIR / 'documents_chegeka.jsonl'
-        chegeka_questions_path = ROOT_DIR / 'questions_chegeka.jsonl'
-
-        if multiq_docs_path.exists() and multiq_questions_path.exists():
-            docs_path = multiq_docs_path
-            questions_path = multiq_questions_path
-        elif chegeka_docs_path.exists() and chegeka_questions_path.exists():
-            docs_path = chegeka_docs_path
-            questions_path = chegeka_questions_path
-        else:
+        doc_candidates = sorted(ROOT_DIR.glob('documents_*.jsonl'))
+        question_candidates = sorted(ROOT_DIR.glob('questions_*.jsonl'))
+        if len(doc_candidates) != 1 or len(question_candidates) != 1:
             raise FileNotFoundError(
-                'Dataset directory must contain either '
-                'documents_multiq.jsonl + questions_multiq.jsonl '
-                'or documents_chegeka.jsonl + questions_chegeka.jsonl. '
-                f'Got directory: {ROOT_DIR}'
+                'Dataset directory must contain exactly one documents_*.jsonl '
+                f'and one questions_*.jsonl file. Got docs={len(doc_candidates)}, '
+                f'questions={len(question_candidates)} in {ROOT_DIR}'
             )
+        docs_path = doc_candidates[0]
+        questions_path = question_candidates[0]
 
         docs: list[Document] = []
         for raw_doc in iter_jsonl(docs_path):

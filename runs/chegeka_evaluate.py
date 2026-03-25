@@ -64,7 +64,7 @@ async def evaluate_with_llm_as_judge(question: Question, answer: str, llm: LLM) 
 
 dataset_name = 'chegeka'
 
-dataset = RAGDataset.load_multiq_chegeka_jsonl_from_dir(f'datasets/{dataset_name}')
+dataset = RAGDataset.load_jsonl_from_dir(f'datasets/{dataset_name}')
 
 answers_dir = Path(f'generated/ragu_{dataset_name}/answers')
 
