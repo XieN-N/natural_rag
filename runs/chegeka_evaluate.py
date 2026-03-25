@@ -162,7 +162,7 @@ summary_df_rows: list[dict[str, Any]] = []
 for (q_idx, question, answer), group in df.groupby(['q_idx', 'question', 'answer']):
     max_score = sum([x for x in group['score'] if x > 0])
     actual_score = group['score'][group['decision']].sum()
-    score_ratio = actual_score / max_score
+    score_ratio = actual_score / max_score if max_score else 0
     summary_df_rows.append({
         'q_idx': q_idx,
         'score_ratio': score_ratio,

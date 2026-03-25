@@ -163,7 +163,7 @@ class RAGDataset(BaseModel):
             metadata: dict,
             raw: dict,
         ) -> dict:
-            # Keep explicit metadata values from the `metadata` field for duplicate keys.
+            # `raw` are top-level JSON fields; values from `metadata` override duplicates.
             return raw | metadata
 
         multiq_docs_path = ROOT_DIR / 'documents_multiq.jsonl'
