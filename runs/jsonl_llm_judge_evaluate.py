@@ -102,7 +102,12 @@ def _read_answers_file(answers_dir: Path, answers_pattern: str) -> dict[str, str
         rag_answer = item['rag_answer']
         assert isinstance(question_text, str)
         assert isinstance(rag_answer, str)
-        answers_by_question.setdefault(question_text, rag_answer)
+        if question_text in answers_by_question:
+            ragu_logger.warning(
+                f'Duplicate question in answers file, keeping first occurrence: {question_text}'
+            )
+            continue
+        answers_by_question[question_text] = rag_answer
 
     return answers_by_question
 
