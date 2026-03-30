@@ -1,12 +1,13 @@
 from __future__ import annotations
 from pathlib import Path
+import json
 from typing import Self
 import re
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
-from natural_rag.data import Question, Document
+from natural_rag.data import Question, Document, SourceLoc
 
 
 class RAGDataset(BaseModel):
@@ -119,6 +120,132 @@ class RAGDataset(BaseModel):
                 if (path := ROOT_DIR / sources_dir / rel_path).exists():
                     doc.source = path.read_bytes()
         
+        return cls(
+            documents={doc.id: doc for doc in docs},
+            questions=qa,
+        )
+
+    @classmethod
+    def load_jsonl_from_dir(
+        cls,
+        dir: str | Path,
+        load_sources: bool = False,
+        sources_dir: str = 'sources',
+    ) -> Self:
+        """Loads dataset from JSONL files in the given folder.
+
+        The directory must contain:
+        - one file matching `documents_*.jsonl`
+        - one file matching `questions_*.jsonl`
+        """
+
+        ROOT_DIR = Path(dir)
+
+        def iter_jsonl(path: Path):
+            for line_idx, line in enumerate(path.read_text(encoding='utf-8').splitlines(), start=1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    parsed = json.loads(line)
+                except json.JSONDecodeError as e:
+                    snippet = line[:120].replace('\n', '\\n')
+                    raise ValueError(
+                        f'Invalid JSONL line in {path} at line {line_idx}: {snippet}'
+                    ) from e
+                if not isinstance(parsed, dict):
+                    raise ValueError(
+                        f'JSONL entry in {path} at line {line_idx} is not an object'
+                    )
+                yield parsed
+
+        def merge_metadata_with_raw(
+            metadata: dict,
+            raw: dict,
+        ) -> dict:
+            # `raw` are top-level JSON fields; values from `metadata` override duplicates.
+            return raw | metadata
+
+        doc_candidates = sorted(ROOT_DIR.glob('documents_*.jsonl'))
+        question_candidates = sorted(ROOT_DIR.glob('questions_*.jsonl'))
+        if len(doc_candidates) != 1 or len(question_candidates) != 1:
+            raise FileNotFoundError(
+                'Dataset directory must contain exactly one documents_*.jsonl '
+                f'and one questions_*.jsonl file. Got docs={len(doc_candidates)}, '
+                f'questions={len(question_candidates)} in {ROOT_DIR}'
+            )
+        docs_path = doc_candidates[0]
+        questions_path = question_candidates[0]
+
+        docs: list[Document] = []
+        for raw_doc in iter_jsonl(docs_path):
+            if 'id' not in raw_doc:
+                raise ValueError(f'Document entry has no "id": {raw_doc}')
+            raw_doc = dict(raw_doc)
+            doc_id = str(raw_doc.pop('id'))
+            text = raw_doc.pop('text', None)
+            source_ext_raw = raw_doc.pop('source_ext', None)
+            source_ext = '' if source_ext_raw is None else str(source_ext_raw)
+            title = raw_doc.pop('title', None)
+            metadata = raw_doc.pop('metadata', {})
+            if metadata is None:
+                metadata = {}
+            if not isinstance(metadata, dict):
+                raise ValueError(f'Document metadata must be an object for doc_id={doc_id}')
+            if title is None and isinstance(metadata.get('title'), str):
+                title = metadata['title']
+            metadata = merge_metadata_with_raw(metadata=metadata, raw=raw_doc)
+            docs.append(Document(
+                id=doc_id,
+                title=title,
+                text=text,
+                source_ext=source_ext,
+                metadata=metadata,
+            ))
+
+        qa: list[Question] = []
+        for raw_question in iter_jsonl(questions_path):
+            raw_question = dict(raw_question)
+            q_id = raw_question.pop('id', None)
+            text = raw_question.pop('question', None)
+            if text is None:
+                raise ValueError(f'Question entry has no "question" / "text": {raw_question}')
+
+            answer = raw_question.pop('answer', None)
+            ref_answers = [str(answer)] if answer is not None else []
+
+            related_pages = raw_question.pop('related_pages', None)
+            if isinstance(related_pages, str):
+                related_pages = [related_pages]
+            relevant = [
+                 SourceLoc(doc_id=doc_id, loc=None) for doc_id in related_pages
+            ] if related_pages is not None else list()
+
+            metadata = raw_question.pop('metadata', {})
+            if metadata is None:
+                metadata = {}
+            if not isinstance(metadata, dict):
+                q_id_for_err = '<missing>' if q_id is None else str(q_id)
+                raise ValueError(
+                    f'Question metadata must be an object for question id={q_id_for_err}'
+                )
+            metadata = merge_metadata_with_raw(metadata=metadata, raw=raw_question)
+            if q_id is not None:
+                metadata.setdefault('id', str(q_id))
+
+            qa.append(Question.model_validate({
+                'text': text,
+                'reference_answers': ref_answers,
+                'relevant': relevant,
+                'metadata': metadata,
+            }))
+
+        if load_sources:
+            for doc in docs:
+                rel_path = f'{doc.id}{doc.source_ext}'
+                if (path := ROOT_DIR / sources_dir / rel_path).exists():
+                    doc.source = path.read_bytes()
+
         return cls(
             documents={doc.id: doc for doc in docs},
             questions=qa,
