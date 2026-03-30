@@ -7,7 +7,7 @@ import re
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
-from natural_rag.data import Question, Document
+from natural_rag.data import Question, Document, SourceLoc
 
 
 class RAGDataset(BaseModel):
@@ -142,7 +142,7 @@ class RAGDataset(BaseModel):
         ROOT_DIR = Path(dir)
 
         def iter_jsonl(path: Path):
-            for line_idx, line in enumerate(path.read_text().splitlines(), start=1):
+            for line_idx, line in enumerate(path.read_text(encoding='utf-8').splitlines(), start=1):
                 line = line.strip()
                 if not line:
                     continue
@@ -207,33 +207,19 @@ class RAGDataset(BaseModel):
         for raw_question in iter_jsonl(questions_path):
             raw_question = dict(raw_question)
             q_id = raw_question.pop('id', None)
-            if 'question' in raw_question:
-                text = raw_question.pop('question')
-            else:
-                text = raw_question.pop('text', None)
+            text = raw_question.pop('question', None)
             if text is None:
                 raise ValueError(f'Question entry has no "question" / "text": {raw_question}')
 
-            ref_answers = raw_question.pop('reference_answers', None)
-            if ref_answers is None:
-                answer = raw_question.pop('answer', None)
-                if answer is None:
-                    ref_answers = []
-                else:
-                    ref_answers = [str(answer)]
-            elif isinstance(ref_answers, str):
-                ref_answers = [ref_answers]
-            else:
-                ref_answers = [str(x) for x in ref_answers]
+            answer = raw_question.pop('answer', None)
+            ref_answers = [str(answer)] if answer is not None else []
 
             related_pages = raw_question.pop('related_pages', None)
             if isinstance(related_pages, str):
                 related_pages = [related_pages]
-            relevant = (
-                [{'doc_id': str(doc_id)} for doc_id in related_pages]
-                if related_pages is not None
-                else None
-            )
+            relevant = [
+                 SourceLoc(doc_id=doc_id, loc=None) for doc_id in related_pages
+            ] if related_pages is not None else list()
 
             metadata = raw_question.pop('metadata', {})
             if metadata is None:
