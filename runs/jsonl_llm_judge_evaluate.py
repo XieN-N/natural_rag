@@ -121,7 +121,7 @@ def _read_answers_file(answers_dir: Path, answers_pattern: str) -> dict[str, str
 
 
 def run_benchmark_evaluation(dataset_name: str, answers_pattern: str) -> None:
-    dataset = RAGDataset.load_jsonl_from_dir(f'datasets/{dataset_name}')
+    dataset = RAGDataset.load_auto(f'datasets/{dataset_name}')
     answers_dir = Path(f'generated/ragu_{dataset_name}/answers')
 
     ragu_logger.info(f'Loading answers for {dataset_name} from {answers_dir} ({answers_pattern})')

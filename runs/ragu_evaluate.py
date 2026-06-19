@@ -61,11 +61,16 @@ async def evaluate_with_llm_as_judge(question: Question, answer: str, llm: LLM) 
         output_schema=ChecklistEvaluated,
     ))
 
-dataset_name = 'bl_medium'
+import argparse
 
-dataset = RAGDataset.load_from_dir(f'datasets/{dataset_name}')
+parser = argparse.ArgumentParser()
+parser.add_argument("--dataset-name", default="bl_medium")
+parser.add_argument("--answers-dir", type=Path, default=None)
+args = parser.parse_args()
 
-answers_dir = Path(f'generated/ragu_{dataset_name}/answers')
+dataset = RAGDataset.load_auto(f'datasets/{args.dataset_name}')
+
+answers_dir = args.answers_dir or Path(f'generated/ragu_{args.dataset_name}/answers')
 
 
 judge_llm = LLMOpenAI(
