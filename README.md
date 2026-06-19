@@ -1,116 +1,165 @@
-# Requirements
+# natural_rag
+
+A research framework for running Retrieval-Augmented Generation (RAG) pipelines — primarily GraphRAG — on diverse question-answering benchmarks.
+
+## Project Structure
 
 ```
-pip install neomodel pydantic PyYAML
+natural_rag/
+├── natural_rag/           # Python package
+│   ├── dataset.py         # Dataset loading (YAML, JSONL, JSON auto-detect)
+│   ├── data.py            # Data model
+│   ├── dashboard.py       # Dash-based result viewer
+│   ├── baseline/          # Baseline RAG implementations
+│   └── pipelines/         # RAG pipeline wrappers (RAGUPipeline, etc.)
+├── runs/                  # Run scripts for various RAG engines
+├── datasets/              # Benchmark datasets (bl_tiny, bl, musique, etc.)
+├── generated/             # Output: indexes + answers
+├── src/                   # Vendored dependencies (graph-ragu)
+├── build/                 # Build artifacts
+└── pyproject.toml
 ```
 
-# Loading the dataset
+## Setup
 
+```bash
+# Install base framework (without RAGU)
+uv pip install -e .
+
+# Install with RAGU — the primary engine (recommended)
+uv pip install -e ".[ragu]"
 ```
+
+Requires Python 3.12+. Base dependencies: `openai`, `pydantic`, `httpx[socks]`, `dash`, etc.
+Add `.[ragu]` to also install RAGU (`graph-ragu`) from GitHub — see [Engine-Specific Dependencies](#engine-specific-dependencies) for other engines.
+
+## Datasets
+
+Datasets live in `datasets/`. Supported formats:
+
+| Format | Files | Example |
+|--------|-------|---------|
+| YAML   | `corpus_info.yaml` + `questions.yaml` + `docs/` | `bl_tiny/` |
+| JSONL  | `corpus.jsonl` + `questions.jsonl` | `bioasq/` |
+| JSON   | Single `.json` file | `2wikimultihopqa/` |
+
+Load any dataset with:
+
+```python
 from natural_rag.dataset import RAGDataset
-dataset = RAGDataset.load_from_dir('datasets/bl')
-print(dataset)
+dataset = RAGDataset.load_auto("datasets/bl_tiny")
 ```
 
-```
-RAGDataset(752 documents, 109 questions, 97 questions with answers)
-```
+## Running RAGU
 
-```
-print(dataset.report_stats())
-```
+The primary run script is `runs/ragu_run.py`. See [runs/README.md](runs/README.md) for full usage.
 
-```
-Total documents: 752
-Shortest documents in symbols: [59, 59, 59, 59, 59]
-Longest documents in symbols: [73440, 45060, 42362, 25090, 23764]
-Symbols: 2104247
-Words: 309256
-Pages (assuming 1800 chars/page): 1169
-Total questions: 109
-Total questions with answers: 97
-Min relevant docs per question: 0
-Max relevant docs per question: 13
-N docs without questions: 610
-```
+Quick start with local embedding server + OpenAI-compatible LLM:
 
-# Installing Neo4j
+```bash
+export OPENAI_BASE_URL="https://api.vsellm.ru/v1"
+export EMBED_BASE_URL="http://127.0.0.1:8080/v1"
+export OPENAI_API_KEY="your-key"
+export LLM_MODEL="qwen/qwen3-vl-8b-instruct"
+export EMBED_MODEL="/data"
+export EMBEDDING_DIM="768"
 
-```
-# 1. Installation and starting
-wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
-echo 'deb https://debian.neo4j.com stable latest' | sudo tee /etc/apt/sources.list.d/neo4j.list
-sudo apt-get update
-sudo apt-get install neo4j
-sudo systemctl enable neo4j
-sudo systemctl start neo4j
-sudo systemctl status neo4j
-
-# 1. Setting password
-cypher-shell
-# enter default user: neo4j, pass: neo4j, set pass to: rag12345
-
-# 2. Installing APOC
-# version table: https://github.com/neo4j/apoc/releases
-cd /var/lib/neo4j/plugins
-sudo wget https://github.com/neo4j/apoc/releases/download/5.15.0/apoc-5.15.0-core.jar
-sudo chown neo4j:neo4j /var/lib/neo4j/plugins/*.jar
-sudo chmod 755 /var/lib/neo4j/plugins/*.jar
-
-# In /etc/neo4j/neo4j.conf add lines:
-dbms.security.procedures.unrestricted=apoc.*
-dbms.security.procedures.allowlist=apoc.*
-server.default_listen_address=0.0.0.0
-
-# Save changes in the file and restart neo4j:
-sudo systemctl restart neo4j
-
-# Check if Neo4j shell with APOC is working:
-cypher-shell -u neo4j -p ragu1234
-# Issue the command: RETURN apoc.version();
-# Ctrl-C
-
-# Set env vars:
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=rag12345
+uv run python runs/ragu_run.py \
+  --dataset-path datasets/bl_tiny \
+  --output-dir generated/ragu_bl_tiny \
+  --no-build-index \
+  --answer \
+  --query-engine query_plan \
+  --embed-batch-size 32
 ```
 
-# Save the dataset to Neo4j
+## Evaluation
 
-```
-import os
-import sys
+```bash
+# Checklist-based evaluation
+uv run python runs/ragu_evaluate.py \
+  --dataset-name bl_tiny \
+  --answers-dir generated/ragu_bl_tiny/answers
 
-from neomodel import config
-
-sys.path.append('/home/oleg/rag_workspace/natural_rag')
-from natural_rag.data_neo4j import ingest_rag_dataset_to_neo4j
-from natural_rag.dataset import RAGDataset
-
-dataset = RAGDataset.load_from_dir('natural_rag/datasets/bl', load_sources=True)
-print(dataset)
-
-NEO4J_URI = os.environ['NEO4J_URI']
-NEO4J_USERNAME = os.environ['NEO4J_USERNAME']
-NEO4J_PASSWORD = os.environ['NEO4J_PASSWORD']
-config.DATABASE_URL = NEO4J_URI.replace('bolt://', f'bolt://{NEO4J_USERNAME}:{NEO4J_PASSWORD}@')
-print(config.DATABASE_URL)
-
-ingest_rag_dataset_to_neo4j(dataset)
+# LLM-as-judge evaluation  
+uv run python runs/jsonl_llm_judge_evaluate.py \
+  --dataset-name bl_medium \
+  --answers-pattern ragu_*.json
 ```
 
-# Visualize
+## Dashboard
 
-Open http://<ip>:7474/browser/
+```bash
+uv run python natural_rag/dashboard.py
+```
 
-Then in the right bar select "neo4j" in "use database".
+Opens a Dash web UI for browsing results.
 
-Then issue:
+## Engine-Specific Dependencies
+
+The framework supports multiple RAG engines. **RAGU** is the primary, preferred engine — most run and evaluation scripts depend on it. Other engines are alternatives for comparison.
+
+Each engine's Python dependencies are declared as **optional extras**. Install only what you need.
+
+### Quick Install
+
+```bash
+# Base framework only (no engine)
+uv pip install -e .
+
+# Install with RAGU — the default / primary engine
+uv pip install -e ".[ragu]"
+
+# Install other engines
+uv pip install -e ".[lightrag]"
+uv pip install -e ".[nano-graphrag]"
+uv pip install -e ".[fast-graphrag]"
+uv pip install -e ".[hipporag]"
+uv pip install -e ".[baseline]"
+
+# All engines at once
+uv pip install -e ".[all]"
+```
+
+> **Recommendation**: Start with `uv pip install -e ".[ragu]"` — this is the engine used in `runs/ragu_run.py`, evaluation scripts (`ragu_evaluate.py`, `jsonl_llm_judge_evaluate.py`), and most of the codebase.
+
+### System Prerequisites
+
+Some engines pull in packages with native extensions that require a C++ compiler and Python headers:
+
+| Engine | Native package | Install system deps (Ubuntu/Debian) |
+|--------|---------------|--------------------------------------|
+| `fast-graphrag` | `hnswlib` (C++ HNSW index) | `sudo apt install python3-dev build-essential` |
+| `hipporag` | `torch` (CUDA-enabled) | `sudo apt install build-essential` (CUDA toolkit is optional) |
+
+Without these, `uv pip install` may fail when building the native extension from source.
+If you only plan to use RAGU, LightRAG, NanoGraphRAG, or the baseline, no system packages are required beyond Python itself.
+
+### Engine Reference
+
+| Engine | Run Script | Dependency | Extras Key | Default? |
+|--------|------------|-----------|------------|----------|
+| **RAGU** 🏆 | `runs/ragu_run.py` | `graph-ragu @ git+https://github.com/RaguTeam/RAGU.git` | `ragu` | Yes |
+| **Baseline** | `runs/baseline_run.py` | RAGU + `diskcache` | `baseline` | No |
+| **LightRAG** | `runs/lightrag_run.py` | `lightrag-hku`, `numpy` | `lightrag` | No |
+| **NanoGraphRAG** | `runs/nano_graphrag_run.py` | `nano-graphrag`, `numpy` | `nano-graphrag` | No |
+| **FastGraphRAG** | `runs/fast_graphrag_run.py` | `fast-graphrag`, `instructor`, `aiohttp` | `fast-graphrag` | No |
+| **HippoRAG** | `runs/run_hippo.py` | `hipporag` (→ `torch`, `transformers`, `vllm`) | `hipporag` | No |
+
+> **HippoRAG** pulls in a large dependency chain (`torch`, `transformers`, `vllm`, `python-igraph`, etc.). Expect a longer install time and significant disk usage.
+>
+> **Baseline** is a tree-structured RAG approach (no knowledge graph). It depends on RAGU for LLM and caching utilities.
+
+### Run Scripts vs Pipelines
+
+All run scripts share the same `RAGDataset` interface and output structure. The mapping:
 
 ```
-MATCH (n)
-WHERE n:NeoQuestion OR n:NeoDocument
-OPTIONAL MATCH (n)-[r:REFERENCES]-(target)
-RETURN n, r, target
+runs/
+├── ragu_run.py               # → pipelines/ragu_pipelines.py     (RAGU)
+├── baseline_run.py           # → natural_rag/baseline/           (no wrapper)
+├── lightrag_run.py           # → pipelines/lightrag_pipelines.py
+├── nano_graphrag_run.py      # → pipelines/nano_graphrag_pipelines.py
+├── fast_graphrag_run.py      # → pipelines/fast_graphrag_pipelines.py
+└── run_hippo.py              # → pipelines/hipporag_pipelines.py
 ```

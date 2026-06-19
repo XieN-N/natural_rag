@@ -9,9 +9,75 @@ dependencies = [
     "ipykernel",
     "ipywidgets",
     "openai",
-    "httpx[socks]",  # if using HTTP_PROXY with sentence_transformers
+    "httpx[socks]", # if using HTTP_PROXY with sentence_transformers
     "bigtree",
-    # "graph-ragu @ git+https://github.com/sedol1339/RAGU.git@caching",
     "dash>=4.0.0",
     "dash-bootstrap-components>=2.0.4",
 ]
+
+[project.optional-dependencies]
+# ── RAGU (default / primary engine) ────────────────────────────────
+# Our own GraphRAG engine. Preferred and used by most run scripts.
+# Repository: https://github.com/RaguTeam/RAGU
+ragu = [
+    "graph-ragu @ git+https://github.com/RaguTeam/RAGU.git",
+]
+
+# ── Baseline (tree-based RAG without a graph) ──────────────────────
+# A simple tree-structured baseline. Depends on RAGU for LLM & caching.
+baseline = [
+    "natural_rag[ragu]",
+    "diskcache>=5.6.3",
+]
+
+# ── LightRAG ───────────────────────────────────────────────────────
+# Minimal, fast GraphRAG implementation from HKU.
+# PyPI: lightrag-hku  |  Import: lightrag
+lightrag = [
+    "lightrag-hku>=1.4.12",
+    "numpy>=1.26.0",
+]
+
+# ── NanoGraphRAG ──────────────────────────────────────────────────
+# Minimal, hackable GraphRAG (predecessor of LightRAG).
+# PyPI: nano-graphrag  |  Import: nano_graphrag
+nano-graphrag = [
+    "nano-graphrag>=0.0.8",
+    "numpy>=1.26.0",
+]
+
+# ── FastGraphRAG ──────────────────────────────────────────────────
+# High-performance GraphRAG by Circlemind.
+# PyPI: fast-graphrag  |  Import: fast_graphrag
+fast-graphrag = [
+    "fast-graphrag>=0.0.5",
+    "instructor>=1.3.0",
+    "aiohttp>=3.9.0",
+]
+
+# ── HippoRAG ──────────────────────────────────────────────────────
+# Long-term-memory-inspired RAG with knowledge graphs (NeurIPS 2024).
+# PyPI: hipporag  |  Import: hipporag
+# NOTE: pulls in torch, transformers, vllm, etc. — large install.
+hipporag = [
+    "hipporag>=2.0.0a2",
+]
+
+# ── All engines (convenience meta-package) ─────────────────────────
+all = [
+    "natural_rag[ragu]",
+    "natural_rag[baseline]",
+    "natural_rag[lightrag]",
+    "natural_rag[nano-graphrag]",
+    "natural_rag[fast-graphrag]",
+    "natural_rag[hipporag]",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["natural_rag*"]
+exclude = ["logs*", "runs*", "legacy*", "datasets*", "generated*", "notebooks*", "runs_universal*"]

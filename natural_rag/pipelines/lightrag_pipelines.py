@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from pathlib import Path
 from typing import Any, Callable
 
@@ -17,6 +18,8 @@ class LightRAGPipeline(RAGPipeline):
         embedding_func: EmbeddingFunc,
         tokenizer: Any = None,
         query_mode: str = "hybrid",
+        addon_params: dict[str, Any] | None = None,
+        max_parallel_insert: int | None = None,
     ):
         self.query_mode = query_mode
 
@@ -28,12 +31,22 @@ class LightRAGPipeline(RAGPipeline):
 
         asyncio.set_event_loop(self._loop)
 
-        self._rag = LightRAG(
-            working_dir=str(working_dir),
-            llm_model_func=llm_model_func,
-            embedding_func=embedding_func,
-            tokenizer=tokenizer,
-        )
+        rag_kwargs: dict[str, Any] = {
+            'working_dir': str(working_dir),
+            'llm_model_func': llm_model_func,
+            'embedding_func': embedding_func,
+            'tokenizer': tokenizer,
+        }
+        lightrag_parameters = inspect.signature(LightRAG).parameters
+        if addon_params is not None and 'addon_params' in lightrag_parameters:
+            rag_kwargs['addon_params'] = addon_params
+        if (
+            max_parallel_insert is not None
+            and 'max_parallel_insert' in lightrag_parameters
+        ):
+            rag_kwargs['max_parallel_insert'] = max_parallel_insert
+
+        self._rag = LightRAG(**rag_kwargs)
 
         self._run(self._rag.initialize_storages())
 
@@ -47,10 +60,30 @@ class LightRAGPipeline(RAGPipeline):
         asyncio.set_event_loop(self._loop)
         return self._loop.run_until_complete(coro)
 
+    async def _cancel_pending_tasks(self):
+        current_task = asyncio.current_task(loop=self._loop)
+        pending_tasks = [
+            task
+            for task in asyncio.all_tasks(self._loop)
+            if task is not current_task and not task.done()
+        ]
+        if not pending_tasks:
+            return
+        for task in pending_tasks:
+            task.cancel()
+        await asyncio.gather(*pending_tasks, return_exceptions=True)
+
+    # def build_index(self, documents: list[Document]):
+    #     for doc in documents:
+    #         if doc.text:
+    #             self._run(self._rag.ainsert(doc.text))
+
     def build_index(self, documents: list[Document]):
-        for doc in documents:
-            if doc.text:
-                self._run(self._rag.ainsert(doc.text))
+        docs = [doc for doc in documents if doc.text]
+        texts = [doc.text for doc in docs]
+        ids = [doc.id for doc in docs]
+
+        self._run(self._rag.ainsert(texts, ids=ids))
 
     def generate_answer(self, question: str) -> tuple[str, Any]:
         context_param = QueryParam(
@@ -71,6 +104,11 @@ class LightRAGPipeline(RAGPipeline):
             pass
         finally:
             if hasattr(self, "_loop") and not self._loop.is_closed():
+                try:
+                    self._run(self._cancel_pending_tasks())
+                    self._run(self._loop.shutdown_asyncgens())
+                except Exception:
+                    pass
                 self._loop.close()
 
             try:
