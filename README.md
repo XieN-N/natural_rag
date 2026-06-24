@@ -115,6 +115,7 @@ uv pip install -e ".[lightrag]"
 uv pip install -e ".[nano-graphrag]"
 uv pip install -e ".[fast-graphrag]"
 uv pip install -e ".[hipporag]"
+uv pip install -e ".[wikontic]"
 uv pip install -e ".[baseline]"
 
 # All engines at once
@@ -131,9 +132,10 @@ Some engines pull in packages with native extensions that require a C++ compiler
 |--------|---------------|--------------------------------------|
 | `fast-graphrag` | `hnswlib` (C++ HNSW index) | `sudo apt install python3-dev build-essential` |
 | `hipporag` | `torch` (CUDA-enabled) | `sudo apt install build-essential` (CUDA toolkit is optional) |
+| `wikontic` | `torch` (CUDA-enabled), `transformers` (tokenizers, Rust extensions) | `sudo apt install python3-dev build-essential` (CUDA toolkit is optional) |
 
 Without these, `uv pip install` may fail when building the native extension from source.
-If you only plan to use RAGU, LightRAG, NanoGraphRAG, or the baseline, no system packages are required beyond Python itself.
+If you only plan to use RAGU, LightRAG, NanoGraphRAG, the baseline, or Wikontic (CPU mode), no system packages are required beyond Python itself. For Wikontic GPU mode, a CUDA toolkit is recommended.
 
 ### Engine Reference
 
@@ -145,6 +147,7 @@ If you only plan to use RAGU, LightRAG, NanoGraphRAG, or the baseline, no system
 | **NanoGraphRAG** | `runs/nano_graphrag_run.py` | `nano-graphrag`, `numpy` | `nano-graphrag` | No |
 | **FastGraphRAG** | `runs/fast_graphrag_run.py` | `fast-graphrag`, `instructor`, `aiohttp` | `fast-graphrag` | No |
 | **HippoRAG** | `runs/run_hippo.py` | `hipporag` (→ `torch`, `transformers`, `vllm`) | `hipporag` | No |
+| **Wikontic** | `runs/wikontic_run.py` | `wikontic @ git+...` (→ `torch`, `transformers`, `qdrant-client`) | `wikontic` | No |
 
 > **HippoRAG** pulls in a large dependency chain (`torch`, `transformers`, `vllm`, `python-igraph`, etc.). Expect a longer install time and significant disk usage.
 >
@@ -161,5 +164,6 @@ runs/
 ├── lightrag_run.py           # → pipelines/lightrag_pipelines.py
 ├── nano_graphrag_run.py      # → pipelines/nano_graphrag_pipelines.py
 ├── fast_graphrag_run.py      # → pipelines/fast_graphrag_pipelines.py
-└── run_hippo.py              # → pipelines/hipporag_pipelines.py
+├── run_hippo.py              # → pipelines/hipporag_pipelines.py
+└── wikontic_run.py           # → pipelines/wikontic_pipeline.py
 ```

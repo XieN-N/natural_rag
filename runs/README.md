@@ -155,6 +155,150 @@ python runs/run_hippo.py \
   --qa-top-k 5
 ```
 
+### Wikontic
+
+**Dynamic mode** (fast, no Wikidata ontology required):
+
+```bash
+python runs/wikontic_run.py \
+  --dataset-path datasets/bl_tiny \
+  --mode dynamic \
+  --qdrant-url ":memory:" \
+  --output-dir generated/wikontic_bl_tiny
+```
+
+**Structured mode** (requires pre-built Wikidata ontology — run `setup_wikontic_ontology` first):
+
+```bash
+# One-time ontology setup
+python -m scripts.setup_wikontic_ontology \
+  --backend qdrant --qdrant-url ":memory:"
+
+# Then run the pipeline
+python runs/wikontic_run.py \
+  --dataset-path datasets/bl_tiny \
+  --mode structured \
+  --qdrant-url ":memory:" \
+  --output-dir generated/wikontic_bl_tiny
+```
+
+**Persistent index** (Qdrant, reused across runs):
+
+Start Qdrant in Docker first (one-time):
+
+```bash
+# Create a volume for data storage
+docker volume create qdrant_storage
+
+# Start the container
+docker run -d \
+  --name qdrant \
+  -p 6333:6333 \
+  -v qdrant_storage:/qdrant/storage \
+  qdrant/qdrant
+
+# Verify it is running
+curl http://localhost:6333/health
+```
+
+Stop and restart:
+
+```bash
+docker stop qdrant
+docker start qdrant  # data persists
+```
+
+Then run the pipeline:
+
+```bash
+# First run: indexing + answers
+python runs/wikontic_run.py \
+  --dataset-path datasets/bl_tiny \
+  --mode dynamic \
+  --qdrant-url http://localhost:6333 \
+  --output-dir generated/wikontic_bl_tiny
+
+# Subsequent runs: answers only (index already exists)
+python runs/wikontic_run.py \
+  --dataset-path datasets/bl_tiny \
+  --mode dynamic \
+  --qdrant-url http://localhost:6333 \
+  --no-build-index --answer
+```
+
+**Separate containers per dataset:**
+
+When `sample_id=None` (default), triplet search goes through **all collections** in Qdrant.
+If multiple datasets are indexed into the same Qdrant, answers for one dataset may
+use triplets from another when entities are similar. To avoid
+cross-contamination, use a **separate container + volume** per dataset:
+
+```bash
+# bl_tiny
+docker run -d --name qdrant_bl_tiny \
+  -p 6333:6333 \
+  -v qdrant_bl_tiny:/qdrant/storage \
+  qdrant/qdrant
+
+# multiq
+docker run -d --name qdrant_multiq \
+  -p 6334:6333 \
+  -v qdrant_multiq:/qdrant/storage \
+  qdrant/qdrant
+```
+
+Each container gets its own port (`-p`), its own volume, and its own database.
+
+**Transferring the index to another machine:**
+
+Option A — Qdrant snapshot (recommended):
+
+```bash
+# Export
+curl -X POST http://localhost:6333/collections/triplets_db/snapshots
+# → returns the path to the .snapshot file inside the container
+
+# Copy the snapshot out
+docker cp qdrant:/qdrant/storage/snapshots/triplets_db/<name>.snapshot ./triplets_db.snapshot
+
+# On the target machine — restore
+curl -X POST \
+  -F "snapshot=@triplets_db.snapshot" \
+  http://localhost:6333/collections/upload?wait=true
+```
+
+Option B — copying the Docker volume:
+
+```bash
+# Export
+docker run --rm -v qdrant_storage:/source alpine \
+  tar czf - -C /source . > qdrant_backup.tar.gz
+
+# Transfer qdrant_backup.tar.gz to the target machine
+# Import (creates the volume if it doesn't exist)
+docker run --rm -v qdrant_storage:/target alpine \
+  tar xzf - -C /target < qdrant_backup.tar.gz
+```
+
+Docker volume `qdrant_storage` holds both collections (`triplets_db` and `wikidata_ontology`) — Qdrant distinguishes them internally.
+
+Environment variables (see `.env.wikontic.example`):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WIKONTIC_API_KEY` | — | LLM API key |
+| `OPENAI_API_KEY` | — | Fallback API key |
+| `WIKONTIC_BASE_URL` | `https://api.openai.com/v1` | LLM API base URL |
+| `OPENAI_BASE_URL` | — | Fallback base URL |
+| `WIKONTIC_MODEL` | — | LLM model |
+| `LLM_MODEL` | `gpt-4o` | Fallback model |
+| `WIKONTIC_MODE` | `dynamic` | `dynamic` or `structured` |
+| `WIKONTIC_STORAGE_BACKEND` | `qdrant` | `qdrant` or `mongo` |
+| `WIKONTIC_QDRANT_URL` | `:memory:` | Qdrant URL |
+| `WIKONTIC_HOP_DEPTH` | `5` | Multi-hop traversal depth |
+
+Fallback chain: **key** — `WIKONTIC_API_KEY` → `OPENAI_API_KEY` → `KEY` → `OPENROUTER_KEY`; **base_url** — `WIKONTIC_BASE_URL` → `OPENAI_BASE_URL` → `OPENROUTER_BASE_URL`; **model** — `WIKONTIC_MODEL` → `LLM_MODEL` → `gpt-4o`. So `ragu_run.py` env vars (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `LLM_MODEL`) also work for Wikontic with no extra config.
+
 ## Evaluation Scripts
 
 ```bash
