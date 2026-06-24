@@ -68,7 +68,7 @@ hipporag = [
 # Repository: https://github.com/screemix/Wikontic
 # NOTE: pulls in torch, transformers, etc. — large install. GPU recommended.
 wikontic = [
-    "wikontic @ git+https://github.com/screemix/Wikontic.git",
+    "wikontic @ git+https://github.com/XieN-N/Wikontic.git@add-wikonticdb-to-packages",
     "torch>=2.4.0",
     "transformers",
     "qdrant-client>=1.12.0",
