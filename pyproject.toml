@@ -63,6 +63,18 @@ hipporag = [
     "hipporag>=2.0.0a2",
 ]
 
+# ── Wikontic ──────────────────────────────────────────────────────
+# Wikidata-aligned, ontology-aware KG construction pipeline (EACL 2026 / AAAI DEMO 26).
+# Repository: https://github.com/screemix/Wikontic
+# NOTE: pulls in torch, transformers, etc. — large install. GPU recommended.
+wikontic = [
+    "wikontic @ git+https://github.com/screemix/Wikontic.git",
+    "torch>=2.4.0",
+    "transformers",
+    "qdrant-client>=1.12.0",
+    "python-dotenv",
+]
+
 # ── All engines (convenience meta-package) ─────────────────────────
 all = [
     "natural_rag[ragu]",
@@ -71,6 +83,7 @@ all = [
     "natural_rag[nano-graphrag]",
     "natural_rag[fast-graphrag]",
     "natural_rag[hipporag]",
+    "natural_rag[wikontic]",
 ]
 
 [build-system]

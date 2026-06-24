@@ -28,3 +28,8 @@ try:
     from natural_rag.pipelines.fast_graphrag_pipelines import FastGraphRAGPipeline
 except ImportError:
     pass
+
+try:
+    from natural_rag.pipelines.wikontic_pipeline import WikonticPipeline
+except ImportError:
+    pass
