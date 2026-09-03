@@ -4,6 +4,38 @@ This directory contains scripts to run various RAG engines on benchmark datasets
 
 All scripts share a common dataset interface (`RAGDataset.load_auto()`) and output structure.
 
+## Where the output goes
+
+Run artifacts live under `local/`, which git ignores wholesale. `generated/` is
+a junction (Windows) or symlink (Linux) pointing at `local/generated`, so every
+`--output-dir generated/...` in this file keeps working. A fresh checkout has no
+link — create it once:
+
+```bash
+ln -s local/generated generated
+```
+
+## Installing RAGU
+
+Two mutually exclusive extras. Install one, never both: they provide the same
+`ragu` package and pip keeps whichever it resolved last.
+
+```bash
+pip install -e ".[ragu]"
+```
+
+```bash
+pip install -e ".[ragu-dev]"
+```
+
+The dev branch passes retrieval options as an `EngineParams` object instead of
+`top_k` / `use_chunks` keywords. `RAGUPipeline` detects which convention the
+installed build follows, so the run scripts and their flags are the same either
+way. Two flags behave differently than they used to: `--no-use-chunks` now
+actually reaches the engine (the answer path used to hardcode chunks on), and
+`--short-answers` fails loudly on a build whose engines have no
+`update_prompt()` instead of silently answering at full length.
+
 ## Quick Start — RAGU
 
 ```bash
@@ -180,6 +212,10 @@ python runs/run_hippo.py \
 
 ### Wikontic
 
+For cluster runs (SLURM + vLLM + GigaChat) use `runs_cluster/` — see
+[runs_cluster/README.md](../runs_cluster/README.md). This section covers the
+script itself.
+
 **Dynamic mode** (fast, no Wikidata ontology required):
 
 ```bash
@@ -204,6 +240,40 @@ python runs/wikontic_run.py \
   --qdrant-url ":memory:" \
   --output-dir generated/wikontic_bl_tiny
 ```
+
+Wikontic-specific arguments (`--index-model`, `--short-answers`, `--force` and
+the output layout behave as for `ragu_run.py`):
+
+| Argument | Env Var | Default | Description |
+|----------|---------|---------|-------------|
+| `--mode` | `WIKONTIC_MODE` | `dynamic` | `dynamic` (no ontology) or `structured` (Wikidata types + property constraints) |
+| `--scope` | `WIKONTIC_SCOPE` | `corpus` | `corpus` = one graph over everything (`sample_id=None`); `per_sample` = one graph per question, retrieval filtered by `sample_id` — the setup used in Wikontic's own `qa_eval_musique.py` |
+| `--per-sample-docs` | `WIKONTIC_PER_SAMPLE_DOCS` | `20` | Documents per sample in `per_sample` scope: gold docs plus seeded distractors |
+| `--workers` | `WIKONTIC_WORKERS` | `1` | Concurrent documents during indexing (upstream indexes strictly sequentially — verify triplet counts before trusting >1) |
+| `--resume` / `--no-resume` | `WIKONTIC_RESUME` | on | Skip documents whose triplets are already stored, keyed on `(sample_id, source_text_id)` |
+| `--collection-prefix` | `WIKONTIC_COLLECTION_PREFIX` | `<dataset>__<index-model>__<mode>__<scope>` | Namespaces the triplet collections so several indexes share one database / Qdrant instance |
+| `--triplets-db-name` | `WIKONTIC_TRIPLETS_DB_NAME` | `triplets_db` | MongoDB database for triplets |
+| `--ontology-db-name` | `WIKONTIC_ONTOLOGY_DB_NAME` | `wikidata_ontology` | MongoDB database for the ontology |
+| `--qdrant-local-path` | `WIKONTIC_QDRANT_LOCAL_PATH` | — | Server-less persistent Qdrant (`QdrantClient(path=...)`) — no container, no port, but brute-force search |
+| `--hf-model-path` | `HF_MODEL_PATH` | — | Local `facebook/contriever` — required on offline nodes |
+| `--qa-collapsing` | `WIKONTIC_QA_COLLAPSING` | off | Answer via `answer_with_qa_collapsing` (question decomposition), the path used in Wikontic's published evaluation |
+| `--use-qualifiers` | `WIKONTIC_USE_QUALIFIERS` | **on** | Matches the default in Wikontic's own `qa_eval_*` scripts |
+| `--limit-docs` / `--limit-questions` | `LIMIT_DOCS` / `LIMIT_QUESTIONS` | — | Truncate for smoke tests |
+| `--timing` / `--no-timing` | — | on | Write `index_timing.jsonl` + `index_summary.json` |
+
+Things to know about Wikontic before interpreting results:
+
+- Its embedder is hardcoded to `facebook/contriever` (768 dim); the OpenAI-compatible
+  embedding endpoint is not used. Only `HF_MODEL_PATH` can point it elsewhere.
+- Its collection names are hardcoded in the aligners, hence `--collection-prefix`
+  (implemented in `natural_rag/wikontic_prefix.py`).
+- The Mongo backend requires **Atlas Vector Search** (`create_search_index`,
+  `$vectorSearch`) — MongoDB Community will fail on index creation.
+- There is no chunker: a document is sent to the LLM whole. Split large corpora
+  when preparing the dataset (see `runs/prepare_graphrag_bench.py`).
+- `--short-answers` appends an instruction to the question text, because the
+  answer prompts live inside the installed package. RAGU's `--short-answers`
+  replaces the prompt template — the two are not equivalent.
 
 **Persistent index** (Qdrant, reused across runs):
 
@@ -249,12 +319,17 @@ python runs/wikontic_run.py \
   --no-build-index --answer
 ```
 
-**Separate containers per dataset:**
+**Separate indexes in one storage:**
 
 When `sample_id=None` (default), triplet search goes through **all collections** in Qdrant.
 If multiple datasets are indexed into the same Qdrant, answers for one dataset may
-use triplets from another when entities are similar. To avoid
-cross-contamination, use a **separate container + volume** per dataset:
+use triplets from another when entities are similar. The cheap fix is
+`--collection-prefix` (on by default, derived from dataset/model/mode/scope): every
+triplet collection is namespaced, so several indexes coexist in one Qdrant instance
+or one MongoDB database. The ontology database is shared on purpose and is not
+prefixed.
+
+Alternatively — a **separate container + volume** per dataset:
 
 ```bash
 # bl_tiny
@@ -376,6 +451,39 @@ metrics: `Fact Retrieval` (bioasq) and `Complex Reasoning` (musique / 2wiki)
 both use `rouge_score` + `answer_correctness`. The judge model
 (`gemini-3-flash-preview`) and embedder (`text-embedding-3-small`) are used
 **only** inside the eval script — they are unrelated to answer generation.
+
+## Indexing Cost
+
+`ragu_run.py` and `wikontic_run.py` both write, next to `index/` and `answers/`:
+
+- `index_timing.jsonl` — one row per indexing step (`doc_id`, `chars`, `seconds`,
+  `cumulative_seconds`). Wikontic emits a row per document; RAGU indexes the whole
+  corpus in a single call, so it emits one row covering every document.
+- `index_summary.json` — `wall_seconds`, `docs_per_min`, `chars_per_sec`,
+  `llm_calls`, `llm_calls_per_doc`, `prompt_tokens`, `completion_tokens`, `failures`.
+
+Both come from `natural_rag/timing.py`, so the numbers are directly comparable.
+Collect them into one table:
+
+```bash
+python runs/index_stats.py generated
+python runs/index_stats.py generated --format csv --out index_stats.csv
+```
+
+## Scoring answers
+
+`runs/judge_answers.py` scores `answers/<i>.txt` for any engine using the shared
+run layout, so Wikontic and RAGU runs are scored identically:
+
+```bash
+python runs/judge_answers.py \
+  --dataset-path datasets/musique \
+  --output-dir generated/wikontic_musique --index-model gigachat \
+  --judge-model Qwen2.5-14B-Instruct
+```
+
+Reports normalised exact match, token F1 and LLM-judge accuracy into
+`eval_results.json`. `--no-judge` computes EM/F1 only (no model needed).
 
 ## Evaluation Scripts
 
