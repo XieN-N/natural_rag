@@ -40,6 +40,26 @@ DEFAULT_QUESTION_TYPE = {
 }
 
 
+def read_context(answers_dir: Path, index: int) -> list[str]:
+    """Retrieved context for question ``index``, or [] when it was not saved.
+
+    ``runs/wikontic_run.py --save-context`` writes these; without them
+    GraphRAG-Benchmark's ``faithfulness`` (Creative Generation) and the whole of
+    ``retrieval_eval.py`` have nothing to score.
+    """
+    context_path = answers_dir / f"{index}.context.json"
+    if not context_path.exists():
+        return []
+    try:
+        data = json.loads(context_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+    context = data.get("context") if isinstance(data, dict) else data
+    if not isinstance(context, list):
+        return []
+    return [str(item) for item in context]
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--dataset-path", type=Path, required=True)
@@ -82,22 +102,37 @@ def main() -> int:
                 f"Missing answer file {answer_path}. Run the *_run.py with "
                 f"--no-build-index --answer first, or pass --skip-missing."
             )
+        # GraphRAG-Bench carries per-question `question_type` / `source` /
+        # `evidence`; datasets that do not (bioasq, musique) fall back to the
+        # dataset-wide defaults. Explicit CLI arguments override both.
         items.append({
             "id": str(q.metadata.get("id", i)),
             "question": q.text,
-            "source": source,
-            "context": [],
-            "evidence": "",
-            "question_type": question_type,
-            "generated_answer": answer_path.read_text().strip(),
+            "source": args.source or q.metadata.get("source") or source,
+            "context": read_context(answers_dir, i),
+            "evidence": q.metadata.get("evidence") or "",
+            "question_type": args.question_type or q.metadata.get("question_type") or question_type,
+            "generated_answer": answer_path.read_text(encoding="utf-8").strip(),
             "ground_truth": q.reference_answers[0] if q.reference_answers else "",
         })
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(items, ensure_ascii=False, indent=2))
+    out_path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"Wrote {len(items)} items -> {out_path}")
     print(f"  source={source!r}  question_type={question_type!r}")
+    types: dict[str, int] = {}
+    for item in items:
+        types[str(item["question_type"])] = types.get(str(item["question_type"]), 0) + 1
+    print(f"  question types: {types}")
+    with_context = sum(1 for item in items if item["context"])
+    print(f"  with retrieved context: {with_context}/{len(items)}")
+    if not with_context:
+        # Not fatal — rouge_score / answer_correctness / coverage_score do not
+        # read it — but faithfulness and retrieval_eval.py silently score zero.
+        print("  NOTE: no <i>.context.json found. faithfulness (Creative "
+              "Generation) and Evaluation/retrieval_eval.py need it; rerun the "
+              "answering step with --save-context to get them.")
     if missing:
         print(f"  WARNING: {len(missing)} answer files missing (indices e.g. {missing[:10]})")
     return 0

@@ -10,8 +10,9 @@ from ragu.models.llm import CachedAsyncOpenAI, LLMOpenAI
 from ragu.models.embedder import EmbedderOpenAI
 
 from natural_rag.dataset import RAGDataset
-from natural_rag.paths import resolve_run_dirs
+from natural_rag.paths import dataset_name_from_path, resolve_run_dirs
 from natural_rag.pipelines.ragu_pipelines import RAGUPipeline
+from natural_rag.timing import IndexTimer, LLMCallCounter, attach_counter
 
 
 def parse_args() -> argparse.Namespace:
@@ -183,11 +184,13 @@ def main() -> None:
 
     dataset = RAGDataset.load_auto(args.dataset_path)
 
-    index_dir, answers_dir, _ = resolve_run_dirs(
+    index_dir, answers_dir, base_dir = resolve_run_dirs(
         args.output_dir, args.dataset_path, args.index_model
     )
     index_dir.mkdir(parents=True, exist_ok=True)
     answers_dir.mkdir(parents=True, exist_ok=True)
+
+    llm_counter = LLMCallCounter()
 
     llm_client = CachedAsyncOpenAI(
         base_url=args.openai_base_url,
@@ -211,6 +214,10 @@ def main() -> None:
         max_completion_tokens=args.max_completion_tokens,
     )
 
+    # Best-effort: RAGU's client wrapper may not expose chat.completions, in
+    # which case the summary simply carries no LLM-call counts.
+    attach_counter(llm_client, llm_counter)
+
     pipeline = RAGUPipeline(
         language='english',
         index_dir=index_dir,
@@ -232,7 +239,21 @@ def main() -> None:
     )
 
     if args.build_index:
-        pipeline.build_index(documents=list(dataset.documents.values()))
+        documents = list(dataset.documents.values())
+        # RAGU indexes the whole corpus in one call, so the timer records a
+        # single step covering every document rather than per-document rows.
+        with IndexTimer(
+            base_dir,
+            engine="ragu",
+            dataset=dataset_name_from_path(args.dataset_path),
+            model=args.index_model or args.builder_model_name,
+            counter=llm_counter,
+            total_units=len(documents),
+            extra={"query_engine": args.query_engine, "chunker": args.chunker},
+        ) as timer:
+            total_chars = sum(len(doc.text) for doc in documents if doc.text)
+            with timer.measure("<corpus>", total_chars, count=len(documents)):
+                pipeline.build_index(documents=documents)
 
     if args.answer:
         # Answer all questions within a single event loop so RAGU's shared HTTP
