@@ -47,6 +47,54 @@ Provide the answer in the following language: {{ language }}
 """
 
 
+def _set_short_prompt(engine: Any, name: str, instruction: Any) -> None:
+    """Swap in the terse answer prompt, where the installed RAGU allows it.
+
+    ``update_prompt`` is not part of every build's engine API. Losing the terse
+    prompt silently would turn a short-answer benchmark into a verbose run and
+    show up only as a collapsed ROUGE-L score, so refuse instead of guessing.
+    """
+    if not hasattr(engine, "update_prompt"):
+        raise RuntimeError(
+            f"--short-answers was requested but {type(engine).__name__} has no "
+            "update_prompt(); this RAGU build cannot take the terse answer prompt."
+        )
+    engine.update_prompt(name, instruction)
+
+
+def _takes_params(engine: Any) -> bool:
+    """Whether this RAGU build passes retrieval options as a ``params`` object.
+
+    The dev branch replaced ``a_query(query, top_k=..., use_chunks=...)`` with
+    ``a_query(query, params: EngineParams | None)``. Both conventions have to
+    work: the pinned release still takes keyword arguments.
+    """
+    try:
+        return "params" in inspect.signature(engine.a_query).parameters
+    except (TypeError, ValueError):
+        return False
+
+
+def _params_class(engine: Any) -> type | None:
+    """The ``EngineParams`` subclass declared next to ``engine``'s own class.
+
+    Each engine declares only the options it accepts, so the class is found by
+    looking in the module that defines the engine rather than by importing a
+    fixed name -- which of the five engines is in use is decided by the caller.
+    """
+    module = sys.modules.get(type(engine).__module__)
+    if module is None:
+        return None
+    found = [
+        obj
+        for name, obj in vars(module).items()
+        if isinstance(obj, type)
+        and name.endswith("Params")
+        and obj.__module__ == module.__name__
+    ]
+    return found[0] if len(found) == 1 else None
+
+
 class RAGUPipeline(RAGPipeline):
     def __init__(
         self,
@@ -58,7 +106,9 @@ class RAGUPipeline(RAGPipeline):
         use_llm_summarization: bool = True,
         vectorize_chunks: bool = True,
         query_use_summary: bool = False,
-        query_use_chunks: bool = False,
+        # True because the answer path used to hardcode use_chunks=True and
+        # ignore this field; `check_index_ready.py` relies on that default.
+        query_use_chunks: bool = True,
         chunker_name: str = "smart",
         simple_chunk_size: int = 2048,
         simple_chunk_overlap: int = 0,
@@ -194,7 +244,7 @@ class RAGUPipeline(RAGPipeline):
                 language=self.language,
             )
             if short_answers:
-                naive_search.update_prompt("naive_search", _short_instruction())
+                _set_short_prompt(naive_search, "naive_search", _short_instruction())
             self.search_engine = naive_search
         else:
             local_search = LocalSearchEngine(
@@ -206,22 +256,63 @@ class RAGUPipeline(RAGPipeline):
             )
             self.local_search = local_search
             if short_answers:
-                local_search.update_prompt("local_search", _short_instruction())
+                _set_short_prompt(local_search, "local_search", _short_instruction())
             self.search_engine = QueryPlanEngine(local_search) if query_engine == "query_plan" else local_search
+
+        # Resolve the calling convention once, not per question. QueryPlanEngine
+        # wraps the local engine and may not declare a params class of its own,
+        # so fall back to the wrapped engine's.
+        self.uses_engine_params = _takes_params(self.search_engine)
+        self.params_class = None
+        if self.uses_engine_params:
+            self.params_class = _params_class(self.search_engine)
+            if self.params_class is None and hasattr(self, "local_search"):
+                self.params_class = _params_class(self.local_search)
+            if self.params_class is None:
+                # Falling back to the engine's own defaults would silently
+                # discard --retrieval-top-k / --qa-top-k, so say so out loud.
+                ragu_logger.warning(
+                    f"{type(self.search_engine).__name__} takes a params object but no "
+                    "EngineParams subclass was found next to it; retrieval will run "
+                    "with the engine's built-in defaults and top_k settings are ignored."
+                )
 
     def build_index(self, documents: list[Document]):
         docs = [doc.text for doc in documents if doc.text]
         asyncio.run(self.knowledge_graph.build_from_docs(docs))
 
+    def _retrieval_options(self, top_k: int) -> dict[str, Any]:
+        """Retrieval options this engine understands, as plain keyword names.
+
+        NaiveSearchEngine works on chunks only and takes neither ``use_chunks``
+        nor ``use_summary``; the graph engines take both.
+        """
+        options: dict[str, Any] = {"top_k": top_k}
+        if self.query_engine != "naive":
+            options["use_chunks"] = self.query_use_chunks
+            options["use_summary"] = self.query_use_summary
+        return options
+
+    def _call_args(self, top_k: int) -> tuple[tuple, dict]:
+        """Positional and keyword arguments for a_search/a_query on this build."""
+        options = self._retrieval_options(top_k)
+        if not self.uses_engine_params:
+            # The pinned release has no ``use_summary`` keyword on the engines.
+            options.pop("use_summary", None)
+            return (), options
+        if self.params_class is None:
+            return (), {}
+        accepted = inspect.signature(self.params_class).parameters
+        return (self.params_class(**{k: v for k, v in options.items() if k in accepted}),), {}
+
     async def _answer(self, question: str, max_retries: int = 3) -> tuple[str, Any]:
-        # NaiveSearchEngine.a_query does not accept `use_chunks`; only pass it
-        # for the graph engines (local / query_plan).
-        qa_kwargs = {} if self.query_engine == "naive" else {"use_chunks": True}
+        search_args, search_kwargs = self._call_args(self.retrieval_top_k)
+        qa_args, qa_kwargs = self._call_args(self.qa_top_k)
         context: Any = None
         for attempt in range(max_retries):
             try:
-                context = await self.search_engine.a_search(question, top_k=self.retrieval_top_k)
-                response = await self.search_engine.a_query(question, top_k=self.qa_top_k, **qa_kwargs)
+                context = await self.search_engine.a_search(question, *search_args, **search_kwargs)
+                response = await self.search_engine.a_query(question, *qa_args, **qa_kwargs)
             except Exception as exc:
                 # A single bad question (e.g. provider content-filter 400, which
                 # is not retryable) must not crash the whole batch. Log and

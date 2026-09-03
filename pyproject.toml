@@ -23,6 +23,16 @@ ragu = [
     "graph-ragu @ git+https://github.com/RaguTeam/RAGU.git",
 ]
 
+# ── RAGU, dev branch ───────────────────────────────────────────────
+# Same engine from the unreleased branch. Install instead of [ragu], never
+# alongside it: both provide the package `ragu`, and pip keeps whichever it
+# resolved last. The dev branch passes retrieval options as an EngineParams
+# object rather than top_k/use_chunks keywords; RAGUPipeline detects which
+# convention the installed build uses, so both work unchanged.
+ragu-dev = [
+    "graph-ragu @ git+https://github.com/RaguTeam/RAGU.git@dev",
+]
+
 # ── Baseline (tree-based RAG without a graph) ──────────────────────
 # A simple tree-structured baseline. Depends on RAGU for LLM & caching.
 baseline = [
@@ -70,8 +80,12 @@ hipporag = [
 wikontic = [
     "wikontic @ git+https://github.com/XieN-N/Wikontic.git@add-wikonticdb-to-packages",
     "torch>=2.4.0",
-    "transformers",
+    # transformers 5 validates model configs through huggingface_hub's strict
+    # dataclasses and rejects GigaChat's config.json ("routed_scaling_factor
+    # expected float, got int"). 4.x has no such check.
+    "transformers>=4.40,<5",
     "qdrant-client>=1.12.0",
+    "pymongo>=4.8",
     "python-dotenv",
 ]
 
