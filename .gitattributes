@@ -1,0 +1,4 @@
+# Shell scripts must keep LF endings: SLURM refuses a batch script with CRLF
+# ("Batch script contains DOS line breaks"). Without this, core.autocrlf=true on
+# a Windows checkout hands the cluster \r\n and sbatch rejects the job.
+*.sh text eol=lf

@@ -1,3 +1,19 @@
+# Local-only artifacts: run outputs, index snapshots, papers, cluster archives.
+# Everything here stays on the machine that produced it. `generated/` is a
+# junction (Windows) / symlink (Linux) into local/generated, so the paths baked
+# into the run scripts and the sbatch files keep working.
+local/
+
+# Research notes and run reports. They describe one particular set of runs and
+# stay with the machine that produced them; the numbers in them are only
+# meaningful together with the index they were measured on.
+/COMPARISON_*.md
+/RESULTS_*.md
+/REINDEX_*.md
+/GRAPHBENCH_*.md
+/INDEXING_FIXES.md
+/WIKONTIC_FINDINGS.txt
+
 tmp/
 generated/
 generated_all_answers/
@@ -221,3 +237,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Cluster credentials (MongoDB password archive) — never commit
+MongoDB_on_cluster/
