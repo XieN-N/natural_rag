@@ -51,6 +51,9 @@ EMBED_BATCH_SIZE="${EMBED_BATCH_SIZE:-32}"
 # Этапы
 DO_INDEX="${DO_INDEX:-1}"
 DO_ANSWER="${DO_ANSWER:-1}"
+# Смоук-режим: проиндексировать/ответить только первые N (0 = без ограничения)
+LIMIT_DOCS="${LIMIT_DOCS:-0}"
+LIMIT_QUESTIONS="${LIMIT_QUESTIONS:-0}"
 
 # ===================== КОНФИГУРАЦИЯ GPU =====================
 NUM_GPUS="${NUM_GPUS:-1}"
@@ -143,7 +146,9 @@ export TRITON_CACHE_DIR="${cache_root}/triton_cache"
 export FLASHINFER_WORKSPACE_DIR="${cache_root}/flashinfer_workspace"
 mkdir -p "${FLASHINFER_WORKSPACE_DIR}" "${VLLM_CACHE_ROOT}" "${TORCH_HOME}" "${XDG_CACHE_HOME}" "${TRITON_CACHE_DIR}" "${PIP_CACHE_DIR}"
 
-OUTPUT_DIR="${project_root}/generated/ragu_${DATASET_NAME}"
+# Переопределяемо: например, чтобы разведти выводы разных версий RAGU
+# (0.0.3 vs dev) по разным каталогам при одном датасете.
+OUTPUT_DIR="${OUTPUT_DIR:-${project_root}/generated/ragu_${DATASET_NAME}}"
 
 # ---------- ЭТАП 1: Запуск LLM и эмбеддера ----------
 echo "=== Starting vLLM for LLM (${BIG_LLM_NAME}) ===" | tee -a "${log_file}"
@@ -201,6 +206,8 @@ RUN_ARGS=(
 [ "${DO_INDEX}"  = "1" ] && RUN_ARGS+=(--build-index) || RUN_ARGS+=(--no-build-index)
 [ "${DO_ANSWER}" = "1" ] && RUN_ARGS+=(--answer)      || RUN_ARGS+=(--no-answer)
 [ "${SHORT_ANSWERS}" = "1" ] && RUN_ARGS+=(--short-answers)
+[ "${LIMIT_DOCS}" -gt 0 ] 2>/dev/null && RUN_ARGS+=(--limit-docs "${LIMIT_DOCS}")
+[ "${LIMIT_QUESTIONS}" -gt 0 ] 2>/dev/null && RUN_ARGS+=(--limit-questions "${LIMIT_QUESTIONS}")
 
 echo "=== Starting RAGU pipeline ===" | tee -a "${log_file}"
 python runs/ragu_run.py "${RUN_ARGS[@]}" >> "${log_file}" 2>&1
