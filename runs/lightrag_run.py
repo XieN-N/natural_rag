@@ -158,6 +158,21 @@ def main() -> None:
         )
         questions = dataset.questions
         if args.limit_docs is not None:
+            if args.limit_questions is not None:
+                # Порядок корпуса не связан с вопросами: первые попавшиеся
+                # доки может не касаться ни один вопрос. Поэтому срез для
+                # смоука собираем из доков, на которые ссылаются первые N
+                # вопросов, и только потом добираем корпусом до лимита.
+                wanted: list[str] = []
+                seen_ids: set[str] = set()
+                for q in questions[: args.limit_questions]:
+                    for source in q.relevant or []:
+                        if source.doc_id in dataset.documents and source.doc_id not in seen_ids:
+                            seen_ids.add(source.doc_id)
+                            wanted.append(source.doc_id)
+                rest = [i for i in dataset.documents if i not in seen_ids]
+                keep_ids = (wanted + rest)[: args.limit_docs]
+                documents = {i: dataset.documents[i] for i in keep_ids}
             # Вопросы, чьи relevant-источники выпали при обрезке корпуса,
             # невалидны (check_ids_exist упадёт). Фильтруем по всему списку
             # и только потом берём первые N — иначе на датасетах, где первые
