@@ -58,21 +58,25 @@ if [ "${NUM_GPUS}" -ge 10 ]; then
     LLM_GPUS=0,1,2,3,4,5,6,7
     EMBED_GPUS=8,9
     LLM_TENSOR_PARALLEL=8
-    LLM_MEM_UTIL=0.85
-    EMBED_MEM_UTIL=0.9
+    LLM_MEM_UTIL_D=0.85
+    EMBED_MEM_UTIL_D=0.9
 elif [ "${NUM_GPUS}" -ge 2 ]; then
     LLM_GPUS=0
     EMBED_GPUS=1
     LLM_TENSOR_PARALLEL=1
-    LLM_MEM_UTIL=0.65
-    EMBED_MEM_UTIL=0.2
+    LLM_MEM_UTIL_D=0.65
+    EMBED_MEM_UTIL_D=0.2
 else
     LLM_GPUS=0
     EMBED_GPUS=0
     LLM_TENSOR_PARALLEL=1
-    LLM_MEM_UTIL=0.65
-    EMBED_MEM_UTIL=0.2
+    LLM_MEM_UTIL_D=0.65
+    EMBED_MEM_UTIL_D=0.2
 fi
+# Env переопределяет выбранную ветку: например, для 14B bf16 на 40ГБ-узле
+# 0.65 не хватает (веса ~28ГБ, KV-кэш уходит в минус) — ставьте 0.85+.
+LLM_MEM_UTIL="${LLM_MEM_UTIL:-$LLM_MEM_UTIL_D}"
+EMBED_MEM_UTIL="${EMBED_MEM_UTIL:-$EMBED_MEM_UTIL_D}"
 JUDGE_GPUS=0
 
 # Идентификатор запуска
@@ -107,15 +111,29 @@ echo "GPU config: NUM_GPUS=${NUM_GPUS}" | tee -a "${log_file}"
 source "${miniconda_dir}/etc/profile.d/conda.sh"
 conda activate "/userspace/sse/.conda/envs/${conda_env}"
 
-# Функция ожидания vLLM
+# Функция ожидания vLLM. Таймаут обязателен: без него умерший при старте
+# сервер (например, OOM) оставляет джобу навсегда в "Waiting for ...".
 wait_for_vllm() {
     local log_path="$1"
     local name="$2"
+    local pid="${3:-}"
+    local waited=0
+    local timeout="${VLLM_WAIT_TIMEOUT:-2700}"   # 45 минут по умолчанию
     echo "=== Waiting for ${name} to start ===" | tee -a "${log_file}"
     while ! grep -q "Starting vLLM API server" "${log_path}" 2>/dev/null; do
+        if [ -n "${pid}" ] && ! kill -0 "${pid}" 2>/dev/null; then
+            echo "=== ${name} process died before starting — see ${log_path} ===" | tee -a "${log_file}"
+            return 1
+        fi
+        if [ "${waited}" -ge "${timeout}" ]; then
+            echo "=== TIMEOUT (${timeout}s) waiting for ${name} — see ${log_path} ===" | tee -a "${log_file}"
+            return 1
+        fi
         sleep 5
+        waited=$((waited + 5))
     done
     echo "=== ${name} started ===" | tee -a "${log_file}"
+    return 0
 }
 
 cleanup() {
@@ -163,7 +181,7 @@ CUDA_VISIBLE_DEVICES=${LLM_GPUS} vllm serve "${BIG_LLM_MODEL}" \
     --tensor-parallel-size ${LLM_TENSOR_PARALLEL} \
     > "${BIG_LLM_LOG}" 2>&1 &
 
-wait_for_vllm "${BIG_LLM_LOG}" "LLM"
+wait_for_vllm "${BIG_LLM_LOG}" "LLM" "$!" || exit 1
 
 echo "=== Starting vLLM for embeddings (${EMBED_MODEL_NAME}) ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${EMBED_GPUS} vllm serve "${EMBED_MODEL}" \
@@ -176,7 +194,7 @@ CUDA_VISIBLE_DEVICES=${EMBED_GPUS} vllm serve "${EMBED_MODEL}" \
     --trust_remote_code \
     > "${EMBED_LOG}" 2>&1 &
 
-wait_for_vllm "${EMBED_LOG}" "Embedder"
+wait_for_vllm "${EMBED_LOG}" "Embedder" "$!" || exit 1
 
 # Экспорт переменных для канонических python-раннеров из runs/
 export OPENAI_BASE_URL="http://localhost:${BIG_LLM_PORT}/v1"
@@ -231,7 +249,7 @@ CUDA_VISIBLE_DEVICES=${JUDGE_GPUS} vllm serve "${JUDGE_MODEL}" \
 
 JUDGE_PID=$!
 
-wait_for_vllm "${JUDGE_LOG}" "Judge"
+wait_for_vllm "${JUDGE_LOG}" "Judge" "${JUDGE_PID}" || exit 1
 
 echo "=== Starting evaluation ===" | tee -a "${log_file}"
 DATASET_NAME="${DATASET_NAME}" ANSWERS_DIR="${ANSWERS_DIR}" \
