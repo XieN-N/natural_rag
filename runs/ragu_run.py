@@ -51,6 +51,18 @@ def parse_args() -> argparse.Namespace:
         default=False,
     )
     parser.add_argument(
+        "--limit-docs",
+        type=int,
+        default=int(os.environ.get("LIMIT_DOCS", "0")) or None,
+        help="Index only the first N documents (smoke tests).",
+    )
+    parser.add_argument(
+        "--limit-questions",
+        type=int,
+        default=int(os.environ.get("LIMIT_QUESTIONS", "0")) or None,
+        help="Answer only the first N questions (smoke tests).",
+    )
+    parser.add_argument(
         "--chunker",
         choices=["simple", "smart"],
         default=os.environ.get("CHUNKER", "simple"),
@@ -183,6 +195,15 @@ def main() -> None:
         args.assistant_model_name = args.builder_model_name
 
     dataset = RAGDataset.load_auto(args.dataset_path)
+    if args.limit_docs is not None or args.limit_questions is not None:
+        dataset = RAGDataset(
+            documents=dict(list(dataset.documents.items())[: args.limit_docs])
+            if args.limit_docs is not None
+            else dataset.documents,
+            questions=dataset.questions[: args.limit_questions]
+            if args.limit_questions is not None
+            else dataset.questions,
+        )
 
     index_dir, answers_dir, base_dir = resolve_run_dirs(
         args.output_dir, args.dataset_path, args.index_model

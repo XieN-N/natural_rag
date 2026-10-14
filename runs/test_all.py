@@ -57,36 +57,32 @@ SCRIPTS = [
     },
     {
         "name": "ragu_2wiki",
-        "script": "ragu_2wiki_run.py",
+        "script": "ragu_run.py",
         "dataset": "datasets/2wikimultihopqa/2wikimultihopqa.json",
-        "extra_args": ["--build-index", "--answer", "--force", "--limit", "50"],
-        "env": {},
-    },
-    {
-        "name": "run_custom_ragu",
-        "script": "run_custom_ragu.py",
-        "dataset": "datasets/2wikimultihopqa/2wikimultihopqa.json",
-        "extra_args": ["--build-index", "--answer", "--force", "--limit", "50"],
+        "extra_args": ["--build-index", "--answer", "--force", "--limit-questions", "50",
+            "--builder-model-name", "qwen/qwen3-vl-8b-instruct",
+            "--assistant-model-name", "qwen/qwen3-vl-8b-instruct",
+            "--embedding-model-name", "/data",
+            "--embedding-dim", "768"],
         "env": {},
     },
     {
         "name": "run_hippo",
         "script": "run_hippo.py",
         "dataset": "datasets/2wikimultihopqa/2wikimultihopqa.json",
-        "extra_args": ["--build-index", "--answer", "--force", "--limit", "50"],
+        "extra_args": ["--build-index", "--answer", "--force", "--limit-questions", "50"],
         "env": {},
     },
     {
-        "name": "run_lightrag_bioasq",
-        "script": "run_lightrag_bioasq.py",
+        "name": "lightrag_bioasq",
+        "script": "lightrag_run.py",
         "dataset": "datasets/bioasq",
-        "extra_args": ["--dataset-dir", "datasets/bioasq",
-            "--n-docs", "100",
+        "extra_args": ["--build-index", "--answer", "--force", "--limit-docs", "100",
+            "--limit-questions", "10",
             "--llm-model", "qwen/qwen3-vl-8b-instruct",
             "--embed-model", "/data",
             "--embedding-dim", "768"],
         "env": {},
-        "skip_default_args": True,
     },
 ]
 
@@ -108,15 +104,12 @@ def run_script(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Build command
-    if script_info.get("skip_default_args"):
-        cmd = [python_exe, f"runs/{script}"] + extra_args
-    else:
-        cmd = [
-            python_exe,
-            f"runs/{script}",
-            "--dataset-path", dataset,
-            "--output-dir", str(output_dir),
-        ] + extra_args
+    cmd = [
+        python_exe,
+        f"runs/{script}",
+        "--dataset-path", dataset,
+        "--output-dir", str(output_dir),
+    ] + extra_args
 
     # Prepare environment
     env = os.environ.copy()

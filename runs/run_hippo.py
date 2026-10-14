@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--index-dir", type=Path, default=None)
     parser.add_argument("--answers-dir", type=Path, default=None)
-    parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--limit-questions", type=int, default=None)
 
     parser.add_argument(
         "--build-index",
@@ -112,10 +112,10 @@ def build_pipeline(args: argparse.Namespace):
 
 def load_dataset(args: argparse.Namespace) -> RAGDataset:
     dataset = RAGDataset.load_auto(args.dataset_path)
-    if args.limit is not None:
+    if args.limit_questions is not None:
         dataset = RAGDataset(
             documents=dataset.documents,
-            questions=dataset.questions[:args.limit],
+            questions=dataset.questions[:args.limit_questions],
         )
     return dataset
 
