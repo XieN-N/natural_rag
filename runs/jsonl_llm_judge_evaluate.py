@@ -238,7 +238,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--dataset-name",
         default=os.environ.get("DATASET_NAME"),
-        required=True,
         help="Dataset folder name under datasets/ (env: DATASET_NAME).",
     )
     parser.add_argument(
@@ -273,6 +272,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if not args.dataset_name:
+        raise SystemExit("--dataset-name is required (or set DATASET_NAME)")
     run_benchmark_evaluation(
         dataset_name=args.dataset_name,
         answers_pattern=args.answers_pattern,

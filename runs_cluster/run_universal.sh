@@ -222,8 +222,10 @@ ANSWERS_DIR="${OUTPUT_DIR}/${DATASET_NAME}/answers"
 
 # ---------- ЭТАП 3: Конвертация ответов в JSON ----------
 echo "=== Converting answers to JSON ===" | tee -a "${log_file}"
-DATASET_NAME="${DATASET_NAME}" ANSWERS_DIR="${ANSWERS_DIR}" \
-    python runs/convert_answers.py >> "${log_file}" 2>&1
+python runs/convert_answers.py \
+    --dataset-name "${DATASET_NAME}" \
+    --answers-dir "${ANSWERS_DIR}" >> "${log_file}" 2>&1
+echo "Convert exit: $?" | tee -a "${log_file}"
 
 # ---------- ЭТАП 4: Остановка LLM и эмбеддера ----------
 echo "=== Stopping LLM and Embedder ===" | tee -a "${log_file}"
@@ -252,11 +254,14 @@ JUDGE_PID=$!
 wait_for_vllm "${JUDGE_LOG}" "Judge" "${JUDGE_PID}" || exit 1
 
 echo "=== Starting evaluation ===" | tee -a "${log_file}"
-DATASET_NAME="${DATASET_NAME}" ANSWERS_DIR="${ANSWERS_DIR}" \
-    OPENAI_BASE_URL="http://localhost:${JUDGE_PORT}/v1" \
-    OPENAI_API_KEY="${VLLM_SERVE_TOKEN}" \
-    JUDGE_MODEL_NAME="${JUDGE_MODEL_NAME}" \
-    python runs/jsonl_llm_judge_evaluate.py >> "${log_file}" 2>&1
-echo "=== Evaluation finished ===" | tee -a "${log_file}"
+OPENAI_BASE_URL="http://localhost:${JUDGE_PORT}/v1" \
+OPENAI_API_KEY="${VLLM_SERVE_TOKEN}" \
+python runs/jsonl_llm_judge_evaluate.py \
+    --dataset-name "${DATASET_NAME}" \
+    --answers-dir "${ANSWERS_DIR}" \
+    --judge-model "${JUDGE_MODEL_NAME}" >> "${log_file}" 2>&1
+judge_status=$?
+echo "=== Evaluation finished (exit ${judge_status}) ===" | tee -a "${log_file}"
 
 echo "=== Job finished at $(date) ===" | tee -a "${log_file}"
+exit "${judge_status}"
