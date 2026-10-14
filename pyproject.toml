@@ -8,7 +8,10 @@ dependencies = [
     "sentence_transformers",
     "ipykernel",
     "ipywidgets",
-    "openai",
+    # RAGU (both the 0.0.3 release and the dev branch) patches
+    # openai._utils._logs.httpx_logger at import time; openai>=3 removed that
+    # attribute, so anything newer breaks every RAGU build with AttributeError.
+    "openai>=2.21.0,<3",
     "httpx[socks]", # if using HTTP_PROXY with sentence_transformers
     "bigtree",
     "dash>=4.0.0",

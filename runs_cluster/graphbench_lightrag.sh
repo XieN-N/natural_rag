@@ -52,7 +52,7 @@ RUN_ID="${RUN_ID:-graphbench_${SUBSET}_${ENGINE}_${BIG_LLM_NAME}}"
 
 set -o pipefail
 
-project_root="/userspace/sse/natural_rag"
+project_root="${PROJECT_ROOT:-/userspace/sse/natural_rag}"
 graphbench_root="${GRAPHBENCH_ROOT:-/userspace/sse/GraphRAG-Benchmark}"
 miniconda_dir="/userspace/sse/miniconda3"
 

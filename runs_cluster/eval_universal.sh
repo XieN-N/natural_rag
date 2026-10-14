@@ -35,7 +35,7 @@ BUILD_GRAPHRAG_BENCH_INPUT=1          # 1 = собрать graphrag_bench_input.
 
 set -o pipefail
 
-project_root="/userspace/sse/natural_rag"
+project_root="${PROJECT_ROOT:-/userspace/sse/natural_rag}"
 miniconda_dir="/userspace/sse/miniconda3"
 eval_conda_env="lightrag"             # судья не зависит от движка
 

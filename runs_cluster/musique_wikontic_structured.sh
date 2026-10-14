@@ -78,7 +78,7 @@ fi
 set -o pipefail
 
 RUN_ID="wikontic_musique_structured"
-project_root="/userspace/sse/natural_rag"
+project_root="${PROJECT_ROOT:-/userspace/sse/natural_rag}"
 miniconda_dir="/userspace/sse/miniconda3"
 conda_env="wikontic"
 

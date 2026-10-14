@@ -87,6 +87,10 @@ Python ≥3.12, uv или pip. База: `uv pip install -e .`. Движки —
 
 ## Типичные ошибки (подробнее — журнал)
 
+- **openai ≥3 ломает любой RAGU** (0.0.3 и dev): у RAGU в logger.py хак
+  `openai._utils._logs.httpx_logger`, удалённый в openai 3. В базовых
+  зависимостях пин `openai>=2.21.0,<3` — не поднимать. Проверено
+  2026-10-14: 0.0.3 + openai 2.21–2.54 работают, 3.x — нет.
 - vLLM/transformers пины: transformers ≥5 ломает конфиг GigaChat
   (пин `>=4.40,<5` в extra wikontic); `VLLM_USE_FLASHINFER_SAMPLER=0` при
   CUDA 11.

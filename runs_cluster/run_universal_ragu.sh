@@ -80,9 +80,9 @@ RUN_ID="${RUN_ID:-ragu_${DATASET_NAME}_${BIG_LLM_NAME}}"
 
 set -o pipefail
 
-project_root="/userspace/sse/natural_rag"
+project_root="${PROJECT_ROOT:-/userspace/sse/natural_rag}"
 miniconda_dir="/userspace/sse/miniconda3"
-conda_env="ragu"
+conda_env="${CONDA_ENV:-ragu}"   # ragu | ragu_dev — как называется conda-env с нужной версией RAGU
 
 if [ -z "${DATASET_PATH}" ]; then
     DATASET_PATH="${project_root}/datasets/${DATASET_NAME}"
