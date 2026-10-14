@@ -18,6 +18,10 @@ not the percentiles, is what should decide the depth.
 """
 from __future__ import annotations
 
+import httpx
+
+from natural_rag.url_guard import assert_http_url
+
 import argparse
 import json
 import os
@@ -74,12 +78,12 @@ def scroll(url: str, collection: str) -> list[dict]:
         body: dict = {"limit": 1000, "with_payload": True, "with_vector": False}
         if offset is not None:
             body["offset"] = offset
-        request = urllib.request.Request(
-            f"{url}/collections/{collection}/points/scroll", method="POST",
-            data=json.dumps(body).encode(), headers={"Content-Type": "application/json"},
+        response = httpx.post(
+            f"{url}/collections/{collection}/points/scroll",
+            json=body, timeout=300,
         )
-        with urllib.request.urlopen(request, timeout=300) as response:
-            result = json.load(response)["result"]
+        response.raise_for_status()
+        result = response.json()["result"]
         payloads.extend(p["payload"] for p in result["points"] if p.get("payload"))
         offset = result.get("next_page_offset")
         if offset is None:
@@ -97,7 +101,7 @@ def main() -> int:
     process = None
     try:
         if args.qdrant_url:
-            url = args.qdrant_url.rstrip("/")
+            url = assert_http_url(args.qdrant_url.rstrip("/"), what="--qdrant-url")
         else:
             binary = args.qdrant_bin or os.environ.get("QDRANT_BIN", "./qdrant")
             process, url = start_qdrant(

@@ -28,6 +28,10 @@ wherever these numbers are reported.
 """
 from __future__ import annotations
 
+import httpx
+
+from natural_rag.url_guard import assert_http_url
+
 import argparse
 import json
 import sys
@@ -68,24 +72,21 @@ def parse_args() -> argparse.Namespace:
 
 
 def scroll_payloads(url: str, collection: str) -> list[dict]:
+    assert_http_url(url, what="Qdrant URL")
     payloads: list[dict] = []
     offset = None
-    while True:
-        body: dict = {"limit": 1000, "with_payload": True, "with_vector": False}
-        if offset is not None:
-            body["offset"] = offset
-        request = urllib.request.Request(
-            f"{url}/collections/{collection}/points/scroll",
-            method="POST",
-            data=json.dumps(body).encode(),
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(request, timeout=120) as response:
-            result = json.load(response)["result"]
-        payloads.extend(p["payload"] for p in result["points"] if p.get("payload"))
-        offset = result.get("next_page_offset")
-        if offset is None:
-            return payloads
+    with httpx.Client(timeout=120) as client:
+        while True:
+            body: dict = {"limit": 1000, "with_payload": True, "with_vector": False}
+            if offset is not None:
+                body["offset"] = offset
+            response = client.post(f"{url}/collections/{collection}/points/scroll", json=body)
+            response.raise_for_status()
+            result = response.json()["result"]
+            payloads.extend(p["payload"] for p in result["points"] if p.get("payload"))
+            offset = result.get("next_page_offset")
+            if offset is None:
+                return payloads
 
 
 def main() -> int:
@@ -97,7 +98,7 @@ def main() -> int:
     process = None
     try:
         if args.qdrant_url:
-            url = args.qdrant_url.rstrip("/")
+            url = assert_http_url(args.qdrant_url.rstrip("/"), what="--qdrant-url")
         else:
             import os
             binary = args.qdrant_bin or os.environ.get("QDRANT_BIN", "./qdrant")
@@ -184,9 +185,9 @@ def main() -> int:
             )
             written += len(batch)
 
-        total = json.load(
-            urllib.request.urlopen(f"{url}/collections/{prefix}__entity_aliases")
-        )["result"]["points_count"]
+        total = httpx.get(
+            f"{url}/collections/{prefix}__entity_aliases", timeout=120
+        ).json()["result"]["points_count"]
         print(f"\nwritten {written}, skipped {skipped} (no embedding)")
         print(f"entity_aliases now holds {total} points")
         return 0

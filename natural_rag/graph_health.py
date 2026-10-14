@@ -29,10 +29,12 @@ The numbers that would have caught it on day one are all cheap and need no LLM:
 from __future__ import annotations
 
 import json
-import urllib.error
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass, field
+
+import httpx
+
+from natural_rag.url_guard import assert_http_url
 
 from natural_rag.wikontic_prefix import sanitize_prefix
 
@@ -130,29 +132,26 @@ class GraphHealth:
 
 def scroll_payloads(url: str, collection: str) -> list[dict] | None:
     """Every payload in ``collection``, or None when it does not exist."""
+    assert_http_url(url, what="Qdrant URL")
     payloads: list[dict] = []
     offset = None
-    while True:
-        body: dict = {"limit": SCROLL_PAGE, "with_payload": True, "with_vector": False}
-        if offset is not None:
-            body["offset"] = offset
-        request = urllib.request.Request(
-            f"{url}/collections/{urllib.parse.quote(collection)}/points/scroll",
-            method="POST",
-            data=json.dumps(body).encode(),
-            headers={"Content-Type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=300) as response:
-                result = json.load(response)["result"]
-        except urllib.error.HTTPError as exc:
-            if exc.code == 404:
+    with httpx.Client(timeout=300) as client:
+        while True:
+            body: dict = {"limit": SCROLL_PAGE, "with_payload": True, "with_vector": False}
+            if offset is not None:
+                body["offset"] = offset
+            response = client.post(
+                f"{url}/collections/{urllib.parse.quote(collection)}/points/scroll",
+                json=body,
+            )
+            if response.status_code == 404:
                 return None
-            raise
-        payloads.extend(p["payload"] for p in result["points"] if p.get("payload"))
-        offset = result.get("next_page_offset")
-        if offset is None:
-            return payloads
+            response.raise_for_status()
+            result = response.json()["result"]
+            payloads.extend(p["payload"] for p in result["points"] if p.get("payload"))
+            offset = result.get("next_page_offset")
+            if offset is None:
+                return payloads
 
 
 def collect(url: str, prefix: str) -> GraphHealth:

@@ -240,3 +240,7 @@ __marimo__/
 
 # Cluster credentials (MongoDB password archive) — never commit
 MongoDB_on_cluster/
+datasets/multiq/
+datasets/chegeka/
+datasets/graphrag_bench_medical/
+.mimosa/

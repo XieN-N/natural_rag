@@ -25,7 +25,6 @@ actually delete.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import urllib.error
 import urllib.request
@@ -36,6 +35,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from natural_rag.wikontic_prefix import sanitize_prefix  # noqa: E402
+
+import httpx
+
+from natural_rag.url_guard import assert_http_url
 
 #: Only these decide whether count_triplets() considers a document done.
 #: entity_aliases / property_aliases are a shared dictionary that re-populates
@@ -63,13 +66,13 @@ def parse_args() -> argparse.Namespace:
 
 
 def request(url: str, payload: dict | None = None) -> dict:
-    data = json.dumps(payload).encode() if payload is not None else None
-    req = urllib.request.Request(
-        url, data=data, method="POST" if data else "GET",
-        headers={"Content-Type": "application/json"},
+    assert_http_url(url, what="--qdrant-url")
+    response = httpx.request(
+        "POST" if payload is not None else "GET",
+        url, json=payload, timeout=120,
     )
-    with urllib.request.urlopen(req, timeout=120) as response:
-        return json.load(response)
+    response.raise_for_status()
+    return response.json()
 
 
 def doc_filter(sample_id: str) -> dict:
@@ -107,7 +110,7 @@ def main() -> int:
         )
 
     prefix = sanitize_prefix(args.collection_prefix)
-    url = args.qdrant_url.rstrip("/")
+    url = assert_http_url(args.qdrant_url.rstrip("/"), what="--qdrant-url")
     if prefix != args.collection_prefix:
         print(f"prefix: {args.collection_prefix!r} -> {prefix!r} (sanitized)")
 
