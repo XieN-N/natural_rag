@@ -108,11 +108,24 @@ conda activate "/userspace/sse/.conda/envs/${conda_env}"
 wait_for_vllm() {
     local log_path="$1"
     local name="$2"
+    local pid="${3:-}"
+    local waited=0
+    local timeout="${VLLM_WAIT_TIMEOUT:-2700}"   # 45 минут по умолчанию
     echo "=== Waiting for ${name} to start ===" | tee -a "${log_file}"
     while ! grep -q "Starting vLLM API server" "${log_path}" 2>/dev/null; do
+        if [ -n "${pid}" ] && ! kill -0 "${pid}" 2>/dev/null; then
+            echo "=== ${name} process died before starting — see ${log_path} ===" | tee -a "${log_file}"
+            return 1
+        fi
+        if [ "${waited}" -ge "${timeout}" ]; then
+            echo "=== TIMEOUT (${timeout}s) waiting for ${name} — see ${log_path} ===" | tee -a "${log_file}"
+            return 1
+        fi
         sleep 5
+        waited=$((waited + 5))
     done
     echo "=== ${name} started ===" | tee -a "${log_file}"
+    return 0
 }
 
 cleanup() {
@@ -162,7 +175,7 @@ CUDA_VISIBLE_DEVICES=${LLM_GPUS} vllm serve "${BIG_LLM_MODEL}" \
     --tensor-parallel-size ${LLM_TENSOR_PARALLEL} \
     > "${BIG_LLM_LOG}" 2>&1 &
 LLM_PID=$!
-wait_for_vllm "${BIG_LLM_LOG}" "LLM"
+wait_for_vllm "${BIG_LLM_LOG}" "LLM" "$!" || exit 1
 
 echo "=== Starting vLLM for embeddings (${EMBED_MODEL_NAME}) ===" | tee -a "${log_file}"
 EMBED_EXTRA=()
@@ -177,7 +190,7 @@ CUDA_VISIBLE_DEVICES=${EMBED_GPUS} vllm serve "${EMBED_MODEL}" \
     --trust_remote_code \
     > "${EMBED_LOG}" 2>&1 &
 EMBED_PID=$!
-wait_for_vllm "${EMBED_LOG}" "Embedder"
+wait_for_vllm "${EMBED_LOG}" "Embedder" "$!" || exit 1
 
 export OPENAI_BASE_URL="http://localhost:${BIG_LLM_PORT}/v1"
 export EMBED_BASE_URL="http://localhost:${EMBED_PORT}/v1"
