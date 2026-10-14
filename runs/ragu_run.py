@@ -196,14 +196,36 @@ def main() -> None:
 
     dataset = RAGDataset.load_auto(args.dataset_path)
     if args.limit_docs is not None or args.limit_questions is not None:
-        dataset = RAGDataset(
-            documents=dict(list(dataset.documents.items())[: args.limit_docs])
+        documents = (
+            dict(list(dataset.documents.items())[: args.limit_docs])
             if args.limit_docs is not None
-            else dataset.documents,
-            questions=dataset.questions[: args.limit_questions]
-            if args.limit_questions is not None
-            else dataset.questions,
+            else dataset.documents
         )
+        questions = dataset.questions
+        if args.limit_docs is not None:
+            # Вопросы, чьи relevant-источники выпали при обрезке корпуса,
+            # невалидны (check_ids_exist упадёт). Фильтруем по всему списку
+            # и только потом берём первые N — иначе на датасетах, где первые
+            # вопросы ссылаются на отрезанные доки, смоук остался бы без
+            # ни одного ответимого вопроса.
+            answerable = [
+                q for q in questions
+                if q.relevant is None
+                or all(s.doc_id in documents for s in q.relevant)
+            ]
+            dropped = len(questions) - len(answerable)
+            if dropped:
+                print(
+                    f"--limit-docs: {dropped} of {len(questions)} question(s) "
+                    "reference docs outside the kept corpus slice"
+                )
+            if args.limit_questions is not None:
+                questions = answerable[: args.limit_questions]
+            else:
+                questions = answerable
+        elif args.limit_questions is not None:
+            questions = questions[: args.limit_questions]
+        dataset = RAGDataset(documents=documents, questions=questions)
 
     index_dir, answers_dir, base_dir = resolve_run_dirs(
         args.output_dir, args.dataset_path, args.index_model
