@@ -22,6 +22,10 @@
 #SBATCH --open-mode=append
 #SBATCH --nodelist=ngpu05
 
+# Токен ЛОКАЛЬНЫХ vLLM-серверов, которые этот же скрипт поднимает ниже.
+# Это не секрет: он только авторизует запросы к localhost-эндпоинтам джобы.
+VLLM_SERVE_TOKEN="${VLLM_SERVE_TOKEN:-local-vllm-placeholder}"
+
 # ---------------- НАСТРОЙКИ ------------------
 SUBSET="${SUBSET:-medical}"
 PHASE="${PHASE:-index}"                        # index | query | all
@@ -181,7 +185,7 @@ fi
 echo "=== Starting vLLM (${BIG_LLM_NAME}) on port ${BIG_LLM_PORT} ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${LLM_GPUS} vllm serve "${BIG_LLM_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization ${LLM_MEM_UTIL} \
     --max-model-len 32768 \
     --served-model-name "${BIG_LLM_NAME}" \
@@ -199,7 +203,7 @@ wait_for_vllm "${BIG_LLM_LOG}" "LLM" "${LLM_PID}"
 echo "=== Starting vLLM embeddings (${EMBED_MODEL_NAME}) on port ${EMBED_PORT} ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${EMBED_GPUS} vllm serve "${EMBED_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization ${EMBED_MEM_UTIL} \
     --served-model-name "${EMBED_MODEL_NAME}" \
     --port "${EMBED_PORT}" \
@@ -208,8 +212,8 @@ CUDA_VISIBLE_DEVICES=${EMBED_GPUS} vllm serve "${EMBED_MODEL}" \
 EMBED_PID=$!
 wait_for_vllm "${EMBED_LOG}" "Embedder" "${EMBED_PID}"
 
-export LLM_API_KEY="token-abc123"
-export OPENAI_API_KEY="token-abc123"
+export LLM_API_KEY="${VLLM_SERVE_TOKEN}"
+export OPENAI_API_KEY="${VLLM_SERVE_TOKEN}"
 
 # ---------- Индексация ----------
 # Раннеры читают ./Datasets/... относительными путями, поэтому только из корня

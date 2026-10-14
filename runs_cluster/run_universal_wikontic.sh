@@ -2,8 +2,8 @@
 
 # ============================================================
 # Универсальный скрипт для Wikontic: индексация + генерация ответов.
-# Построен по образцу runs_universal/run_universal_*.sh.
 # Все пути (логи, кэш, индекс, ответы) изолированы с помощью RUN_ID.
+# Вызывает канонический раннер runs/wikontic_run.py.
 #
 # Отличия от скриптов LightRAG/FastGraphRAG:
 #   * vLLM для эмбеддера НЕ поднимается — Wikontic использует локальный
@@ -17,6 +17,10 @@
 #SBATCH --error="/userspace/sse/natural_rag/logs/wikontic.err"
 #SBATCH --output="/userspace/sse/natural_rag/logs/wikontic.log"
 #SBATCH --open-mode=append
+
+# Токен ЛОКАЛЬНЫХ vLLM-серверов, которые этот же скрипт поднимает ниже.
+# Это не секрет: он только авторизует запросы к localhost-эндпоинтам джобы.
+VLLM_SERVE_TOKEN="${VLLM_SERVE_TOKEN:-local-vllm-placeholder}"
 
 # ---------------- НАСТРОЙКИ (МЕНЯЙТЕ ЗДЕСЬ) ------------------
 # Любую переменную можно переопределить из окружения при запуске, не трогая файл:
@@ -91,7 +95,7 @@ RUN_ID="${RUN_ID:-wikontic_${DATASET_NAME}_${BIG_LLM_NAME}_${WIKONTIC_MODE}_${WI
 
 set -o pipefail
 
-project_root="/userspace/sse/natural_rag"
+project_root="${PROJECT_ROOT:-/userspace/sse/natural_rag}"
 miniconda_dir="/userspace/sse/miniconda3"
 conda_env="wikontic"
 
@@ -282,7 +286,7 @@ esac
 echo "=== Starting vLLM for LLM (${BIG_LLM_NAME}) ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${LLM_GPUS} vllm serve "${BIG_LLM_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization ${LLM_MEM_UTIL} \
     --max-model-len 32768 \
     --served-model-name "${BIG_LLM_NAME}" \
@@ -293,7 +297,7 @@ LLM_PID=$!
 wait_for_vllm "${BIG_LLM_LOG}" "LLM"
 
 export OPENAI_BASE_URL="http://localhost:${BIG_LLM_PORT}/v1"
-export OPENAI_API_KEY="token-abc123"
+export OPENAI_API_KEY="${VLLM_SERVE_TOKEN}"
 export LLM_MODEL="${BIG_LLM_NAME}"
 
 cd "${project_root}" || exit 1

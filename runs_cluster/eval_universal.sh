@@ -2,7 +2,6 @@
 
 # ============================================================
 # Универсальный скрипт ОЦЕНКИ ответов (любой движок).
-# Построен по образцу runs_universal/evaluate_universal.sh.
 # Читает уже сгенерированные answers/<i>.txt и считает EM / F1 /
 # accuracy по LLM-судье, а также готовит вход для GraphRAG-Benchmark.
 # ============================================================
@@ -12,6 +11,10 @@
 #SBATCH --error="/userspace/sse/natural_rag/logs/eval_universal.err"
 #SBATCH --output="/userspace/sse/natural_rag/logs/eval_universal.log"
 #SBATCH --open-mode=append
+
+# Токен ЛОКАЛЬНЫХ vLLM-серверов, которые этот же скрипт поднимает ниже.
+# Это не секрет: он только авторизует запросы к localhost-эндпоинтам джобы.
+VLLM_SERVE_TOKEN="${VLLM_SERVE_TOKEN:-local-vllm-placeholder}"
 
 # ---------------- НАСТРОЙКИ (МЕНЯЙТЕ ЗДЕСЬ) ------------------
 RAG_ENGINE="wikontic"                 # wikontic | ragu  (только для путей)
@@ -105,7 +108,7 @@ fi
 echo "=== Starting vLLM judge server (${JUDGE_MODEL_NAME}) ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${JUDGE_GPUS} vllm serve "${JUDGE_MODEL}" \
     --download-dir "${eval_cache_dir}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization 0.8 \
     --max-model-len 8192 \
     --served-model-name "${JUDGE_MODEL_NAME}" \
@@ -115,7 +118,7 @@ JUDGE_PID=$!
 wait_for_vllm "${JUDGE_LOG}" "Judge"
 
 export OPENAI_BASE_URL="http://localhost:${JUDGE_PORT}/v1"
-export OPENAI_API_KEY="token-abc123"
+export OPENAI_API_KEY="${VLLM_SERVE_TOKEN}"
 export JUDGE_MODEL_NAME="${JUDGE_MODEL_NAME}"
 
 # ---------- ЭТАП 3: Оценка ----------

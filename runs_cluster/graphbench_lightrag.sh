@@ -22,6 +22,10 @@
 #SBATCH --open-mode=append
 #SBATCH --nodelist=ngpu07
 
+# Токен ЛОКАЛЬНЫХ vLLM-серверов, которые этот же скрипт поднимает ниже.
+# Это не секрет: он только авторизует запросы к localhost-эндпоинтам джобы.
+VLLM_SERVE_TOKEN="${VLLM_SERVE_TOKEN:-local-vllm-placeholder}"
+
 # ---------------- НАСТРОЙКИ ------------------
 SUBSET="${SUBSET:-medical}"
 PHASE="${PHASE:-index}"                        # index | query | all
@@ -148,7 +152,7 @@ fi
 echo "=== Starting vLLM (${BIG_LLM_NAME}) on port ${BIG_LLM_PORT} ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=0 vllm serve "${BIG_LLM_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization 0.80 \
     --max-model-len 32768 \
     --served-model-name "${BIG_LLM_NAME}" \
@@ -159,8 +163,8 @@ CUDA_VISIBLE_DEVICES=0 vllm serve "${BIG_LLM_MODEL}" \
 LLM_PID=$!
 wait_for_vllm
 
-export LLM_API_KEY="token-abc123"
-export OPENAI_API_KEY="token-abc123"
+export LLM_API_KEY="${VLLM_SERVE_TOKEN}"
+export OPENAI_API_KEY="${VLLM_SERVE_TOKEN}"
 
 # ---------- Индексация ----------
 # Раннеры читают ./Datasets/... относительными путями, поэтому только из корня

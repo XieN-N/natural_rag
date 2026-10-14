@@ -1,47 +1,66 @@
 #!/bin/bash
 
 # ============================================================
-# Универсальный скрипт для RAG-экспериментов (LightRAG / Fast GraphRAG)
-# с индексацией, генерацией ответов, конвертацией и оценкой LLM-судьёй.
-# Все пути (логи, кэш, ответы) изолированы с помощью RUN_ID.
-# Настройка GPU – укажите NUM_GPUS, остальное подстроится.
+# Универсальный sbatch-скрипт для RAG-экспериментов с LightRAG /
+# FastGraphRAG на кластере: vLLM-серверы (LLM + эмбеддер), индексация,
+# генерация ответов, конвертация в JSON и оценка LLM-судьёй.
+# Все пути (логи, кэш, ответы) изолированы через RUN_ID.
+#
+# Заменяет бывшие ~30 копий runs_universal/run_*.sh, отличавшихся
+# только блоком переменных. Любую настройку можно переопределить из
+# окружения, не трогая файл:
+#
+#   sbatch --export=ALL,RAG_ENGINE=lightrag,DATASET_NAME=chegeka \
+#       runs_cluster/run_universal.sh
+#
+# (SLURM по умолчанию пробрасывает окружение: --export=ALL.)
+# Готовые комбинации «датасет × движок × модель» — таблицей примеров
+# в runs_cluster/README.md.
+#
+# Вызывает канонические раннеры из runs/ (lightrag_run.py,
+# fast_graphrag_run.py, convert_answers.py, jsonl_llm_judge_evaluate.py).
 # ============================================================
 
-#SBATCH --job-name=fast_chegeka
+#SBATCH --job-name=rag_universal
 #SBATCH --partition=a100
-#SBATCH --error="/userspace/sse/natural_rag/logs/rag_universal.err"
-#SBATCH --output="/userspace/sse/natural_rag/logs/rag_universal.log"
+#SBATCH --error="logs/%x-%j.err"
+#SBATCH --output="logs/%x-%j.log"
 #SBATCH --open-mode=append
-#SBATCH --nodelist=ngpu07
 
-# ---------------- НАСТРОЙКИ (МЕНЯЙТЕ ЗДЕСЬ) ------------------
-RAG_ENGINE="fast_graphrag"                # lightrag или fast_graphrag
-DATASET_NAME="chegeka"                # имя датасета (папка в datasets/)
+# ---------------- НАСТРОЙКИ (МЕНЯЙТЕ ЗДЕСЬ ИЛИ ЧЕРЕЗ ОКРУЖЕНИЕ) -------
+RAG_ENGINE="${RAG_ENGINE:-fast_graphrag}"   # lightrag | fast_graphrag
+DATASET_NAME="${DATASET_NAME:-multiq}"      # папка в datasets/
 
-# Модели
-BIG_LLM_MODEL="/userspace/kms/models/gpt-oss-20b"
-EMBED_MODEL="/userspace/kms/models/gte-multilingual-base"
-JUDGE_MODEL="/userspace/kms/models/LLMs/Qwen2.5-14B-Instruct"
+# Модели (пути на кластере + имена, под которыми их отдаёт vLLM)
+BIG_LLM_MODEL="${BIG_LLM_MODEL:-/userspace/kms/models/LLMs/Qwen2.5-14B-Instruct}"
+EMBED_MODEL="${EMBED_MODEL:-/userspace/kms/models/gte-multilingual-base}"
+JUDGE_MODEL="${JUDGE_MODEL:-/userspace/kms/models/LLMs/Qwen2.5-14B-Instruct}"
 
-BIG_LLM_NAME="gpt-oss-20b"
-EMBED_MODEL_NAME="gte-multilingual-base"
-JUDGE_MODEL_NAME="Qwen2.5-14B-Instruct"
+BIG_LLM_NAME="${BIG_LLM_NAME:-Qwen2.5-14B-Instruct}"
+EMBED_MODEL_NAME="${EMBED_MODEL_NAME:-gte-multilingual-base}"
+JUDGE_MODEL_NAME="${JUDGE_MODEL_NAME:-Qwen2.5-14B-Instruct}"
+
+EMBEDDING_DIM="${EMBEDDING_DIM:-768}"
 
 # Порты
-BIG_LLM_PORT=8000
-EMBED_PORT=8002
-JUDGE_PORT=8200
+BIG_LLM_PORT="${BIG_LLM_PORT:-8000}"
+EMBED_PORT="${EMBED_PORT:-8002}"
+JUDGE_PORT="${JUDGE_PORT:-8200}"
+
+# Токен ЛОКАЛЬНЫХ vLLM-серверов, которые этот же скрипт поднимает ниже.
+# Это не секрет: он только авторизует запросы к localhost-эндпоинтам джобы.
+VLLM_SERVE_TOKEN="${VLLM_SERVE_TOKEN:-local-vllm-placeholder}"
 
 # ===================== КОНФИГУРАЦИЯ GPU =====================
-NUM_GPUS=1   # укажите количество GPU на ноде (1,2,8,10...)
+NUM_GPUS="${NUM_GPUS:-1}"   # количество GPU на ноде (1,2,8,10...)
 
-if [ ${NUM_GPUS} -ge 10 ]; then
+if [ "${NUM_GPUS}" -ge 10 ]; then
     LLM_GPUS=0,1,2,3,4,5,6,7
     EMBED_GPUS=8,9
     LLM_TENSOR_PARALLEL=8
     LLM_MEM_UTIL=0.85
     EMBED_MEM_UTIL=0.9
-elif [ ${NUM_GPUS} -ge 2 ]; then
+elif [ "${NUM_GPUS}" -ge 2 ]; then
     LLM_GPUS=0
     EMBED_GPUS=1
     LLM_TENSOR_PARALLEL=1
@@ -57,15 +76,16 @@ fi
 JUDGE_GPUS=0
 
 # Идентификатор запуска
-RUN_ID="${RAG_ENGINE}_${DATASET_NAME}_${BIG_LLM_NAME}"
+RUN_ID="${RUN_ID:-${RAG_ENGINE}_${DATASET_NAME}_${BIG_LLM_NAME}}"
 # --------------------------------------------------------------
 
-project_root="/userspace/sse/natural_rag"
+PROJECT_ROOT="${PROJECT_ROOT:-/userspace/sse/natural_rag}"
+project_root="${PROJECT_ROOT}"
 miniconda_dir="/userspace/sse/miniconda3"
 
-# Окружение для индексации и генерации
+# Окружение для индексации и генерации (conda-env на движок)
 conda_env="${RAG_ENGINE}"
-# Окружение для оценки (всегда lightrag)
+# Окружение для оценки (судья не зависит от движка)
 eval_conda_env="lightrag"
 
 # Уникальные папки для логов и кэша
@@ -73,10 +93,9 @@ logs_dir="${project_root}/logs/${RUN_ID}"
 cache_root="/userspace/sse/cache/${RUN_ID}"
 eval_cache_dir="${cache_root}/eval"
 
-mkdir -p "${logs_dir}" "${cache_root}" "${eval_cache_dir}"
+mkdir -p "${project_root}/logs" "${logs_dir}" "${cache_root}" "${eval_cache_dir}"
 
 log_file="${logs_dir}/main.log"
-err_file="${logs_dir}/main.err"
 BIG_LLM_LOG="${logs_dir}/vllm_llm.log"
 EMBED_LOG="${logs_dir}/vllm_embed.log"
 JUDGE_LOG="${logs_dir}/vllm_judge.log"
@@ -98,6 +117,13 @@ wait_for_vllm() {
     done
     echo "=== ${name} started ===" | tee -a "${log_file}"
 }
+
+cleanup() {
+    kill %1 %2 2>/dev/null || true
+    [ -n "${JUDGE_PID}" ] && kill "${JUDGE_PID}" 2>/dev/null || true
+    wait 2>/dev/null
+}
+trap cleanup EXIT
 
 # Очистка процессов
 echo "=== Killing leftover vllm/torch processes ===" | tee -a "${log_file}"
@@ -121,16 +147,15 @@ export TRITON_CACHE_DIR="${cache_root}/triton_cache"
 export FLASHINFER_WORKSPACE_DIR="${cache_root}/flashinfer_workspace"
 mkdir -p "${FLASHINFER_WORKSPACE_DIR}" "${VLLM_CACHE_DIR}" "${TORCH_HOME}" "${XDG_CACHE_HOME}" "${TRITON_CACHE_DIR}" "${PIP_CACHE_DIR}"
 
-# Пути индекса и ответов
-INDEX_DIR="${project_root}/generated/${RUN_ID}/index"
-ANSWERS_DIR="${project_root}/generated/${RUN_ID}/answers"
-mkdir -p "${INDEX_DIR}" "${ANSWERS_DIR}"
+# Канонические раннеры раскладывают вывод как
+#   <OUTPUT_DIR>/<датасет>/{index,answers}  (natural_rag.paths.resolve_run_dirs)
+export OUTPUT_DIR="${project_root}/generated/${RUN_ID}"
 
 # ---------- ЭТАП 1: Запуск LLM и эмбеддера ----------
 echo "=== Starting vLLM for LLM (${BIG_LLM_NAME}) ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${LLM_GPUS} vllm serve "${BIG_LLM_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization ${LLM_MEM_UTIL} \
     --max-model-len 32768 \
     --served-model-name "${BIG_LLM_NAME}" \
@@ -143,7 +168,7 @@ wait_for_vllm "${BIG_LLM_LOG}" "LLM"
 echo "=== Starting vLLM for embeddings (${EMBED_MODEL_NAME}) ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${EMBED_GPUS} vllm serve "${EMBED_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization ${EMBED_MEM_UTIL} \
     --served-model-name "${EMBED_MODEL_NAME}" \
     --port "${EMBED_PORT}" \
@@ -153,44 +178,34 @@ CUDA_VISIBLE_DEVICES=${EMBED_GPUS} vllm serve "${EMBED_MODEL}" \
 
 wait_for_vllm "${EMBED_LOG}" "Embedder"
 
-# Экспорт переменных для Python-скриптов
+# Экспорт переменных для канонических python-раннеров из runs/
 export OPENAI_BASE_URL="http://localhost:${BIG_LLM_PORT}/v1"
 export EMBED_BASE_URL="http://localhost:${EMBED_PORT}/v1"
-export OPENAI_API_KEY="token-abc123"
+export OPENAI_API_KEY="${VLLM_SERVE_TOKEN}"
 export LLM_MODEL="${BIG_LLM_NAME}"
 export EMBED_MODEL="${EMBED_MODEL_NAME}"
-export EMBEDDING_DIM=768
+export EMBEDDING_DIM="${EMBEDDING_DIM}"
 export CONCURRENT_TASK_LIMIT=128
 
-export RAG_ENGINE="${RAG_ENGINE}"
-export DATASET_NAME="${DATASET_NAME}"
-export INDEX_DIR="${INDEX_DIR}"
-export ANSWERS_DIR="${ANSWERS_DIR}"
+export DATASET_PATH="${project_root}/datasets/${DATASET_NAME}"
 
 # ---------- ЭТАП 2: Индексация и генерация ответов ----------
 echo "=== Starting RAG pipeline (${RAG_ENGINE}) ===" | tee -a "${log_file}"
 cd "${project_root}" || exit 1
 
 if [ "${RAG_ENGINE}" = "fast_graphrag" ]; then
-    python runs_universal/fast_graphrag_run.py >> "${log_file}" 2>&1
+    python runs/fast_graphrag_run.py >> "${log_file}" 2>&1
 else
-    python runs_universal/lightrag_run.py >> "${log_file}" 2>&1
+    python runs/lightrag_run.py >> "${log_file}" 2>&1
 fi
 echo "=== RAG pipeline finished ===" | tee -a "${log_file}"
 
-# ---------- ЭТАП 3: Конвертация ответов в JSON ----------
-# Определяем паттерн и имя файла для ответов
-if [ "${DATASET_NAME}" = "multiq" ]; then
-    ANSWERS_PATTERN="multi_q_*.json"
-    ANSWERS_JSON_FILE="multi_q_answers.json"
-else
-    ANSWERS_PATTERN="${DATASET_NAME}_*.json"
-    ANSWERS_JSON_FILE="${DATASET_NAME}_answers.json"
-fi
-export ANSWERS_PATTERN ANSWERS_JSON_FILE
+ANSWERS_DIR="${OUTPUT_DIR}/${DATASET_NAME}/answers"
 
+# ---------- ЭТАП 3: Конвертация ответов в JSON ----------
 echo "=== Converting answers to JSON ===" | tee -a "${log_file}"
-python runs_universal/convert_answers.py >> "${log_file}" 2>&1
+DATASET_NAME="${DATASET_NAME}" ANSWERS_DIR="${ANSWERS_DIR}" \
+    python runs/convert_answers.py >> "${log_file}" 2>&1
 
 # ---------- ЭТАП 4: Остановка LLM и эмбеддера ----------
 echo "=== Stopping LLM and Embedder ===" | tee -a "${log_file}"
@@ -207,7 +222,7 @@ conda activate "/userspace/sse/.conda/envs/${eval_conda_env}"
 echo "=== Starting vLLM judge server (${JUDGE_MODEL_NAME}) ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${JUDGE_GPUS} vllm serve "${JUDGE_MODEL}" \
     --download-dir "${eval_cache_dir}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization 0.8 \
     --max-model-len 8192 \
     --served-model-name "${JUDGE_MODEL_NAME}" \
@@ -218,22 +233,12 @@ JUDGE_PID=$!
 
 wait_for_vllm "${JUDGE_LOG}" "Judge"
 
-export OPENAI_BASE_URL="http://localhost:${JUDGE_PORT}/v1"
-export JUDGE_MODEL_NAME="${JUDGE_MODEL_NAME}"
-
-# Паттерн для JSON с ответами
-if [ "${DATASET_NAME}" = "multiq" ]; then
-    export ANSWERS_PATTERN="multi_q_*.json"
-else
-    export ANSWERS_PATTERN="${DATASET_NAME}_*.json"
-fi
-
 echo "=== Starting evaluation ===" | tee -a "${log_file}"
-python runs_universal/evaluate.py >> "${log_file}" 2>&1
+DATASET_NAME="${DATASET_NAME}" ANSWERS_DIR="${ANSWERS_DIR}" \
+    OPENAI_BASE_URL="http://localhost:${JUDGE_PORT}/v1" \
+    OPENAI_API_KEY="${VLLM_SERVE_TOKEN}" \
+    JUDGE_MODEL_NAME="${JUDGE_MODEL_NAME}" \
+    python runs/jsonl_llm_judge_evaluate.py >> "${log_file}" 2>&1
 echo "=== Evaluation finished ===" | tee -a "${log_file}"
-
-# Очистка
-kill ${JUDGE_PID} 2>/dev/null
-wait ${JUDGE_PID} 2>/dev/null
 
 echo "=== Job finished at $(date) ===" | tee -a "${log_file}"

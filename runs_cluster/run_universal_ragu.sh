@@ -2,7 +2,6 @@
 
 # ============================================================
 # Универсальный скрипт для RAGU: индексация + генерация ответов.
-# Построен по образцу runs_universal/run_universal_*.sh.
 # Поднимает два vLLM: LLM и эмбеддер. Замер скорости индексации
 # пишется в generated/.../index_summary.json тем же IndexTimer,
 # что и у Wikontic — числа сравнимы напрямую.
@@ -13,6 +12,10 @@
 #SBATCH --error="/userspace/sse/natural_rag/logs/ragu.err"
 #SBATCH --output="/userspace/sse/natural_rag/logs/ragu.log"
 #SBATCH --open-mode=append
+
+# Токен ЛОКАЛЬНЫХ vLLM-серверов, которые этот же скрипт поднимает ниже.
+# Это не секрет: он только авторизует запросы к localhost-эндпоинтам джобы.
+VLLM_SERVE_TOKEN="${VLLM_SERVE_TOKEN:-local-vllm-placeholder}"
 
 # ---------------- НАСТРОЙКИ (МЕНЯЙТЕ ЗДЕСЬ) ------------------
 # Любую переменную можно переопределить из окружения при запуске, не трогая файл:
@@ -146,7 +149,7 @@ OUTPUT_DIR="${project_root}/generated/ragu_${DATASET_NAME}"
 echo "=== Starting vLLM for LLM (${BIG_LLM_NAME}) ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${LLM_GPUS} vllm serve "${BIG_LLM_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization ${LLM_MEM_UTIL} \
     --max-model-len 32768 \
     --served-model-name "${BIG_LLM_NAME}" \
@@ -161,7 +164,7 @@ EMBED_EXTRA=()
 [ -n "${EMBED_HF_OVERRIDES}" ] && EMBED_EXTRA+=(--hf-overrides "${EMBED_HF_OVERRIDES}")
 CUDA_VISIBLE_DEVICES=${EMBED_GPUS} vllm serve "${EMBED_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization ${EMBED_MEM_UTIL} \
     --served-model-name "${EMBED_MODEL_NAME}" \
     --port "${EMBED_PORT}" \
@@ -173,7 +176,7 @@ wait_for_vllm "${EMBED_LOG}" "Embedder"
 
 export OPENAI_BASE_URL="http://localhost:${BIG_LLM_PORT}/v1"
 export EMBED_BASE_URL="http://localhost:${EMBED_PORT}/v1"
-export OPENAI_API_KEY="token-abc123"
+export OPENAI_API_KEY="${VLLM_SERVE_TOKEN}"
 export LLM_MODEL="${BIG_LLM_NAME}"
 export EMBED_MODEL="${EMBED_MODEL_NAME}"
 export EMBEDDING_DIM="${EMBEDDING_DIM}"

@@ -13,14 +13,14 @@
 # Смоучится тот же самый скрипт, который потом пойдёт в очередь — иначе проба
 # проверяет не то, что запускается. Задаётся через SCRIPT:
 #
-#   SCRIPT=run_universal_wikontic_qwen.sh ./runs_cluster/smoke_index.sh
+#   SCRIPT=launch_wikontic_qwen.sh ./runs_cluster/smoke_index.sh
 #
 # Скрипт НЕ уходит в SLURM сам: он выполняет целевой файл через bash здесь же.
 # На login-узле vLLM не поднимется, поэтому запускать через srun, на той же
 # ноде, что зашита в целевом скрипте:
 #
 #   srun -p a100 -w ngpu06 bash -c \
-#     'SCRIPT=run_universal_wikontic_qwen.sh ./runs_cluster/smoke_index.sh'
+#     'SCRIPT=launch_wikontic_qwen.sh ./runs_cluster/smoke_index.sh'
 #
 # Ненулевой код возврата означает: в очередь не ставить.
 set -uo pipefail

@@ -25,6 +25,10 @@
 #SBATCH --output="/userspace/sse/natural_rag/logs/musique_wikontic_dynamic.log"
 #SBATCH --open-mode=append
 
+# Токен ЛОКАЛЬНЫХ vLLM-серверов, которые этот же скрипт поднимает ниже.
+# Это не секрет: он только авторизует запросы к localhost-эндпоинтам джобы.
+VLLM_SERVE_TOKEN="${VLLM_SERVE_TOKEN:-local-vllm-placeholder}"
+
 # ---------------- НАСТРОЙКИ (МЕНЯЙТЕ ЗДЕСЬ) ------------------
 DATASET_NAME="musique"
 
@@ -216,7 +220,7 @@ echo "=== Qdrant ready ===" | tee -a "${log_file}"
 echo "=== Starting vLLM (${BIG_LLM_NAME}) on port ${BIG_LLM_PORT} ===" | tee -a "${log_file}"
 CUDA_VISIBLE_DEVICES=${LLM_GPUS} vllm serve "${BIG_LLM_MODEL}" \
     --download-dir "${cache_root}" \
-    --api-key token-abc123 \
+    --api-key "${VLLM_SERVE_TOKEN}" \
     --gpu-memory-utilization ${LLM_MEM_UTIL} \
     --max-model-len 32768 \
     --served-model-name "${BIG_LLM_NAME}" \
@@ -227,7 +231,7 @@ LLM_PID=$!
 wait_for_vllm
 
 export OPENAI_BASE_URL="http://localhost:${BIG_LLM_PORT}/v1"
-export OPENAI_API_KEY="token-abc123"
+export OPENAI_API_KEY="${VLLM_SERVE_TOKEN}"
 export LLM_MODEL="${BIG_LLM_NAME}"
 
 # ---------- ЭТАП 3: Индексация и ответы ----------
