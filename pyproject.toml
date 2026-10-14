@@ -107,4 +107,4 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["natural_rag*"]
-exclude = ["logs*", "runs*", "legacy*", "datasets*", "generated*", "notebooks*", "runs_universal*"]
+exclude = ["logs*", "runs*", "runs_cluster*", "runs_local*", "legacy*", "datasets*", "generated*", "notebooks*", "docs*"]

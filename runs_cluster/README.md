@@ -16,25 +16,49 @@ Community, а `mongodb-atlas-local` — docker-образ.
 
 | Скрипт | Что делает |
 |---|---|
-| `build_ontology.sh` | разовая сборка Wikidata-онтологии (только для `structured`) |
+| `run_universal.sh` | LightRAG / FastGraphRAG на любом датасете: vLLM + индексация + ответы + судья (заменил ~30 копий из бывшего `runs_universal/`) |
+| `run_universal_wikontic.sh` | Wikontic на любом датасете (индексация + ответы) |
+| `run_universal_ragu.sh` | RAGU на любом датасете |
+| `launch_wikontic_gpt.sh` | пресет: graphrag_bench_medical × gpt-oss-20b × dynamic × ngpu07 |
+| `launch_wikontic_meno.sh` | пресет: graphrag_bench_medical × meno-lite-0.1 × dynamic × ngpu05 |
+| `launch_wikontic_qwen.sh` | пресет: graphrag_bench_medical × Qwen2.5-7B × dynamic × ngpu06 |
 | `musique_wikontic_structured.sh` | musique, structured — индексация + ответы |
 | `musique_wikontic_dynamic.sh` | musique, dynamic — индексация + ответы |
-| `run_universal_wikontic.sh` | Wikontic на любом датасете |
-| `run_universal_ragu.sh` | RAGU на любом датасете |
+| `smoke_index.sh` | смоук-проверка индексации на 5 документах (не в очередь) |
+| `build_ontology.sh` | разовая сборка Wikidata-онтологии (только для `structured`) |
 | `eval_universal.sh` | судья: EM / F1 / accuracy + вход для GraphRAG-Benchmark |
 | `show_progress.sh` | очередь + живая таблица скорости + результаты оценки |
 | `export_index.sh` | упаковать индекс для вывоза (граф + манифест + цифры + датасет) |
+| `retry_documents.py` | дозапуск отдельных документов после сбоя индексации |
+| `time_phase.py` | замер длительности фаз прогона по логам |
+| `graphbench_ragu.sh` / `graphbench_lightrag.sh` / `graphbench_hipporag.sh` | прогоны GraphRAG-Bench для соответствующих движков |
 
 Ответы и оценка происходят не здесь, а на своей машине через API — см.
 [`runs_local/README.md`](../runs_local/README.md).
 
-Первые три ставятся обычным `sbatch <файл>`, настройки — в блоке «НАСТРОЙКИ»
-в начале файла. У `run_universal_*` любую настройку можно ещё и переопределить
-из окружения при запуске (SLURM пробрасывает его в job):
+`launch_*.sh` ставятся голым `sbatch` (весь прогон зашит внутри — так
+случайный `export` в сессии не подменит датасет). Остальные универсальные
+скрипты настраиваются блоком «НАСТРОЙКИ» в начале файла, и любую настройку
+можно переопределить из окружения (SLURM пробрасывает его в job):
 
 ```bash
 DATASET_NAME=bioasq WIKONTIC_MODE=dynamic sbatch runs_cluster/run_universal_wikontic.sh
 ```
+
+```bash
+sbatch --export=ALL,RAG_ENGINE=lightrag,DATASET_NAME=chegeka,BIG_LLM_MODEL=/userspace/kms/models/gpt-oss-20b,BIG_LLM_NAME=gpt-oss-20b runs_cluster/run_universal.sh
+```
+
+Бывшие копии `run_<датасет>_<модель>_<движок>.sh` заменены одним
+`run_universal.sh`; эквивалентные запуски:
+
+| Бывший скрипт | Эквивалент |
+|---|---|
+| `run_universal_gpt_20b_lightrag_chegeka.sh` | `sbatch --export=ALL,RAG_ENGINE=lightrag,DATASET_NAME=chegeka,BIG_LLM_MODEL=/userspace/kms/models/gpt-oss-20b,BIG_LLM_NAME=gpt-oss-20b runs_cluster/run_universal.sh` |
+| `run_universal_gigachat-3.1-lightning_lightrag_multiq.sh` | `sbatch --export=ALL,RAG_ENGINE=lightrag,DATASET_NAME=multiq runs_cluster/run_universal.sh` (gigachat — модель по умолчанию не тут: подставьте BIG_LLM_MODEL/BIG_LLM_NAME) |
+| `run_bl_qwen_bl_lightrag.sh` | `sbatch --export=ALL,RAG_ENGINE=lightrag,DATASET_NAME=bl,BIG_LLM_MODEL=/userspace/kms/models/LLMs/Qwen2.5-14B-Instruct,BIG_LLM_NAME=Qwen2.5-14B-Instruct runs_cluster/run_universal.sh` |
+| `run_2wikimultihopqa_gpt_lightrag.sh` | `sbatch --export=ALL,RAG_ENGINE=lightrag,DATASET_NAME=2wikimultihopqa,BIG_LLM_MODEL=/userspace/kms/models/gpt-oss-20b,BIG_LLM_NAME=gpt-oss-20b runs_cluster/run_universal.sh` |
+| `run_universal_wikontic_gpt.sh` | `sbatch runs_cluster/launch_wikontic_gpt.sh` (то же самое, одним файлом) |
 
 ---
 
@@ -117,7 +141,7 @@ sacct -u $(whoami) --format=JobID,JobName%20,NodeList,AllocTRES%40,Elapsed,State
 ```
 
 `--gres` в скриптах нет и не нужен: на этом кластере ноды выделяются целиком
-(так же работают старые `runs_universal/`).
+(так же работают скрипты `run_universal.sh` / `launch_*.sh`).
 
 `#SBATCH --time` в скриптах намеренно нет: ограничений по времени выполнения на
 кластере нет, и прогоны идут столько, сколько нужно.
@@ -150,8 +174,8 @@ cd /userspace/sse/natural_rag && pip install -e ".[ragu]"
 ### Версии: обязательно выровнять по `lightrag`
 
 Свежие `vllm` и `transformers` с этим GigaChat'ом не работают. Рабочий набор —
-тот, что стоит в `lightrag`, где модель уже успешно серверится скриптами
-`runs_universal/`:
+тот, что стоит в `lightrag`, где модель уже успешно серверится
+скриптами `runs_cluster/run_universal.sh`:
 
 ```bash
 pip install "vllm==0.11.0" "transformers==4.57.0" "tokenizers==0.22.2" "torch==2.8.0"

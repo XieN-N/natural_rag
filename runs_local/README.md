@@ -304,14 +304,15 @@ python runs_local/report_results.py --output-dir generated/wikontic_graphrag_ben
 
 ### musique и bioasq
 
-Вашим обычным путём, он не менялся:
+Вашим обычным путём, он не менялся (скрипты переехали из `runs_universal/`
+в `runs/` и получили CLI-флаги поверх env):
 
 ```bash
-ANSWERS_DIR=generated/<RUN_ID>__gpt-4o-mini/musique/gigachat-3.1-lightning/answers DATASET_NAME=musique python runs_universal/convert_answers.py
+ANSWERS_DIR=generated/<RUN_ID>__gpt-4o-mini/musique/gigachat-3.1-lightning/answers DATASET_NAME=musique python runs/convert_answers.py
 ```
 
 ```bash
-DATASET_NAME=musique ANSWERS_PATTERN='musique_*.json' JUDGE_MODEL_NAME=gemini-3-flash-preview python runs_universal/evaluate.py
+DATASET_NAME=musique ANSWERS_DIR=generated/<RUN_ID>__gpt-4o-mini/musique/gigachat-3.1-lightning/answers JUDGE_MODEL_NAME=gemini-3-flash-preview python runs/jsonl_llm_judge_evaluate.py
 ```
 
 ---

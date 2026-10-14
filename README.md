@@ -8,20 +8,28 @@ A research framework for running Retrieval-Augmented Generation (RAG) pipelines 
 natural_rag/
 ├── natural_rag/           # Python package
 │   ├── dataset.py         # Dataset loading (YAML, JSONL, JSON auto-detect)
+│   ├── benchmarks.py      # Benchmark registry (name → path, format, flags)
 │   ├── data.py            # Data model
 │   ├── paths.py           # Output-dir resolver (<engine>_<dataset>/<dataset>/[<model>]/...)
+│   ├── timing.py          # Indexing time / LLM-call accounting
+│   ├── graph_health.py    # Corpus coverage checks (empty_docs, triplets)
 │   ├── dashboard.py       # Dash-based result viewer
 │   ├── baseline/          # Baseline RAG implementations
 │   └── pipelines/         # RAG pipeline wrappers (RAGUPipeline, etc.)
-├── runs/                  # Run scripts + tooling for various RAG engines
-│   ├── check_index_ready.py         # Verify a downloaded index loads without re-indexing
-│   └── build_graphrag_bench_input.py # Convert answers → GraphRAG-Benchmark eval JSON
-├── datasets/              # Benchmark datasets (bl_tiny, bl, musique, etc.)
-├── generated/             # Output: indexes + answers (layout below)
-├── src/                   # Vendored dependencies (graph-ragu)
-├── build/                 # Build artifacts
+├── runs/                  # Canonical per-engine runners + evaluation (README.md inside)
+├── runs_cluster/          # SLURM wrappers for the NSU cluster (README.md inside)
+├── runs_local/            # Local answering/eval over exported indexes (README.md inside)
+├── scripts/               # Repo self-check (validate_repo.py) and setup utilities
+├── datasets/              # Benchmark datasets (see docs/benchmarks.md)
+├── notebooks/             # BL corpus preparation notebooks
+├── legacy/                # Original BL questions before cleanup
+├── docs/                  # benchmarks.md, research journal
 └── pyproject.toml
 ```
+
+One engine — one canonical runner in `runs/` (RAGU: `ragu_run.py`, LightRAG:
+`lightrag_run.py`, …). Every combination of «dataset × engine × model» is a
+matter of flags/environment, not a new script.
 
 Output layout (see `natural_rag/paths.py`):
 
@@ -46,9 +54,16 @@ uv pip install -e ".[ragu]"
 Requires Python 3.12+. Base dependencies: `openai`, `pydantic`, `httpx[socks]`, `dash`, etc.
 Add `.[ragu]` to also install RAGU (`graph-ragu`) from GitHub — see [Engine-Specific Dependencies](#engine-specific-dependencies) for other engines.
 
+> **`ragu` and `ragu-dev` extras are mutually exclusive** — both provide the
+> `ragu` package (the dev branch of RAGU takes `EngineParams` in
+> `a_search`/`a_query`). Install exactly one.
+
 ## Datasets
 
-Datasets live in `datasets/`. Supported formats:
+Nine benchmarks are committed to the repo; three more (multiq, chegeka,
+graphrag_bench_medical) are installed manually. Full table with document and
+question counts, languages and per-benchmark flags:
+[docs/benchmarks.md](docs/benchmarks.md). Supported formats:
 
 | Format | Files | Example |
 |--------|-------|---------|
@@ -86,6 +101,12 @@ uv run python runs/ragu_run.py \
   --embed-batch-size 32
 ```
 
+Smoke-testing any benchmark on a slice of the data:
+
+```bash
+... ragu_run.py --dataset-path datasets/bioasq --limit-docs 50 --limit-questions 5 ...
+```
+
 ### Short-answer mode & NaiveRAG
 
 For benchmarks whose gold answers are short (bioasq, musique, 2wikimultihopqa),
@@ -102,15 +123,19 @@ models in separate folders.
 ## Evaluation
 
 ```bash
-# Checklist-based evaluation
+# Checklist-based evaluation (BL family)
 uv run python runs/ragu_evaluate.py \
   --dataset-name bl_tiny \
   --answers-dir generated/ragu_bl_tiny/answers
 
-# LLM-as-judge evaluation  
+# Consolidate per-question .txt answers into one JSON, then LLM-as-judge
+uv run python runs/convert_answers.py \
+  --dataset-name bl_medium \
+  --answers-dir generated/ragu_bl_medium/answers
 uv run python runs/jsonl_llm_judge_evaluate.py \
   --dataset-name bl_medium \
-  --answers-pattern ragu_*.json
+  --answers-dir generated/ragu_bl_medium/answers \
+  --judge-model Qwen2.5-14B-Instruct
 ```
 
 ### GraphRAG-Benchmark generation eval
@@ -128,6 +153,20 @@ python runs/build_graphrag_bench_input.py \
 See [runs/README.md](runs/README.md#evaluation-with-graphrag-benchmark) for the
 full flow (input schema, `question_type` → metric mapping, and the
 `generation_eval` command).
+
+## Cluster and local workflows
+
+Heavy indexing runs on the NSU cluster (SLURM, one sbatch wrapper per engine
+family): see [runs_cluster/README.md](runs_cluster/README.md). Answering and
+evaluation happen locally against exported indexes via an API LLM:
+[runs_local/README.md](runs_local/README.md).
+
+## Self-check (no GPU, no LLM calls)
+
+```bash
+python scripts/validate_repo.py   # every benchmark loads; all .py/.sh parse
+python runs/test_all.py --dry-run # print every pipeline's command
+```
 
 ## Dashboard
 

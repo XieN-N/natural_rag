@@ -4,6 +4,38 @@ This directory contains scripts to run various RAG engines on benchmark datasets
 
 All scripts share a common dataset interface (`RAGDataset.load_auto()`) and output structure.
 
+## File Map
+
+One engine — one canonical runner; per-dataset/per-model variants are
+flags/env, not copies. Every runner accepts `--limit-docs`/`--limit-questions`
+for smoke tests.
+
+| File | Purpose |
+|---|---|
+| `ragu_run.py` | **RAGU** runner (primary engine): indexing + answers; `--query-engine local/query_plan/naive`, `--short-answers`, `--index-model` |
+| `lightrag_run.py` | **LightRAG** runner |
+| `fast_graphrag_run.py` | **FastGraphRAG** runner |
+| `nano_graphrag_run.py` | **NanoGraphRAG** runner |
+| `run_hippo.py` | **HippoRAG** runner |
+| `baseline_run.py` | Tree-structured **baseline** (no graph; depends on RAGU) |
+| `wikontic_run.py` | **Wikontic** runner: modes dynamic/structured, scope corpus/per_sample, Qdrant/Mongo backends |
+| `convert_answers.py` | Consolidate `answers/<q_idx>.txt` → `<dataset>_answers.json` |
+| `jsonl_llm_judge_evaluate.py` | LLM-as-judge (any engine; plain OpenAI client, env-overridable) |
+| `judge_answers.py` | EM/F1 + LLM judge over an existing index (used by `runs_cluster/eval_universal.sh`) |
+| `ragu_evaluate.py` | Checklist-based evaluation for the BL family |
+| `build_graphrag_bench_input.py` | Build the eval input JSON for external GraphRAG-Benchmark |
+| `prepare_graphrag_bench.py` | Prepare GraphRAG-Bench datasets into the repo layout |
+| `index_stats.py` | Indexing-cost summary (time, LLM calls per document) |
+| `check_index_ready.py` | Verify a downloaded index loads without re-indexing |
+| `ragu_dash.py` | Launch the results dashboard |
+| `test_all.py` | Smoke-test every pipeline on a small dataset (`--dry-run` prints commands) |
+
+Removed in the `cleanup-reproducibility` branch (near-duplicates of the
+canonical runners): `ragu_2wiki_run.py`, `run_custom_ragu.py`,
+`run_lightrag_bioasq.py`, `chegeka_evaluate.py`, `multi_q_evaluate.py` and the
+whole `runs_universal/` directory (~30 copies of one sbatch script — replaced
+by `runs_cluster/run_universal.sh`).
+
 ## Where the output goes
 
 Run artifacts live under `local/`, which git ignores wholesale. `generated/` is
@@ -493,16 +525,15 @@ python runs/ragu_evaluate.py \
   --dataset-name bl_medium \
   --answers-dir generated/ragu_bl_medium/answers
 
-# LLM-as-judge
+# Consolidate .txt answers into one JSON, then LLM-as-judge (any engine)
+python runs/convert_answers.py \
+  --dataset-name multiq \
+  --answers-dir generated/lightrag_multiq/multiq/answers
+
 python runs/jsonl_llm_judge_evaluate.py \
   --dataset-name multiq \
-  --answers-pattern multi_q_*.json
-
-# Chegeka-specific
-python runs/chegeka_evaluate.py
-
-# Multi-Q
-python runs/multi_q_evaluate.py
+  --answers-dir generated/lightrag_multiq/multiq/answers \
+  --judge-model Qwen2.5-14B-Instruct
 ```
 
 ## Dataset Examples
