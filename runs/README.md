@@ -49,15 +49,18 @@ ln -s local/generated generated
 
 ## Installing RAGU
 
-Two mutually exclusive extras. Install one, never both: they provide the same
-`ragu` package and pip keeps whichever it resolved last.
+The release build is an extra; the dev branch is a manual install. Never mix
+them in one environment: both provide the same `ragu` package and pip keeps
+whichever it resolved last.
 
 ```bash
 pip install -e ".[ragu]"
 ```
 
 ```bash
-pip install -e ".[ragu-dev]"
+# dev branch of RaguTeam/RAGU instead of the release
+pip install -e . && pip install --force-reinstall \
+    "graph-ragu @ git+https://github.com/RaguTeam/RAGU.git@dev"
 ```
 
 The dev branch passes retrieval options as an `EngineParams` object instead of

@@ -61,9 +61,10 @@ Python ≥3.12, uv или pip. База: `uv pip install -e .`. Движки —
 `.[ragu]` (рекомендуется), `.[lightrag]`, `.[nano-graphrag]`,
 `.[fast-graphrag]`, `.[hipporag]`, `.[wikontic]`, `.[baseline]`, `.[all]`.
 
-**`ragu` и `ragu-dev` взаимоисключающие** — оба ставят пакет `ragu`
+**Релиз и dev-сборка RAGU взаимоисключающие** — оба ставят пакет `ragu`
 (dev-ветка принимает EngineParams в a_search/a_query; обёртка понимает оба,
-но ставьте что-то одно).
+но ставить что-то одно). Релиз — extra `.[ragu]`; dev-ветка — ручная команда
+из runs/README.md (git-URL-extra ломал бы uv lock: два URL на один пакет).
 
 ## Нормы работы (из журнала, проверенные практикой)
 

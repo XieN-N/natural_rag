@@ -54,9 +54,12 @@ uv pip install -e ".[ragu]"
 Requires Python 3.12+. Base dependencies: `openai`, `pydantic`, `httpx[socks]`, `dash`, etc.
 Add `.[ragu]` to also install RAGU (`graph-ragu`) from GitHub — see [Engine-Specific Dependencies](#engine-specific-dependencies) for other engines.
 
-> **`ragu` and `ragu-dev` extras are mutually exclusive** — both provide the
-> `ragu` package (the dev branch of RAGU takes `EngineParams` in
-> `a_search`/`a_query`). Install exactly one.
+> **The release and dev builds of RAGU are mutually exclusive** — both provide
+> the `ragu` package (the dev branch takes `EngineParams` in
+> `a_search`/`a_query`). Install exactly one: the release via `.[ragu]`, the
+> dev branch via the manual command in [runs/README.md](runs/README.md#installing-ragu)
+> (a git-URL extra would make `uv lock` fail on two URLs for one package, so
+> dev is not an extra).
 
 ## Datasets
 
@@ -199,9 +202,14 @@ uv pip install -e ".[hipporag]"
 uv pip install -e ".[wikontic]"
 uv pip install -e ".[baseline]"
 
-# All engines at once
+# The compatible-together set (RAGU, baseline, LightRAG, NanoGraphRAG, Wikontic)
 uv pip install -e ".[all]"
 ```
+
+> `fast-graphrag` and `hipporag` pin incompatible `openai`/`tiktoken`
+> generations and must live in their OWN environments
+> (`uv pip install -e ".[fast-graphrag]"`), as the cluster setup has always
+> done. `uv lock` models this via `[tool.uv] conflicts`.
 
 > **Recommendation**: Start with `uv pip install -e ".[ragu]"` — this is the engine used in `runs/ragu_run.py`, evaluation scripts (`ragu_evaluate.py`, `jsonl_llm_judge_evaluate.py`), and most of the codebase.
 

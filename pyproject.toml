@@ -5,13 +5,15 @@ requires-python = ">=3.12"
 
 dependencies = [
     "pydantic",
-    "sentence_transformers",
+    # sentence-transformers 6.x requires transformers>=5, which breaks the
+    # pinned vLLM stack (tokenizer attribute removed in transformers 5) —
+    # see the wikontic extra's transformers>=4.40,<5 pin.
+    "sentence-transformers>=3.0,<6",
     "ipykernel",
     "ipywidgets",
-    # RAGU (both the 0.0.3 release and the dev branch) patches
-    # openai._utils._logs.httpx_logger at import time; openai>=3 removed that
-    # attribute, so anything newer breaks every RAGU build with AttributeError.
-    "openai>=2.21.0,<3",
+    # openai не пинится в базе: движкам нужны разные мажоры (RAGU — <3,
+    # fast-graphrag/hipporag — 1.x). Пин RAGU живёт в его extra.
+    "openai",
     "httpx[socks]", # if using HTTP_PROXY with sentence_transformers
     "bigtree",
     "dash>=4.0.0",
@@ -19,22 +21,27 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# ── RAGU (default / primary engine) ────────────────────────────────
+# ── RAGU (default / primary engine) ─────────────────────────────────
 # Our own GraphRAG engine. Preferred and used by most run scripts.
 # Repository: https://github.com/RaguTeam/RAGU
 ragu = [
     "graph-ragu @ git+https://github.com/RaguTeam/RAGU.git",
+    # RAGU (0.0.3 и dev) патчит openai._utils._logs.httpx_logger при импорте;
+    # в openai>=3 атрибут удалён → AttributeError на любом билде RAGU.
+    "openai>=2.21.0,<3",
 ]
 
 # ── RAGU, dev branch ───────────────────────────────────────────────
-# Same engine from the unreleased branch. Install instead of [ragu], never
+# Same engine from the unreleased branch. Install INSTEAD of [ragu], never
 # alongside it: both provide the package `ragu`, and pip keeps whichever it
 # resolved last. The dev branch passes retrieval options as an EngineParams
 # object rather than top_k/use_chunks keywords; RAGUPipeline detects which
 # convention the installed build uses, so both work unchanged.
-ragu-dev = [
-    "graph-ragu @ git+https://github.com/RaguTeam/RAGU.git@dev",
-]
+#
+# NOT an extra: two git URLs for one package cannot coexist in a single uv
+# lock, so a `ragu-dev` extra made `uv lock` fail outright. Install manually:
+#   pip install -e . && pip install --force-reinstall \
+#       "graph-ragu @ git+https://github.com/RaguTeam/RAGU.git@dev"
 
 # ── Baseline (tree-based RAG without a graph) ──────────────────────
 # A simple tree-structured baseline. Depends on RAGU for LLM & caching.
@@ -93,14 +100,56 @@ wikontic = [
 ]
 
 # ── All engines (convenience meta-package) ─────────────────────────
+# НЕ включает fast-graphrag (пинит tiktoken<0.9 против tiktoken>=0.11 у
+# актуального graph-ragu) и hipporag (пинит openai==1.x против нашего
+# openai<3): в одном окружении с RAGU они не разрешаются. Движки и так
+# принято разводить по отдельным env (как на кластере) — ставьте их
+# отдельными extras в своих окружениях.
 all = [
     "natural_rag[ragu]",
     "natural_rag[baseline]",
     "natural_rag[lightrag]",
     "natural_rag[nano-graphrag]",
-    "natural_rag[fast-graphrag]",
-    "natural_rag[hipporag]",
     "natural_rag[wikontic]",
+]
+
+# RAGU (openai<3) несовместим по openai/tiktoken с fast-graphrag (openai<2,
+# tiktoken<0.9) и hipporag (openai==1.x): это форки версий — uv умеет их
+# разводить через conflicts, но одновременно ставить нельзя; движки и так
+# приняты в отдельных окружениях (как на кластере).
+[tool.uv]
+conflicts = [
+    [
+        { extra = "ragu" },
+        { extra = "fast-graphrag" },
+    ],
+    [
+        { extra = "ragu" },
+        { extra = "hipporag" },
+    ],
+    # baseline и all тянут ragu, поэтому в ветках fast-graphrag/hipporag
+    # их тоже нужно исключить.
+    [
+        { extra = "baseline" },
+        { extra = "fast-graphrag" },
+    ],
+    [
+        { extra = "baseline" },
+        { extra = "hipporag" },
+    ],
+    [
+        { extra = "all" },
+        { extra = "fast-graphrag" },
+    ],
+    [
+        { extra = "all" },
+        { extra = "hipporag" },
+    ],
+    # и между собой: hipporag пинит tiktoken==0.7, fast-graphrag — 0.8.x.
+    [
+        { extra = "fast-graphrag" },
+        { extra = "hipporag" },
+    ],
 ]
 
 [build-system]
