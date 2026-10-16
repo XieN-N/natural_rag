@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import os
 from pathlib import Path
+from typing import Any
 
 from ragu import QueryPlanEngine
 from ragu.models.llm import CachedAsyncOpenAI, LLMOpenAI
@@ -35,6 +37,52 @@ def parse_args() -> argparse.Namespace:
         help="Label of the model that BUILT the graph (e.g. gpt-oss-20b). "
              "When set, inserted into the index/answers path as a subdirectory.",
     )
+    parser.add_argument(
+        "--index-dir",
+        type=Path,
+        default=Path(os.environ["INDEX_DIR"]) if os.environ.get("INDEX_DIR") else None,
+        help="Read/write the index here instead of <output-dir>/<dataset>/[<index-model>/]index. "
+             "Lets several answer variants share one index.",
+    )
+    parser.add_argument(
+        "--save-context",
+        action=argparse.BooleanOptionalAction,
+        default=os.environ.get("SAVE_CONTEXT", "").lower() in ("1", "true", "yes"),
+        help="Write answers/<i>.context.json: the context the answer was generated from, "
+             "its token count, answer seconds and retrieval metrics.",
+    )
+    parser.add_argument(
+        "--context-budget",
+        type=int,
+        default=int(os.environ.get("CONTEXT_BUDGET", "0")) or None,
+        help="Max context tokens for the answer prompt (RAGU max_context_length). "
+             "Default: the engine default (Settings.llm_context_token_limit).",
+    )
+    parser.add_argument(
+        "--selector",
+        choices=["none", "pointwise", "cosine"],
+        default=os.environ.get("SELECTOR", "none"),
+        help="Retrieval-time selection (dev RAGU with ragu.decision): pointwise asks the "
+             "decision model; cosine keeps the --select-top-* most query-similar candidates.",
+    )
+    parser.add_argument(
+        "--decision-model-name",
+        default=os.environ.get("DECISION_MODEL_NAME"),
+        help="Model for the single-token decision model; uses the answering client.",
+    )
+    parser.add_argument(
+        "--decision-constraint",
+        choices=["none", "logit_bias", "allowed_token_ids"],
+        default=os.environ.get("DECISION_CONSTRAINT", "none"),
+    )
+    parser.add_argument("--select-pool-entities", type=int, default=None)
+    parser.add_argument("--select-pool-relations", type=int, default=None)
+    parser.add_argument("--select-pool-chunks", type=int, default=None)
+    parser.add_argument("--select-threshold", type=float, default=None)
+    parser.add_argument("--select-floor", type=int, default=None)
+    parser.add_argument("--select-top-entities", type=int, default=None)
+    parser.add_argument("--select-top-relations", type=int, default=None)
+    parser.add_argument("--select-top-chunks", type=int, default=None)
     parser.add_argument(
         "--build-index",
         action=argparse.BooleanOptionalAction,
@@ -245,6 +293,8 @@ def main() -> None:
     index_dir, answers_dir, base_dir = resolve_run_dirs(
         args.output_dir, args.dataset_path, args.index_model
     )
+    if args.index_dir is not None:
+        index_dir = args.index_dir
     index_dir.mkdir(parents=True, exist_ok=True)
     answers_dir.mkdir(parents=True, exist_ok=True)
 
@@ -294,6 +344,24 @@ def main() -> None:
         tokenizer_embedder_name=args.tokenizer_embedder_name,
         query_engine=args.query_engine,
         short_answers=args.short_answers,
+        max_context_length=args.context_budget,
+        decision_llm=(
+            LLMOpenAI(llm_client, args.decision_model_name) if args.decision_model_name else None
+        ),
+        decision_constraint=args.decision_constraint,
+        selector=args.selector,
+        select_options={
+            key: value for key, value in {
+                "select_pool_entities": args.select_pool_entities,
+                "select_pool_relations": args.select_pool_relations,
+                "select_pool_chunks": args.select_pool_chunks,
+                "select_threshold": args.select_threshold,
+                "select_floor": args.select_floor,
+                "select_top_entities": args.select_top_entities,
+                "select_top_relations": args.select_top_relations,
+                "select_top_chunks": args.select_top_chunks,
+            }.items() if value is not None
+        },
     )
 
     if args.build_index:
@@ -320,12 +388,44 @@ def main() -> None:
         async def _generate_all() -> None:
             for q_idx, question in enumerate(dataset.questions):
                 answer_path = answers_dir / f'{q_idx}.txt'
-                if answer_path.exists() and not args.force:
+                if answer_path.exists() and answer_path.stat().st_size > 0 and not args.force:
                     continue
-                answer, _ = await pipeline.a_generate_answer(question.text)
-                answer_path.write_text(answer)
+                answer, context = await pipeline.a_generate_answer(question.text)
+                answer_path.write_text(answer, encoding="utf-8")
+                if args.save_context:
+                    write_context(
+                        answers_dir / f'{q_idx}.context.json',
+                        pipeline,
+                        context,
+                        seconds=getattr(pipeline, "last_answer_seconds", None),
+                    )
 
         asyncio.run(_generate_all())
+
+
+def write_context(path: Path, pipeline: RAGUPipeline, context: Any, seconds: float | None) -> None:
+    """Save the context an answer was generated from, as the answer prompt saw it.
+
+    The text is passed through the engine's own truncation, so ``context_tokens``
+    is the size of what the answering LLM actually read.
+    """
+    text = str(context) if context is not None else ""
+    truncation = getattr(pipeline.search_engine, "truncation", None) or getattr(
+        getattr(pipeline, "local_search", None), "truncation", None
+    )
+    tokens: int | None = None
+    if truncation is not None and text:
+        text = truncation(text)
+        encoder = getattr(truncation, "encoder", None)
+        tokens = len(encoder.encode(text)) if encoder is not None else None
+    metrics = getattr(context, "metrics", None)
+    payload = {
+        "context": [text] if text else [],
+        "context_tokens": tokens,
+        "answer_seconds": seconds,
+        "metrics": json.loads(json.dumps(metrics, default=str)) if metrics else None,
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
 
 if __name__ == "__main__":
