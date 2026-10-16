@@ -145,7 +145,11 @@ class RAGUPipeline(RAGPipeline):
         self.decision_model: Any = None
         if decision_llm is not None:
             from ragu.decision import DecisionModel
-            self.decision_model = DecisionModel(decision_llm, constraint=decision_constraint)  # type: ignore[arg-type]
+            # One provider-rejected candidate (e.g. a content filter) must not turn
+            # the whole question into a placeholder answer.
+            self.decision_model = DecisionModel(  # type: ignore[call-arg]
+                decision_llm, constraint=decision_constraint, skip_failed_requests=True,  # type: ignore[arg-type]
+            )
         if selector == "pointwise" and self.decision_model is None:
             raise ValueError(f"selector={selector!r} needs a decision LLM (--decision-model-name)")
 

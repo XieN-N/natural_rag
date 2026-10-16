@@ -84,6 +84,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--select-top-relations", type=int, default=None)
     parser.add_argument("--select-top-chunks", type=int, default=None)
     parser.add_argument(
+        "--select-hops", type=int, default=None,
+        help="pointwise only: hops walked from relations the decision model kept (1 = seeds only).",
+    )
+    parser.add_argument(
         "--build-index",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -360,6 +364,7 @@ def main() -> None:
                 "select_top_entities": args.select_top_entities,
                 "select_top_relations": args.select_top_relations,
                 "select_top_chunks": args.select_top_chunks,
+                "select_hops": args.select_hops,
             }.items() if value is not None
         },
     )
