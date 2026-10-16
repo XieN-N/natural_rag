@@ -36,6 +36,35 @@ python -c "from huggingface_hub import snapshot_download; snapshot_download('fac
 
 ~440 МБ. GPU почти не занимает (110M параметров) — `WIKONTIC_DEVICE=cuda`.
 
+### Эмбеддер для индексов RAGU (в т.ч. Windows)
+
+RAGU ходит к эмбеддеру по HTTP (`EmbedderOpenAI`), на кластере это vLLM с
+gte-multilingual-base. vLLM под Windows не работает, а для ответов по готовому
+индексу нужны только эмбеддинги запросов, поэтому хватает маленького
+OpenAI-совместимого сервера `runs_local/serve_embedder.py` на
+sentence-transformers. Отдельное окружение:
+
+```bash
+python -m venv .venv_embed
+.venv_embed/Scripts/python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+.venv_embed/Scripts/python -m pip install "sentence-transformers>=3,<6" "transformers>=4.40,<5"
+.venv_embed/Scripts/python runs_local/serve_embedder.py --port 8002
+```
+
+Для GPU RTX 50xx вместо `whl/cpu` нужен `whl/cu128`; для ~500 запросов хватает и
+CPU. Первый запуск скачивает модель (~600 МБ) и её код (`trust_remote_code`).
+
+Проверка, что сервер даёт те же векторы, что лежат в индексе (иначе поиск
+тихо деградирует):
+
+```bash
+.venv_embed/Scripts/python runs_local/check_embedder.py --index-dir generated/ragu_musique/musique/gpt-oss-20b/index
+```
+
+Для `ragu_musique/gpt-oss-20b` (2026-10-16): косинус 1.00000 по чанкам,
+сущностям и отношениям. Дальше в `runs/ragu_run.py`:
+`--embed-base-url http://127.0.0.1:8002/v1 --embedding-model-name gte-multilingual-base --embedding-dim 768`.
+
 ### Qdrant
 
 Тот же статический бинарь, что на кластере, root не нужен:
