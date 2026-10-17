@@ -26,7 +26,7 @@ HippoRAG, Wikontic + безграфовый baseline) на QA-бенчмарка
 
 | Движок/задача | Скрипт | Примечание |
 |---|---|---|
-| RAGU | `runs/ragu_run.py` | query engines: local / query_plan / naive; `--index-model`, `--short-answers`, `--limit-docs/questions` |
+| RAGU | `runs/ragu_run.py` | query engines: local / query_plan / naive; `--index-model`, `--short-answers`, `--always-answer`, `--limit-docs/questions`; decision model (выключена по умолчанию, нужна RAGU из ветки `feature/decision-model`): `--selector`, `--decision-model-name`, `--select-*`, `--ppr-*` |
 | LightRAG | `runs/lightrag_run.py` | |
 | FastGraphRAG | `runs/fast_graphrag_run.py` | |
 | NanoGraphRAG | `runs/nano_graphrag_run.py` | |

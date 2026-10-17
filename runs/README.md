@@ -71,6 +71,19 @@ actually reaches the engine (the answer path used to hardcode chunks on), and
 `--short-answers` fails loudly on a build whose engines have no
 `update_prompt()` instead of silently answering at full length.
 
+The decision-model flags (`--selector`, `--decision-model-name`, `--select-*`,
+`--ppr-*`) need RAGU with the `ragu.decision` package, which until it is merged
+upstream lives in the `feature/decision-model` branch of the fork:
+
+```bash
+pip install -e . && pip install --force-reinstall \
+    "graph-ragu @ git+https://github.com/XieN-N/RAGU.git@feature/decision-model"
+```
+
+Without these flags that build answers exactly like dev RAGU. With them on a
+build that lacks the feature, `RAGUPipeline` stops with an error instead of
+quietly running without selection.
+
 ## Quick Start — RAGU
 
 ```bash
@@ -145,8 +158,12 @@ python runs/ragu_run.py \
 | `--select-keep-seed-context` / `--no-select-keep-seed-context` | — | `false` | pointwise: keep the full seed context and append what further hops select |
 | `--ppr-chunks`, `--ppr-alpha` | — | `0`, `0.5` | Append Personalized PageRank chunks (seeded by the decision model when present) |
 
-Best MuSiQue setup so far (see the measurement reports): `--short-answers --always-answer
---selector pointwise --decision-model-name gpt-4o-mini --select-hops 2 --select-pool-chunks 30`.
+All of these are off by default, so a run without them is the plain LocalSearch
+it always was. Best MuSiQue setup so far: `--short-answers --always-answer
+--selector pointwise --decision-model-name gpt-4o-mini --select-hops 2 --select-pool-chunks 30`
+(+3.8 pp answer correctness over the same prompt without the decision model on
+395 held-out questions; scripts and numbers in
+[runs_local/README.md](../runs_local/README.md#эксперименты-с-decision-model)).
 
 ## Query Engines
 

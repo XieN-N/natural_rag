@@ -346,6 +346,115 @@ DATASET_NAME=musique ANSWERS_DIR=generated/<RUN_ID>__gpt-4o-mini/musique/gigacha
 
 ---
 
+## 6. Эксперименты с decision model
+
+Замеры decision model в RAGU (отбор контекста LocalSearch одним токеном и обход
+графа на несколько шагов) делались на MuSiQue по готовому индексу
+`generated/ragu_musique/musique/gpt-oss-20b/index`. Ответы и решения даёт
+gpt-4o-mini через vsellm, оценивает gemini-3-flash-preview по протоколу
+GraphRAG-Benchmark. Нужны RAGU из ветки `feature/decision-model` форка (команда
+установки в [runs/README.md](../runs/README.md#installing-ragu)), сервер эмбеддера
+из раздела 1 и чекаут [GraphRAG-Benchmark](https://github.com/bond005/GraphRAG-Benchmark)
+со своим окружением.
+
+Все варианты отвечают по одному общему индексу, каждый в свою папку
+`generated/ragu_musique__<вариант>/` и со своим кэшем LLM, чтобы время ответа было
+честным. Варианты лучше гонять по очереди, а не параллельно, иначе время одного
+зависит от нагрузки другого.
+
+```bash
+export OPENAI_API_KEY=<ключ vsellm> PYTHON=<python с RAGU из ветки форка>
+```
+
+```bash
+runs_local/run_musique_variant.sh base 498
+```
+
+```bash
+runs_local/run_musique_variant.sh dm_h2p30_na 498 --always-answer --selector pointwise --decision-model-name gpt-4o-mini --select-hops 2 --select-pool-chunks 30
+```
+
+Остальные варианты из замеров отличаются только флагами:
+
+| Вариант | Флаги |
+|---|---|
+| `base` | — (исходный LocalSearch) |
+| `base_na` | `--always-answer` |
+| `base800` | `--context-budget 800` |
+| `cosine` | `--selector cosine` |
+| `dm` | `--selector pointwise --decision-model-name gpt-4o-mini` |
+| `dm_h2p30` | `dm` + `--select-hops 2 --select-pool-chunks 30` |
+| `dm_h2p30_na` | `dm_h2p30` + `--always-answer` |
+| `aug_h2` | `dm_h2p30` + `--select-keep-seed-context` |
+| `ppr_dm`, `ppr_nodm` | `--ppr-chunks 5`, с decision model и без |
+
+Повторный запуск с тем же именем пропускает готовые ответы, так что прерванный
+прогон просто запускается ещё раз.
+
+Оценка судьёй. Скрипт сам собирает `graphrag_bench_input.json` и оценивает только
+те вопросы диапазона, которых ещё нет ни в одном `eval_results*.json` варианта;
+вопросы, отвалившиеся по сети, добираются в следующем раунде. Судья стоит около
+0.15 рубля за вопрос, поэтому разработка шла на вопросах 0–99, а 100–497 отложены
+для проверки выбранной конфигурации.
+
+```bash
+LLM_API_KEY=<ключ vsellm> GRAPHRAG_BENCH_ROOT=<путь к GraphRAG-Benchmark> EVAL_PYTHON=<его python> runs_local/eval_graphrag_bench.sh dm_h2p30_na 100 497
+```
+
+Второй независимый проход судьи запускается с `PASS=pass2`: тогда готовыми
+считаются только файлы `eval_results_pass2*.json`, и судья заново оценивает весь
+диапазон. `compare_runs.py` усредняет все проходы варианта; на 398 вопросах два
+прохода расходятся в среднем не больше чем на 0.2 пункта.
+
+Сравнение, всё офлайн и бесплатно:
+
+```bash
+python runs_local/compare_runs.py base base_na dm cosine base800 dm_h2p30 dm_h2p30_na --ids 100-497
+```
+
+```bash
+python runs_local/gold_recall.py base dm_h2p30_na --ids 0-99
+```
+
+`compare_runs.py` сравнивает каждый вариант с первым на общих вопросах: средняя
+разница AC, 95% парный бутстреп-интервал, p с поправкой Холма, число вопросов,
+ставших лучше и хуже, а также время по этапам и цену генерации на вопрос.
+`gold_recall.py` считает, какая доля gold-документов MuSiQue попала в контекст
+ответа.
+
+Диагностика графа без вызовов LLM, нужен только эмбеддер. `graph_reachability.py`
+показывает потолок обхода: сколько gold-чанков достижимо за 0–3 шага от стартовых
+сущностей и сколько кандидатов добавляет каждый шаг. `ppr_reachability.py`
+проверяет, поднимает ли Personalized PageRank по графу gold-чанки выше косинуса.
+
+```bash
+python runs_local/graph_reachability.py --ids 0-99
+```
+
+```bash
+python runs_local/ppr_reachability.py --ids 0-99
+```
+
+Результат на отложенных вопросах (395 из 100–497, AC, разница с `base` и 95%
+интервал):
+
+| Вариант | AC | Разница | Контекст, токенов |
+|---|---|---|---|
+| `base` | 38.3 | | 6253 |
+| `base_na` | 42.4 | +4.1 [+2.3; +5.9] | 6253 |
+| `dm` | 37.5 | −0.7 [−2.9; +1.4] | 753 |
+| `cosine` | 30.7 | −7.6 [−10.3; −4.9] | 741 |
+| `base800` | 32.1 | −6.1 [−8.3; −4.0] | 800 |
+| `dm_h2p30` | 41.8 | +3.6 [+1.0; +6.2] | 964 |
+| `dm_h2p30_na` | 46.0 | +7.8 [+5.0; +10.5] | 964 |
+| HippoRAG 2 | 49.0 | +10.7 [+6.6; +14.8] | — |
+
+`dm_h2p30_na` лучше `base_na` на 3.8 пункта [+1.3; +6.4], то есть обход decision
+model даёт прирост и сверх промпта без отказа. Цена: ответ на вопрос 7.9 с против
+2.2 с, 96 запросов к decision model и около 0.41 рубля на генерацию против 0.087.
+
+---
+
 ## Что придётся оговорить в отчёте
 
 **Графы построены на разной доле корпуса.** Это первое, что надо назвать при

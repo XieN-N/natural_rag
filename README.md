@@ -123,6 +123,23 @@ index's text chunks (no graph traversal), reusing the same RAGU index. Use
 `--index-model <name>` (e.g. `gpt-oss-20b`) to keep graphs from different builder
 models in separate folders.
 
+`--always-answer` (with `--short-answers`) removes the `I don't know.` escape
+from the terse prompt. On benchmarks where every question has an answer, such as
+MuSiQue, most of the gap to other engines came from these refusals rather than
+from retrieval.
+
+### Decision model (optional)
+
+RAGU with the decision model (`ragu.decision`, fork branch
+`feature/decision-model`, see [runs/README.md](runs/README.md#installing-ragu))
+can let a small LLM judge each entity, relation and chunk of the local context
+with a single-token yes/no and walk further hops from the relations it kept.
+It is off unless `--selector pointwise --decision-model-name <model>` is given;
+without these flags nothing changes. The best MuSiQue setup adds
+`--select-hops 2 --select-pool-chunks 30`; how the variants compare in quality,
+time and cost, and how to reproduce them, is in
+[runs_local/README.md](runs_local/README.md#эксперименты-с-decision-model).
+
 ## Evaluation
 
 ```bash
