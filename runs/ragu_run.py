@@ -88,6 +88,15 @@ def parse_args() -> argparse.Namespace:
         help="pointwise only: hops walked from relations the decision model kept (1 = seeds only).",
     )
     parser.add_argument(
+        "--select-keep-seed-context", action=argparse.BooleanOptionalAction, default=None,
+        help="pointwise only: keep the full seed context and append what further hops select.",
+    )
+    parser.add_argument(
+        "--ppr-chunks", type=int, default=None,
+        help="Append this many Personalized PageRank chunks (seeded by the decision model if any).",
+    )
+    parser.add_argument("--ppr-alpha", type=float, default=None)
+    parser.add_argument(
         "--build-index",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -224,6 +233,13 @@ def parse_args() -> argparse.Namespace:
         help="Use a brief extractive answer prompt (for short-answer benchmarks).",
     )
     parser.add_argument(
+        "--always-answer",
+        action=argparse.BooleanOptionalAction,
+        default=os.environ.get("ALWAYS_ANSWER", "").lower() in ("1", "true", "yes"),
+        help="With --short-answers: forbid 'I don't know' and always give the best answer. "
+             "(Not --no-abstain: BooleanOptionalAction treats a --no- prefix as negation.)",
+    )
+    parser.add_argument(
         "--tokenizer-backend",
         default=os.environ.get("TOKENIZER_BACKEND", "tiktoken"),
     )
@@ -348,6 +364,7 @@ def main() -> None:
         tokenizer_embedder_name=args.tokenizer_embedder_name,
         query_engine=args.query_engine,
         short_answers=args.short_answers,
+        no_abstain=args.always_answer,
         max_context_length=args.context_budget,
         decision_llm=(
             LLMOpenAI(llm_client, args.decision_model_name) if args.decision_model_name else None
@@ -365,6 +382,9 @@ def main() -> None:
                 "select_top_relations": args.select_top_relations,
                 "select_top_chunks": args.select_top_chunks,
                 "select_hops": args.select_hops,
+                "select_keep_seed_context": args.select_keep_seed_context,
+                "ppr_chunks": args.ppr_chunks,
+                "ppr_alpha": args.ppr_alpha,
             }.items() if value is not None
         },
     )

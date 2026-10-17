@@ -47,6 +47,16 @@ Context: {{ context }}
 Provide the answer in the following language: {{ language }}
 """
 
+# Same terse prompt without the right to abstain. On benchmarks where every
+# question has an answer (MuSiQue, 2Wiki), "I don't know" always scores zero,
+# while other systems (e.g. HippoRAG 2) always commit to their best guess.
+NO_ABSTAIN_SHORT_ANSWER_PROMPT = SHORT_ANSWER_PROMPT.replace(
+    "3. If the answer is not supported by the context, output exactly: I don't know.",
+    "3. Always give your single best answer, even if the context does not state it\n"
+    "   explicitly; never answer \"I don't know\".",
+)
+assert NO_ABSTAIN_SHORT_ANSWER_PROMPT != SHORT_ANSWER_PROMPT
+
 
 def _set_short_prompt(engine: Any, name: str, instruction: Any) -> None:
     """Swap in the terse answer prompt, where the installed RAGU allows it.
@@ -120,6 +130,7 @@ class RAGUPipeline(RAGPipeline):
         tokenizer_embedder_name: str = "gpt-4o",
         query_engine: str = "local",
         short_answers: bool = False,
+        no_abstain: bool = False,
         max_context_length: int | None = None,
         decision_llm: LLM | None = None,
         decision_constraint: str = "none",
@@ -247,7 +258,7 @@ class RAGUPipeline(RAGPipeline):
         def _short_instruction() -> RAGUInstruction:
             return RAGUInstruction(
                 messages=ChatMessages.from_messages(
-                    [UserMessage(content=SHORT_ANSWER_PROMPT)]
+                    [UserMessage(content=NO_ABSTAIN_SHORT_ANSWER_PROMPT if no_abstain else SHORT_ANSWER_PROMPT)]
                 ),
                 pydantic_model=str,
                 description="Brief extractive answer prompt for short-answer benchmarks.",
@@ -323,7 +334,8 @@ class RAGUPipeline(RAGPipeline):
             options["use_summary"] = self.query_use_summary
             if self.selector != "none":
                 options["selector"] = self.selector
-                options.update(self.select_options)
+            # select_options also carries selector-independent knobs (e.g. ppr_chunks)
+            options.update(self.select_options)
         return options
 
     def _call_args(self, top_k: int) -> tuple[tuple, dict]:

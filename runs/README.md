@@ -133,6 +133,20 @@ python runs/ragu_run.py \
 | `--tokenizer-backend` | `TOKENIZER_BACKEND` | `tiktoken` | Tokenizer backend |
 | `--tokenizer-llm-name` | `TOKENIZER_LLM_NAME` | `gpt-4o` | Tokenizer model name (LLM) |
 | `--tokenizer-embedder-name` | `TOKENIZER_EMBEDDER_NAME` | `gpt-4o` | Tokenizer model name (embedder) |
+| `--index-dir` | `INDEX_DIR` | — | Read/write the index here instead of `<output-dir>/<dataset>/[<model>/]index`, so several answer variants share one index |
+| `--save-context` / `--no-save-context` | `SAVE_CONTEXT` | `false` | Write `answers/<i>.context.json`: context as the answer prompt saw it, its tokens, answer seconds, retrieval metrics (incl. per-stage `timing`) |
+| `--context-budget` | `CONTEXT_BUDGET` | engine default (30k) | Max context tokens for the answer prompt |
+| `--always-answer` / `--no-always-answer` | `ALWAYS_ANSWER` | `false` | With `--short-answers`: forbid "I don't know" (benchmarks where every question has an answer) |
+| `--selector` | `SELECTOR` | `none` | dev RAGU: `pointwise` (decision model) or `cosine` context selection in LocalSearch |
+| `--decision-model-name` | `DECISION_MODEL_NAME` | — | Model for the single-token decision model (same client as answers) |
+| `--decision-constraint` | `DECISION_CONSTRAINT` | `none` | `none`, `logit_bias` (OpenAI) or `allowed_token_ids` (vLLM) |
+| `--select-pool-entities/relations/chunks`, `--select-threshold`, `--select-floor`, `--select-top-entities/relations/chunks` | — | RAGU defaults | Selection pools and rules, see `ragu/search_engine/README.md` |
+| `--select-hops` | — | `1` | pointwise: hops walked from relations the decision model kept |
+| `--select-keep-seed-context` / `--no-select-keep-seed-context` | — | `false` | pointwise: keep the full seed context and append what further hops select |
+| `--ppr-chunks`, `--ppr-alpha` | — | `0`, `0.5` | Append Personalized PageRank chunks (seeded by the decision model when present) |
+
+Best MuSiQue setup so far (see the measurement reports): `--short-answers --always-answer
+--selector pointwise --decision-model-name gpt-4o-mini --select-hops 2 --select-pool-chunks 30`.
 
 ## Query Engines
 
