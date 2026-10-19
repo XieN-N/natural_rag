@@ -128,6 +128,10 @@ from the terse prompt. On benchmarks where every question has an answer, such as
 MuSiQue, most of the gap to other engines came from these refusals rather than
 from retrieval.
 
+`--reason-first` (with `--short-answers`) asks for a short `Thought:` before the
+final `Answer:` line, as HippoRAG 2 does; only the final answer is saved. Off by
+default; with Meno-Lite 0.1 on MuSiQue it did not help.
+
 ### Decision model (optional)
 
 RAGU with the decision model (`ragu.decision`, fork branch

@@ -240,6 +240,14 @@ def parse_args() -> argparse.Namespace:
              "(Not --no-abstain: BooleanOptionalAction treats a --no- prefix as negation.)",
     )
     parser.add_argument(
+        "--reason-first",
+        action=argparse.BooleanOptionalAction,
+        default=os.environ.get("REASON_FIRST", "").lower() in ("1", "true", "yes"),
+        help="With --short-answers: a short 'Thought:' before the final 'Answer:' line "
+             "(as in HippoRAG 2). Only the final answer is written to <i>.txt; the full "
+             "text goes to raw_answer in <i>.context.json.",
+    )
+    parser.add_argument(
         "--tokenizer-backend",
         default=os.environ.get("TOKENIZER_BACKEND", "tiktoken"),
     )
@@ -365,6 +373,7 @@ def main() -> None:
         query_engine=args.query_engine,
         short_answers=args.short_answers,
         no_abstain=args.always_answer,
+        reason_first=args.reason_first,
         max_context_length=args.context_budget,
         decision_llm=(
             LLMOpenAI(llm_client, args.decision_model_name) if args.decision_model_name else None
@@ -450,6 +459,9 @@ def write_context(path: Path, pipeline: RAGUPipeline, context: Any, seconds: flo
         "answer_seconds": seconds,
         "metrics": json.loads(json.dumps(metrics, default=str)) if metrics else None,
     }
+    raw_answer = getattr(pipeline, "last_raw_answer", None)
+    if raw_answer is not None:
+        payload["raw_answer"] = raw_answer
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
 

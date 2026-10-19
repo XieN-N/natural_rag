@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import re
 import sys
 import time
 from pathlib import Path
@@ -56,6 +57,44 @@ NO_ABSTAIN_SHORT_ANSWER_PROMPT = SHORT_ANSWER_PROMPT.replace(
     "   explicitly; never answer \"I don't know\".",
 )
 assert NO_ABSTAIN_SHORT_ANSWER_PROMPT != SHORT_ANSWER_PROMPT
+
+_DIRECT_ANSWER_RULES = (
+    "1. Output ONLY the direct answer: a single entity, name, number, date, or a\n"
+    "   short semicolon-separated list of such items.\n"
+    "2. No explanations, no full sentences, no restating of the question, no\n"
+    "   markdown, no citations."
+)
+# HippoRAG 2 style: a short "Thought:" before the final "Answer:" line. Only the
+# text after the last "Answer:" is kept as the answer (see extract_final_answer).
+_REASON_FIRST_RULES = (
+    "1. First write \"Thought:\" and reason briefly, in at most three sentences,\n"
+    "   about which facts in the context lead to the answer.\n"
+    "2. Then write \"Answer:\" on a new line followed ONLY by the direct answer: a\n"
+    "   single entity, name, number, date, or a short semicolon-separated list of\n"
+    "   such items, with no explanation."
+)
+
+
+def reason_first_prompt(prompt: str) -> str:
+    """The terse prompt with a short reasoning step before the final answer."""
+    reasoning = prompt.replace(_DIRECT_ANSWER_RULES, _REASON_FIRST_RULES)
+    assert reasoning != prompt
+    return reasoning
+
+
+_ANSWER_MARK = re.compile(r"answer\s*:", re.IGNORECASE)
+
+
+def extract_final_answer(text: str) -> str:
+    """Answer after the last "Answer:" mark; the last non-empty line without one."""
+    marks = list(_ANSWER_MARK.finditer(text))
+    if marks:
+        tail = text[marks[-1].end():].strip()
+    else:
+        lines = [line for line in text.splitlines() if line.strip()]
+        tail = lines[-1] if lines else text
+    first_line = tail.strip().splitlines()[0] if tail.strip() else ""
+    return first_line.strip().strip("*").strip()
 
 
 def _set_short_prompt(engine: Any, name: str, instruction: Any) -> None:
@@ -131,6 +170,7 @@ class RAGUPipeline(RAGPipeline):
         query_engine: str = "local",
         short_answers: bool = False,
         no_abstain: bool = False,
+        reason_first: bool = False,
         max_context_length: int | None = None,
         decision_llm: LLM | None = None,
         decision_constraint: str = "none",
@@ -163,6 +203,10 @@ class RAGUPipeline(RAGPipeline):
             )
         if selector == "pointwise" and self.decision_model is None:
             raise ValueError(f"selector={selector!r} needs a decision LLM (--decision-model-name)")
+        if reason_first and not short_answers:
+            raise ValueError("reason_first works with the terse prompt only (short_answers=True)")
+        self.reason_first = reason_first
+        self.last_raw_answer: str | None = None
 
         Settings.storage_folder = self.index_dir
         Settings.language = self.language
@@ -256,10 +300,11 @@ class RAGUPipeline(RAGPipeline):
         self.query_engine = query_engine
 
         def _short_instruction() -> RAGUInstruction:
+            prompt = NO_ABSTAIN_SHORT_ANSWER_PROMPT if no_abstain else SHORT_ANSWER_PROMPT
+            if reason_first:
+                prompt = reason_first_prompt(prompt)
             return RAGUInstruction(
-                messages=ChatMessages.from_messages(
-                    [UserMessage(content=NO_ABSTAIN_SHORT_ANSWER_PROMPT if no_abstain else SHORT_ANSWER_PROMPT)]
-                ),
+                messages=ChatMessages.from_messages([UserMessage(content=prompt)]),
                 pydantic_model=str,
                 description="Brief extractive answer prompt for short-answer benchmarks.",
             )
@@ -357,6 +402,7 @@ class RAGUPipeline(RAGPipeline):
         qa_args, qa_kwargs = self._call_args(self.qa_top_k)
         context: Any = None
         self.last_answer_seconds = 0.0
+        self.last_raw_answer = None
         for attempt in range(max_retries):
             started = time.perf_counter()
             try:
@@ -379,6 +425,9 @@ class RAGUPipeline(RAGPipeline):
                 )
                 return "I don't know.", context
             if response.response and response.response.strip():
+                if self.reason_first:
+                    self.last_raw_answer = response.response
+                    return extract_final_answer(response.response) or response.response, context
                 return response.response, context
             ragu_logger.warning(f"Empty answer on attempt {attempt+1}/{max_retries}, retrying...")
         return "NO ANSWER OBTAINED", context

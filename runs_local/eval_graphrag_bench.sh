@@ -11,7 +11,9 @@
 # runs_local/compare_runs.py averages all eval_results*.json of a variant.
 #
 # A second, independent judge pass: PASS=pass2 counts only eval_results_pass2*.json
-# as done and writes eval_results_pass2_<timestamp>.json.
+# as done and writes eval_results_pass2_<timestamp>.json. A different judge works
+# the same way, e.g. PASS=yandex with JUDGE_WRAPPER=runs_local/judge_yandex.py;
+# the default pass ignores eval_results_yandex*.json, so judges never mix.
 #
 # Environment (defaults in brackets):
 #   LLM_API_KEY          key for the judge endpoint (required; the name the eval scripts expect)
@@ -22,6 +24,10 @@
 #   DATASET              [musique]  INDEX_MODEL [gpt-oss-20b]
 #   PYTHON               [python]   interpreter for natural_rag scripts
 #   PASS                 []         judge pass tag, see above
+#   JUDGE_WRAPPER        []         script run instead of "-m Evaluation.generation_eval"
+#                                   (same flags), e.g. runs_local/judge_yandex.py
+#   JUDGE_CONCURRENCY    [6]        --max_concurrent of the judge
+#   DATASET_PATH         [datasets/<DATASET>]  e.g. datasets/2wikimultihopqa/2wikimultihopqa.json
 set -euo pipefail
 
 VARIANT="${1:?variant name}"
@@ -41,7 +47,7 @@ export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 win_path() { if command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else echo "$1"; fi; }
 
 cd "$ROOT"
-PYTHONPATH="$ROOT" "$PY" runs/build_graphrag_bench_input.py --dataset-path "datasets/${DATASET}" \
+PYTHONPATH="$ROOT" "$PY" runs/build_graphrag_bench_input.py --dataset-path "${DATASET_PATH:-datasets/${DATASET}}" \
   --output-dir "$OUT" --index-model "$INDEX_MODEL" --skip-missing
 
 for round in 1 2 3; do
@@ -52,6 +58,8 @@ run, dst, lo, hi, questions, prefix = sys.argv[1], sys.argv[2], int(sys.argv[3])
 items = json.load(open(run + "/graphrag_bench_input.json", encoding="utf-8"))
 done = set()
 for path in glob.glob(run + "/" + prefix + "*.json"):
+    if prefix == "eval_results" and os.path.basename(path).startswith("eval_results_yandex"):
+        continue  # another judge's files never count as done for the default pass
     for section in json.load(open(path, encoding="utf-8")).values():
         done.update(item["id"] for item in section.get("detailed", []))
 if os.path.exists(questions):
@@ -66,10 +74,15 @@ PY
   echo "round ${round}: ${N} questions to judge"
   [ "$N" = "0" ] && break
   OUT_FILE="${RUN_DIR}/${PREFIX}_$(date +%s).json"
-  (cd "$GRAPHRAG_BENCH_ROOT" && "${EVAL_PYTHON:-python}" -m Evaluation.generation_eval --mode API \
+  if [ -n "${JUDGE_WRAPPER:-}" ]; then
+    JUDGE_CMD=("$(win_path "$(cd "$(dirname "$JUDGE_WRAPPER")" && pwd)/$(basename "$JUDGE_WRAPPER")")")
+  else
+    JUDGE_CMD=(-m Evaluation.generation_eval)
+  fi
+  (cd "$GRAPHRAG_BENCH_ROOT" && "${EVAL_PYTHON:-python}" "${JUDGE_CMD[@]}" --mode API \
     --model "${JUDGE_MODEL:-gemini-3-flash-preview}" --base_url "${JUDGE_BASE_URL:-https://api.vsellm.ru/v1}" \
     --embedding_model "${JUDGE_EMBEDDING_MODEL:-text-embedding-3-small}" \
     --embedding_base_url "${JUDGE_BASE_URL:-https://api.vsellm.ru/v1}" \
     --data_file "$(win_path "$MISSING")" --output_file "$(win_path "$OUT_FILE")" \
-    --detailed_output --max_concurrent 6) || true
+    --detailed_output --max_concurrent "${JUDGE_CONCURRENCY:-6}") || true
 done

@@ -19,6 +19,7 @@ import random
 import re
 import statistics
 import string
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -28,9 +29,16 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("variants", nargs="+", help="Baseline first, then the variants to compare with it")
     parser.add_argument("--dataset", default="musique")
+    parser.add_argument("--dataset-path", default=None,
+                        help="Dataset file or dir when there is no datasets/<dataset>/questions.jsonl")
     parser.add_argument("--index-model", default="gpt-oss-20b")
     parser.add_argument("--ids", default=None, help="Question index range, e.g. 100-497 (inclusive)")
     parser.add_argument("--bootstrap", type=int, default=10000)
+    parser.add_argument(
+        "--judge", default="gemini",
+        help="Whose eval files to read: gemini (eval_results*.json except eval_results_yandex*) "
+             "or the PASS tag of another judge, e.g. yandex (eval_results_yandex*.json)",
+    )
     parser.add_argument(
         "--rub-per-m-tokens", type=float, default=14.0,
         help="Input price of the answering/decision model per 1M tokens (gpt-4o-mini via vsellm ~14)",
@@ -59,8 +67,16 @@ def pct(values, q: float) -> float:
     return values[min(len(values) - 1, int(q * len(values)))] if values else float("nan")
 
 
-def load(run: Path, index_of: dict[str, int]) -> dict:
-    passes = [p for p in sorted(run.glob("eval_results*.json")) if "partial" not in p.name]
+def judge_files(run: Path, judge: str) -> list[Path]:
+    """Eval files of one judge: gemini runs never mix with another judge's PASS tag."""
+    files = [p for p in sorted(run.glob("eval_results*.json")) if "partial" not in p.name]
+    if judge == "gemini":
+        return [p for p in files if not p.name.startswith("eval_results_yandex")]
+    return [p for p in files if p.name.startswith(f"eval_results_{judge}")]
+
+
+def load(run: Path, index_of: dict[str, int], judge: str = "gemini") -> dict:
+    passes = judge_files(run, judge)
     per_q: dict[str, dict] = {}
     for path in passes:
         for section in json.loads(path.read_text(encoding="utf-8")).values():
@@ -88,14 +104,38 @@ def load(run: Path, index_of: dict[str, int]) -> dict:
             "timing": timing, "dm_chars": dm_chars, "passes": len(passes)}
 
 
+def load_questions(args: argparse.Namespace) -> list[dict]:
+    """Questions as dicts with id, answer, aliases and a grouping key (``hops``).
+
+    Uses ``datasets/<dataset>/questions.jsonl`` when present; otherwise loads the
+    dataset with RAGDataset (e.g. the single-file 2WikiMultiHopQA), with ids taken
+    from the question metadata as in ``runs/build_graphrag_bench_input.py`` and the
+    question type in place of the hop count.
+    """
+    path = REPO_ROOT / "datasets" / args.dataset / "questions.jsonl"
+    if path.exists():
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    sys.path.insert(0, str(REPO_ROOT))
+    from natural_rag.dataset import RAGDataset
+    ds = RAGDataset.load_auto(str(REPO_ROOT / (args.dataset_path or f"datasets/{args.dataset}")))
+    out = []
+    for i, q in enumerate(ds.questions):
+        answers = list(q.reference_answers or [])
+        meta = q.metadata or {}
+        out.append({"id": str(meta.get("id", i)), "question": q.text, "answer": answers[0] if answers else "",
+                    "answer_aliases": answers[1:], "hops": meta.get("type")})
+    return out
+
+
 def main() -> None:
     args = parse_args()
-    questions_path = REPO_ROOT / "datasets" / args.dataset / "questions.jsonl"
-    questions = [json.loads(line) for line in (questions_path).read_text(encoding="utf-8").splitlines() if line.strip()]
+    questions = load_questions(args)
     index_of = {q["id"]: i for i, q in enumerate(questions)}
 
     runs = {
-        v: load(REPO_ROOT / f"generated/ragu_{args.dataset}__{v}/{args.dataset}/{args.index_model}", index_of)
+        # "variant@index-model" reads a run over another index (e.g. meno_base@MenoLite)
+        v: load(REPO_ROOT / f"generated/ragu_{args.dataset}__{v.split('@')[0]}/{args.dataset}/"
+                f"{v.split('@')[1] if '@' in v else args.index_model}", index_of, args.judge)
         for v in args.variants
     }
     common = set.intersection(*(set(r["q"]) for r in runs.values()))

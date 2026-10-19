@@ -150,6 +150,7 @@ python runs/ragu_run.py \
 | `--save-context` / `--no-save-context` | `SAVE_CONTEXT` | `false` | Write `answers/<i>.context.json`: context as the answer prompt saw it, its tokens, answer seconds, retrieval metrics (incl. per-stage `timing`) |
 | `--context-budget` | `CONTEXT_BUDGET` | engine default (30k) | Max context tokens for the answer prompt |
 | `--always-answer` / `--no-always-answer` | `ALWAYS_ANSWER` | `false` | With `--short-answers`: forbid "I don't know" (benchmarks where every question has an answer) |
+| `--reason-first` / `--no-reason-first` | `REASON_FIRST` | `false` | With `--short-answers`: a short "Thought:" before the final "Answer:" line, as in HippoRAG 2. `<i>.txt` gets the final answer only, the full text goes to `raw_answer` in `<i>.context.json` |
 | `--selector` | `SELECTOR` | `none` | dev RAGU: `pointwise` (decision model) or `cosine` context selection in LocalSearch |
 | `--decision-model-name` | `DECISION_MODEL_NAME` | — | Model for the single-token decision model (same client as answers) |
 | `--decision-constraint` | `DECISION_CONSTRAINT` | `none` | `none`, `logit_bias` (OpenAI) or `allowed_token_ids` (vLLM) |
