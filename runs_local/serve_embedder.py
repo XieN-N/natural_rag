@@ -24,9 +24,11 @@ from __future__ import annotations
 
 import argparse
 import base64
+import gc
 import json
 import os
 import threading
+from concurrent.futures import ThreadPoolExecutor
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
@@ -88,7 +90,10 @@ class EmbeddingService:
         self.batch_size = args.batch_size
         self.normalize = not args.no_normalize
         self.name = args.served_model_name
-        self._lock = threading.Lock()
+        # One long-lived thread runs the model. The HTTP server starts a thread per
+        # request, and encoding on a new thread each time grows the process by about
+        # 150 MB per request until the machine runs out of memory.
+        self._encoder = ThreadPoolExecutor(max_workers=1)
         print(
             f"Loaded {args.model} on {device} in {time.time() - started:.1f}s: "
             f"dim={self.dim}, max_seq_length={self.model.max_seq_length}, "
@@ -97,14 +102,18 @@ class EmbeddingService:
         )
 
     def embed(self, texts: list[str]) -> np.ndarray:
-        with self._lock:
-            vectors = self.model.encode(
-                texts,
-                batch_size=self.batch_size,
-                normalize_embeddings=self.normalize,
-                convert_to_numpy=True,
-                show_progress_bar=False,
-            )
+        return self._encoder.submit(self._encode, texts).result()
+
+    def _encode(self, texts: list[str]) -> np.ndarray:
+        vectors = self.model.encode(
+            texts,
+            batch_size=self.batch_size,
+            normalize_embeddings=self.normalize,
+            convert_to_numpy=True,
+            show_progress_bar=False,
+        )
+        # The encoder leaves tensors in reference cycles.
+        gc.collect()
         return np.asarray(vectors, dtype=np.float32)
 
 
