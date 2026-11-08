@@ -82,6 +82,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--decision-max-decisions", type=int, default=None)
     parser.add_argument("--decision-min-probability", type=float, default=None)
     parser.add_argument("--decision-seed-facts", type=int, default=None)
+    parser.add_argument(
+        "--decision-stub", choices=["cosine"], default=None,
+        help="Control without a decision model: cosine similarity to the query instead of P(Y).",
+    )
     parser.add_argument("--decision-tie-break", default=None, help="best_first: none | cosine")
     parser.add_argument("--decision-tie-weight", type=float, default=None)
     parser.add_argument(
@@ -132,6 +136,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=int(os.environ.get("LIMIT_QUESTIONS", "0")) or None,
         help="Answer only the first N questions (smoke tests).",
+    )
+    parser.add_argument(
+        "--first-question",
+        type=int,
+        default=0,
+        help="Skip questions before this index; numbering of the answers does not change.",
     )
     parser.add_argument(
         "--chunker",
@@ -366,12 +376,19 @@ def main() -> None:
     # which case the summary simply carries no LLM-call counts.
     attach_counter(llm_client, llm_counter)
 
+    embedder = EmbedderOpenAI(embed_client, args.embedding_model_name, dim=args.embedding_dim, batch_size=args.embed_batch_size)
+    decision_stub = None
+    if args.decision_stub == "cosine":
+        from natural_rag.pipelines.cosine_decision_model import CosineDecisionModel
+
+        decision_stub = CosineDecisionModel(embedder)
+
     pipeline = RAGUPipeline(
         language='english',
         index_dir=index_dir,
         builder_llm=LLMOpenAI(llm_client, args.builder_model_name),
         assistant_llm=LLMOpenAI(llm_client, args.assistant_model_name),
-        embedder=EmbedderOpenAI(embed_client, args.embedding_model_name, dim=args.embedding_dim, batch_size=args.embed_batch_size),
+        embedder=embedder,
         chunker_name=args.chunker,
         query_use_chunks=args.use_chunks,
         query_use_summary=args.use_summary,
@@ -390,6 +407,7 @@ def main() -> None:
         decision_llm=(
             LLMOpenAI(llm_client, args.decision_model_name) if args.decision_model_name else None
         ),
+        decision_model=decision_stub,
         decision_constraint=args.decision_constraint,
         decision_prompt=args.decision_prompt,
         decision_options={
@@ -446,6 +464,8 @@ def main() -> None:
         # reuse warnings and spurious APIConnectionError retries).
         async def _generate_all() -> None:
             for q_idx, question in enumerate(dataset.questions):
+                if q_idx < args.first_question:
+                    continue
                 answer_path = answers_dir / f'{q_idx}.txt'
                 if answer_path.exists() and answer_path.stat().st_size > 0 and not args.force:
                     continue

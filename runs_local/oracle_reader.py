@@ -40,6 +40,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from natural_rag.pipelines.ragu_pipelines import (
     NO_ABSTAIN_SHORT_ANSWER_PROMPT,
+    SHORT_ANSWER_PROMPT,
     extract_final_answer,
     reason_first_prompt,
 )
@@ -47,7 +48,7 @@ from natural_rag.pipelines.ragu_pipelines import (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("kinds", nargs="+", choices=["docs", "facts", "noisy"])
+    parser.add_argument("kinds", nargs="+", choices=["docs", "facts", "noisy", "saved"])
     parser.add_argument("--dataset", default="musique")
     parser.add_argument("--index-model", default="gpt-oss-20b")
     parser.add_argument("--ids", default="100-497", help="Question index range, inclusive")
@@ -58,6 +59,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default=os.environ.get("ANSWER_MODEL", "meno-lite-0.1"))
     parser.add_argument("--max-completion-tokens", type=int, default=512)
     parser.add_argument("--concurrency", type=int, default=16)
+    parser.add_argument("--out-variant", default=None, help="Write here instead of <prefix>_<kind> (one kind only)")
+    parser.add_argument("--allow-abstain", action="store_true", help="Use the terse prompt that may answer I don't know")
     parser.add_argument("--reason-first", action="store_true", help="Short reasoning before the answer, as --reason-first of ragu_run.py")
     parser.add_argument("--dry-run", action="store_true", help="Write contexts only, without calling the model")
     return parser.parse_args()
@@ -121,6 +124,10 @@ async def main() -> None:
     noise_dir = run_root / f"ragu_{args.dataset}__{args.noise_variant}/{args.dataset}/{args.index_model}/answers"
 
     def build_context(kind: str, i: int) -> str:
+        if kind == "saved":
+            # The reader alone changes: the context of a finished run, word for word.
+            saved_context = json.loads((noise_dir / f"{i}.context.json").read_text(encoding="utf-8"))["context"]
+            return saved_context[0] if saved_context else ""
         gold = questions[i]["gold_doc_ids"]
         if kind == "docs":
             return render_chunks([corpus[g].strip() for g in gold])
@@ -139,7 +146,8 @@ async def main() -> None:
             return render_chunks(missing) + text
         return text.rstrip() + "\n" + "\n".join(missing) + "\n"
 
-    prompt_text = reason_first_prompt(NO_ABSTAIN_SHORT_ANSWER_PROMPT) if args.reason_first else NO_ABSTAIN_SHORT_ANSWER_PROMPT
+    base_prompt = SHORT_ANSWER_PROMPT if args.allow_abstain else NO_ABSTAIN_SHORT_ANSWER_PROMPT
+    prompt_text = reason_first_prompt(base_prompt) if args.reason_first else base_prompt
     template = Template(prompt_text)
     client = AsyncOpenAI(base_url=args.base_url, api_key=os.environ.get("OPENAI_API_KEY", "local"), timeout=600, max_retries=8)
     semaphore = asyncio.Semaphore(args.concurrency)
@@ -180,7 +188,8 @@ async def main() -> None:
         (out_dir / f"{i}.context.json").write_text(json.dumps(saved, ensure_ascii=False), encoding="utf-8")
 
     for kind in args.kinds:
-        out_dir = run_root / f"ragu_{args.dataset}__{args.prefix}_{kind}/{args.dataset}/{args.index_model}/answers"
+        variant = args.out_variant or f"{args.prefix}_{kind}"
+        out_dir = run_root / f"ragu_{args.dataset}__{variant}/{args.dataset}/{args.index_model}/answers"
         out_dir.mkdir(parents=True, exist_ok=True)
         await asyncio.gather(*(answer(kind, i, out_dir) for i in range(lo, hi + 1)))
         print(f"{kind}: {len(list(out_dir.glob('*.txt')))} answers in {out_dir}", flush=True)
