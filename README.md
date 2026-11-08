@@ -136,12 +136,13 @@ default; with Meno-Lite 0.1 on MuSiQue it did not help.
 
 RAGU with the decision model (`ragu.decision`, fork branch
 `feature/decision-model`, see [runs/README.md](runs/README.md#installing-ragu))
-can let a small LLM judge each entity, relation and chunk of the local context
-with a single-token yes/no and walk further hops from the relations it kept.
-It is off unless `--selector pointwise --decision-model-name <model>` is given;
-without these flags nothing changes. The best MuSiQue setup adds
-`--select-hops 2 --select-pool-chunks 30`; how the variants compare in quality,
-time and cost, and how to reproduce them, is in
+has a separate engine, `DecisionSearchEngine`: a small LLM judges each entity,
+relation and chunk of the local context with a single-token yes/no and walks
+further hops from the relations it kept. It runs with
+`--query-engine decision --decision-model-name <model>`, and under the query planner
+with `--query-engine query_plan_decision`; the other engines do not use it. The best
+MuSiQue setup adds `--select-hops 2 --select-pool-chunks 30`; how the variants compare
+in quality, time and cost, and how to reproduce them, is in
 [runs_local/README.md](runs_local/README.md#эксперименты-с-decision-model).
 
 ## Evaluation

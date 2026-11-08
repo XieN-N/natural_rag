@@ -348,8 +348,8 @@ DATASET_NAME=musique ANSWERS_DIR=generated/<RUN_ID>__gpt-4o-mini/musique/gigacha
 
 ## 6. Эксперименты с decision model
 
-Замеры decision model в RAGU (отбор контекста LocalSearch одним токеном и обход
-графа на несколько шагов) делались на MuSiQue по готовому индексу
+Замеры decision model в RAGU (отбор контекста одним токеном и обход графа на
+несколько шагов, сейчас это `DecisionSearchEngine`) делались на MuSiQue по готовому индексу
 `generated/ragu_musique/musique/gpt-oss-20b/index`. Ответы и решения даёт
 gpt-4o-mini через vsellm, оценивает gemini-3-flash-preview по протоколу
 GraphRAG-Benchmark. Нужны RAGU из ветки `feature/decision-model` форка (команда
@@ -371,7 +371,7 @@ runs_local/run_musique_variant.sh base 498
 ```
 
 ```bash
-runs_local/run_musique_variant.sh dm_h2p30_na 498 --always-answer --selector pointwise --decision-model-name gpt-4o-mini --select-hops 2 --select-pool-chunks 30
+runs_local/run_musique_variant.sh dm_h2p30_na 498 --always-answer --query-engine decision --decision-model-name gpt-4o-mini --select-hops 2 --select-pool-chunks 30
 ```
 
 Остальные варианты из замеров отличаются только флагами:
@@ -381,16 +381,27 @@ runs_local/run_musique_variant.sh dm_h2p30_na 498 --always-answer --selector poi
 | `base` | — (исходный LocalSearch) |
 | `base_na` | `--always-answer` |
 | `base800` | `--context-budget 800` |
-| `cosine` | `--selector cosine` |
-| `dm` | `--selector pointwise --decision-model-name gpt-4o-mini` |
+| `dm` | `--query-engine decision --decision-model-name gpt-4o-mini` |
 | `dm_h2p30` | `dm` + `--select-hops 2 --select-pool-chunks 30` |
 | `dm_h2p30_na` | `dm_h2p30` + `--always-answer` |
 | `aug_h2` | `dm_h2p30` + `--select-keep-seed-context` |
-| `ppr_dm`, `ppr_nodm` | `--ppr-chunks 5`, с decision model и без |
 | `*_r` | тот же вариант + `--reason-first` (короткое рассуждение перед ответом) |
 
 Повторный запуск с тем же именем пропускает готовые ответы, так что прерванный
 прогон просто запускается ещё раз.
+
+Варианты `cosine` (`--selector cosine`) и `ppr_dm`, `ppr_nodm` (`--ppr-chunks 5`)
+из замеров запускались со старыми флагами отбора в `LocalSearchEngine`. В движок они
+не перенесены, для их воспроизведения нужны коммит `14bbcd8` этого репозитория и
+коммит `7662b7e` форка RAGU.
+
+Проверка переноса отбора в движок: `replay_decisions.py` повторяет решения Meno-Lite
+из `itmo_results/calib.tar.gz` без запуска модели и сравнивает контексты с прогоном
+`meno_t01` дословно. Векторы запросов даёт сервер из раздела 1:
+
+```bash
+EMBED_BASE_URL=http://127.0.0.1:8002/v1 python runs_local/replay_decisions.py --ids 0-19
+```
 
 Оценка судьёй. Скрипт сам собирает `graphrag_bench_input.json` и оценивает только
 те вопросы диапазона, которых ещё нет ни в одном `eval_results*.json` варианта;

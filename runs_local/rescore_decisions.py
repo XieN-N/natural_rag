@@ -2,7 +2,7 @@
 
 Sends every prompt of ``runs_local/harvest_decisions.py`` output through
 ``CachedAsyncOpenAI.option_probabilities`` (one greedy token, top-20 logprobs,
-"Y" and " Y" summed), so the probabilities equal what a LocalSearch run with
+"Y" and " Y" summed), so the probabilities equal what a DecisionSearch run with
 that model would see. The result keeps all input columns and adds ``p_score``
 for ``runs_local/calibration_report.py --score p_score``.
 

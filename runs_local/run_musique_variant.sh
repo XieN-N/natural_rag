@@ -11,7 +11,7 @@
 # Examples (decision-model experiments, see runs_local/README.md):
 #   runs_local/run_musique_variant.sh base 498
 #   runs_local/run_musique_variant.sh dm_h2p30_na 498 --always-answer \
-#       --selector pointwise --decision-model-name gpt-4o-mini \
+#       --query-engine decision --decision-model-name gpt-4o-mini \
 #       --select-hops 2 --select-pool-chunks 30
 #
 # Environment (defaults in brackets):

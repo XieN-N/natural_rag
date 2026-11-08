@@ -59,43 +59,53 @@ def parse_args() -> argparse.Namespace:
              "Default: the engine default (Settings.llm_context_token_limit).",
     )
     parser.add_argument(
-        "--selector",
-        choices=["none", "pointwise", "cosine"],
-        default=os.environ.get("SELECTOR", "none"),
-        help="Retrieval-time selection (dev RAGU with ragu.decision): pointwise asks the "
-             "decision model; cosine keeps the --select-top-* most query-similar candidates.",
-    )
-    parser.add_argument(
         "--decision-model-name",
         default=os.environ.get("DECISION_MODEL_NAME"),
-        help="Model for the single-token decision model; uses the answering client.",
+        help="Model for the single-token decision model; uses the answering client. "
+             "Needed by --query-engine decision and query_plan_decision.",
     )
     parser.add_argument(
         "--decision-constraint",
         choices=["none", "logit_bias", "allowed_token_ids"],
         default=os.environ.get("DECISION_CONSTRAINT", "none"),
     )
+    # DecisionParams options (--query-engine decision or query_plan_decision); values
+    # left out keep the engine defaults, not-yet-implemented ones make the engine raise.
+    parser.add_argument("--decision-seeds", default=None, help="entities | entities+facts | entities+facts+names")
+    parser.add_argument("--decision-prerank", default=None, help="cosine | cross_encoder")
+    parser.add_argument("--decision-policy", default=None, help="threshold | one_round | best_first")
+    parser.add_argument("--decision-state", default=None, help="facts | chain")
+    parser.add_argument("--decision-next-query", default=None, help="blob | subquestion")
+    parser.add_argument("--decision-stop", default=None, help="hops | budget | sufficient")
+    parser.add_argument("--decision-context-order", default=None, help="sections | chain")
+    parser.add_argument("--decision-max-context-tokens", type=int, default=None)
+    parser.add_argument("--decision-max-decisions", type=int, default=None)
+    parser.add_argument("--decision-min-probability", type=float, default=None)
+    parser.add_argument("--decision-seed-facts", type=int, default=None)
+    parser.add_argument("--decision-tie-break", default=None, help="best_first: none | cosine")
+    parser.add_argument("--decision-tie-weight", type=float, default=None)
+    parser.add_argument(
+        "--decision-prompt", choices=["default", "chain"], default="default",
+        help="chain counts intermediate links of a multi-hop chain as useful.",
+    )
+    parser.add_argument("--decision-log", action="store_true", default=None, help="best_first: save every decision")
+    parser.add_argument("--select-beam", type=int, default=None)
+    parser.add_argument("--select-max-depth", type=int, default=None)
+    parser.add_argument("--branch-pool-relations", type=int, default=None)
+    parser.add_argument("--branch-pool-chunks", type=int, default=None)
     parser.add_argument("--select-pool-entities", type=int, default=None)
     parser.add_argument("--select-pool-relations", type=int, default=None)
     parser.add_argument("--select-pool-chunks", type=int, default=None)
     parser.add_argument("--select-threshold", type=float, default=None)
     parser.add_argument("--select-floor", type=int, default=None)
-    parser.add_argument("--select-top-entities", type=int, default=None)
-    parser.add_argument("--select-top-relations", type=int, default=None)
-    parser.add_argument("--select-top-chunks", type=int, default=None)
     parser.add_argument(
         "--select-hops", type=int, default=None,
-        help="pointwise only: hops walked from relations the decision model kept (1 = seeds only).",
+        help="Hops walked from relations the decision model kept (1 = seeds only).",
     )
     parser.add_argument(
         "--select-keep-seed-context", action=argparse.BooleanOptionalAction, default=None,
-        help="pointwise only: keep the full seed context and append what further hops select.",
+        help="Keep the full seed context and append what further hops select.",
     )
-    parser.add_argument(
-        "--ppr-chunks", type=int, default=None,
-        help="Append this many Personalized PageRank chunks (seeded by the decision model if any).",
-    )
-    parser.add_argument("--ppr-alpha", type=float, default=None)
     parser.add_argument(
         "--build-index",
         action=argparse.BooleanOptionalAction,
@@ -221,10 +231,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--query-engine",
-        choices=["local", "query_plan", "naive"],
+        choices=["local", "query_plan", "naive", "decision", "query_plan_decision"],
         default=os.environ.get("QUERY_ENGINE", "local"),
         help="Search engine for answering: local (default), query_plan "
-             "(decomposes complex queries), or naive (plain vector RAG over chunks).",
+             "(decomposes complex queries), naive (plain vector RAG over chunks), "
+             "decision (a decision model chooses the context; dev RAGU only), or "
+             "query_plan_decision (query_plan over decision).",
     )
     parser.add_argument(
         "--short-answers",
@@ -379,21 +391,34 @@ def main() -> None:
             LLMOpenAI(llm_client, args.decision_model_name) if args.decision_model_name else None
         ),
         decision_constraint=args.decision_constraint,
-        selector=args.selector,
-        select_options={
+        decision_prompt=args.decision_prompt,
+        decision_options={
             key: value for key, value in {
+                "seeds": args.decision_seeds,
+                "prerank": args.decision_prerank,
+                "policy": args.decision_policy,
+                "state": args.decision_state,
+                "next_query": args.decision_next_query,
+                "stop": args.decision_stop,
+                "context_order": args.decision_context_order,
+                "max_context_tokens": args.decision_max_context_tokens,
+                "max_decisions": args.decision_max_decisions,
+                "min_probability": args.decision_min_probability,
+                "seed_facts": args.decision_seed_facts,
+                "tie_break": args.decision_tie_break,
+                "tie_weight": args.decision_tie_weight,
+                "log_decisions": args.decision_log,
+                "select_beam": args.select_beam,
+                "select_max_depth": args.select_max_depth,
+                "branch_pool_relations": args.branch_pool_relations,
+                "branch_pool_chunks": args.branch_pool_chunks,
                 "select_pool_entities": args.select_pool_entities,
                 "select_pool_relations": args.select_pool_relations,
                 "select_pool_chunks": args.select_pool_chunks,
                 "select_threshold": args.select_threshold,
                 "select_floor": args.select_floor,
-                "select_top_entities": args.select_top_entities,
-                "select_top_relations": args.select_top_relations,
-                "select_top_chunks": args.select_top_chunks,
                 "select_hops": args.select_hops,
                 "select_keep_seed_context": args.select_keep_seed_context,
-                "ppr_chunks": args.ppr_chunks,
-                "ppr_alpha": args.ppr_alpha,
             }.items() if value is not None
         },
     )
@@ -445,7 +470,7 @@ def write_context(path: Path, pipeline: RAGUPipeline, context: Any, seconds: flo
     """
     text = str(context) if context is not None else ""
     truncation = getattr(pipeline.search_engine, "truncation", None) or getattr(
-        getattr(pipeline, "local_search", None), "truncation", None
+        getattr(pipeline, "graph_engine", None), "truncation", None
     )
     tokens: int | None = None
     if truncation is not None and text:

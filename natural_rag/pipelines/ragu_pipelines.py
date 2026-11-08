@@ -58,6 +58,25 @@ NO_ABSTAIN_SHORT_ANSWER_PROMPT = SHORT_ANSWER_PROMPT.replace(
 )
 assert NO_ABSTAIN_SHORT_ANSWER_PROMPT != SHORT_ANSWER_PROMPT
 
+# Decision prompt that counts intermediate links of a multi-hop chain as useful.
+# Same variables as DEFAULT_DECISION_POINTWISE_PROMPT and the same single-token answer.
+CHAIN_DECISION_POINTWISE_PROMPT = """
+Query: {{ query }}
+{%- if state_context %}
+
+Facts gathered so far:
+{{ state_context }}
+{%- endif %}
+
+Candidate:
+{{ candidate }}
+
+Answering the query may take a chain of facts, and the query may describe an entity without naming it.
+Answer Y if the candidate states the answer, identifies an entity the query describes, or gives a fact about an entity on the way to the answer, even if it does not answer the query by itself.
+Answer N only if the candidate is unrelated to every step.
+Answer Y or N:
+"""
+
 _DIRECT_ANSWER_RULES = (
     "1. Output ONLY the direct answer: a single entity, name, number, date, or a\n"
     "   short semicolon-separated list of such items.\n"
@@ -112,6 +131,27 @@ def _set_short_prompt(engine: Any, name: str, instruction: Any) -> None:
     engine.update_prompt(name, instruction)
 
 
+def _is_environment_error(exc: BaseException) -> bool:
+    """Whether an answer failure comes from the environment rather than the question.
+
+    Connection errors (the local embedder or the LLM endpoint is down), timeouts,
+    authentication failures, rate limits and server errors that survived the
+    retries say nothing about the question, so the run must stop instead of
+    recording a refusal for it.
+    """
+    try:
+        import openai
+    except ImportError:
+        return False
+    return isinstance(exc, (
+        openai.APIConnectionError,
+        openai.AuthenticationError,
+        openai.PermissionDeniedError,
+        openai.RateLimitError,
+        openai.InternalServerError,
+    ))
+
+
 def _takes_params(engine: Any) -> bool:
     """Whether this RAGU build passes retrieval options as a ``params`` object.
 
@@ -145,6 +185,11 @@ def _params_class(engine: Any) -> type | None:
     return found[0] if len(found) == 1 else None
 
 
+#: Query engines built on the decision model, and those wrapped in QueryPlanEngine.
+DECISION_ENGINES = ("decision", "query_plan_decision")
+QUERY_PLAN_ENGINES = ("query_plan", "query_plan_decision")
+
+
 class RAGUPipeline(RAGPipeline):
     def __init__(
         self,
@@ -174,8 +219,9 @@ class RAGUPipeline(RAGPipeline):
         max_context_length: int | None = None,
         decision_llm: LLM | None = None,
         decision_constraint: str = "none",
-        selector: str = "none",
-        select_options: dict[str, Any] | None = None,
+        decision_model: Any = None,
+        decision_options: dict[str, Any] | None = None,
+        decision_prompt: str = "default",
     ):
         ragu_logger.remove()
         ragu_logger.add(sys.stdout, level="DEBUG")
@@ -189,20 +235,36 @@ class RAGUPipeline(RAGPipeline):
         self.query_use_chunks = query_use_chunks
         self.retrieval_top_k = retrieval_top_k
         self.qa_top_k = qa_top_k
-        # Retrieval-time selection (dev RAGU with ragu.decision only); empty
-        # options keep the engine defaults.
-        self.selector = selector
-        self.select_options = dict(select_options or {})
-        self.decision_model: Any = None
-        if decision_llm is not None:
+        # query_engine "decision" (dev RAGU with ragu.decision only): a ready model
+        # (decision_model, e.g. a replay stub) wins over one built on decision_llm;
+        # decision_options are DecisionParams fields, empty keeps the engine defaults.
+        uses_decision = query_engine in DECISION_ENGINES
+        self.decision_options = dict(decision_options or {})
+        self.decision_model: Any = decision_model
+        if self.decision_model is None and decision_llm is not None:
             from ragu.decision import DecisionModel
             # One provider-rejected candidate (e.g. a content filter) must not turn
             # the whole question into a placeholder answer.
             self.decision_model = DecisionModel(  # type: ignore[call-arg]
                 decision_llm, constraint=decision_constraint, skip_failed_requests=True,  # type: ignore[arg-type]
             )
-        if selector == "pointwise" and self.decision_model is None:
-            raise ValueError(f"selector={selector!r} needs a decision LLM (--decision-model-name)")
+        if decision_prompt == "chain":
+            from ragu.common.prompts.default_templates import DEFAULT_DECISION_SYSTEM_PROMPT
+            from ragu.common.prompts.messages import SystemMessage
+
+            self.decision_model.update_prompt("decision_pointwise", RAGUInstruction(
+                messages=ChatMessages.from_messages([
+                    SystemMessage(content=DEFAULT_DECISION_SYSTEM_PROMPT),
+                    UserMessage(content=CHAIN_DECISION_POINTWISE_PROMPT),
+                ]),
+                pydantic_model=str,
+                description="Y/N judgement that counts intermediate links of a chain as useful.",
+            ))
+        if uses_decision and self.decision_model is None:
+            raise ValueError(f"query_engine={query_engine!r} needs a decision LLM (--decision-model-name)")
+        if not uses_decision and (self.decision_model is not None or self.decision_options):
+            # Otherwise a run asked to select would silently answer from the full context.
+            raise ValueError(f"Decision-model options need a decision query engine, got {query_engine!r}")
         if reason_first and not short_answers:
             raise ValueError("reason_first works with the terse prompt only (short_answers=True)")
         self.reason_first = reason_first
@@ -323,37 +385,47 @@ class RAGUPipeline(RAGPipeline):
                 _set_short_prompt(naive_search, "naive_search", _short_instruction())
             self.search_engine = naive_search
         else:
-            # Pass only kwargs the installed LocalSearchEngine accepts: the
-            # decision model exists only in builds with ragu.decision.
-            local_kwargs: dict[str, Any] = {
+            engine_kwargs: dict[str, Any] = {
                 "tokenizer_model": "gpt-4o-mini",
                 "language": self.language,
                 "max_context_length": max_context_length,
-                "decision_model": self.decision_model,
             }
-            local_params = inspect.signature(LocalSearchEngine.__init__).parameters
-            if self.decision_model is not None and "decision_model" not in local_params:
-                raise RuntimeError("This RAGU build's LocalSearchEngine has no decision_model")
-            local_search = LocalSearchEngine(
-                self.assistant_llm,
-                self.knowledge_graph,
-                self.embedder,
-                **{k: v for k, v in local_kwargs.items() if k in local_params and v is not None},
-            )
-            self.local_search = local_search
+            if uses_decision:
+                # Imported here: the pinned release has no such module.
+                from ragu.search_engine.decision_search import DecisionSearchEngine
+
+                graph_engine: Any = DecisionSearchEngine(
+                    self.assistant_llm,
+                    self.knowledge_graph,
+                    self.embedder,
+                    self.decision_model,
+                    **engine_kwargs,
+                )
+            else:
+                # Pass only kwargs the installed LocalSearchEngine accepts.
+                local_params = inspect.signature(LocalSearchEngine.__init__).parameters
+                graph_engine = LocalSearchEngine(
+                    self.assistant_llm,
+                    self.knowledge_graph,
+                    self.embedder,
+                    **{k: v for k, v in engine_kwargs.items() if k in local_params and v is not None},
+                )
+            self.graph_engine = graph_engine
             if short_answers:
-                _set_short_prompt(local_search, "local_search", _short_instruction())
-            self.search_engine = QueryPlanEngine(local_search) if query_engine == "query_plan" else local_search
+                _set_short_prompt(graph_engine, "local_search", _short_instruction())
+            self.search_engine = (
+                QueryPlanEngine(graph_engine) if query_engine in QUERY_PLAN_ENGINES else graph_engine
+            )
 
         # Resolve the calling convention once, not per question. QueryPlanEngine
-        # wraps the local engine and may not declare a params class of its own,
+        # wraps a graph engine and may not declare a params class of its own,
         # so fall back to the wrapped engine's.
         self.uses_engine_params = _takes_params(self.search_engine)
         self.params_class = None
         if self.uses_engine_params:
             self.params_class = _params_class(self.search_engine)
-            if self.params_class is None and hasattr(self, "local_search"):
-                self.params_class = _params_class(self.local_search)
+            if self.params_class is None and hasattr(self, "graph_engine"):
+                self.params_class = _params_class(self.graph_engine)
             if self.params_class is None:
                 # Falling back to the engine's own defaults would silently
                 # discard --retrieval-top-k / --qa-top-k, so say so out loud.
@@ -377,10 +449,7 @@ class RAGUPipeline(RAGPipeline):
         if self.query_engine != "naive":
             options["use_chunks"] = self.query_use_chunks
             options["use_summary"] = self.query_use_summary
-            if self.selector != "none":
-                options["selector"] = self.selector
-            # select_options also carries selector-independent knobs (e.g. ppr_chunks)
-            options.update(self.select_options)
+            options.update(self.decision_options)
         return options
 
     def _call_args(self, top_k: int) -> tuple[tuple, dict]:
@@ -393,8 +462,6 @@ class RAGUPipeline(RAGPipeline):
         if self.params_class is None:
             return (), {}
         accepted = inspect.signature(self.params_class).parameters
-        if "selector" in options and "selector" not in accepted:
-            raise RuntimeError(f"{self.params_class.__name__} has no 'selector'; this RAGU build cannot select")
         return (self.params_class(**{k: v for k, v in options.items() if k in accepted}),), {}
 
     async def _answer(self, question: str, max_retries: int = 3) -> tuple[str, Any]:
@@ -418,7 +485,11 @@ class RAGUPipeline(RAGPipeline):
             except Exception as exc:
                 # A single bad question (e.g. provider content-filter 400, which
                 # is not retryable) must not crash the whole batch. Log and
-                # return a refusal placeholder so the run continues.
+                # return a refusal placeholder so the run continues. A broken
+                # environment (endpoint down, auth, rate limit after retries) is
+                # raised instead: as placeholders it would be scored as answers.
+                if _is_environment_error(exc):
+                    raise
                 ragu_logger.warning(
                     f"Answer generation failed ({type(exc).__name__}: {exc}); "
                     f"returning 'I don't know.' placeholder for this question."

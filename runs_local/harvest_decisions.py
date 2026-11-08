@@ -38,7 +38,7 @@ from ragu.graph.graph_builder_pipeline import BuilderArguments
 from ragu.graph.knowledge_graph import KnowledgeGraph
 from ragu.models.embedder import EmbedderOpenAI
 from ragu.models.openai import CachedAsyncOpenAI
-from ragu.search_engine.local_search import _format_entity, _format_relation
+from ragu.search_engine.decision_search import _format_entity, _format_relation
 from ragu.utils.ragu_utils import compute_mdhash_id
 
 from natural_rag.dataset import RAGDataset
@@ -87,7 +87,7 @@ def main() -> None:
     ds = RAGDataset.load_auto(str(REPO_ROOT / args.dataset_path))
     dataset_name = Path(args.dataset_path).stem if Path(args.dataset_path).suffix else Path(args.dataset_path).name
 
-    # candidate text -> objects, built with the same formatters LocalSearch uses
+    # candidate text -> objects, built with the same formatters DecisionSearch uses
     chunks = {cid: Chunk(**payload) for cid, payload in
               json.loads((index_dir / "kv_chunks.json").read_text(encoding="utf-8")).items()}
     nodes, edges = asyncio.run(load_graph(index_dir, args.embedding_dim))

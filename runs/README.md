@@ -12,7 +12,7 @@ for smoke tests.
 
 | File | Purpose |
 |---|---|
-| `ragu_run.py` | **RAGU** runner (primary engine): indexing + answers; `--query-engine local/query_plan/naive`, `--short-answers`, `--index-model` |
+| `ragu_run.py` | **RAGU** runner (primary engine): indexing + answers; `--query-engine local/query_plan/naive/decision/query_plan_decision`, `--short-answers`, `--index-model` |
 | `lightrag_run.py` | **LightRAG** runner |
 | `fast_graphrag_run.py` | **FastGraphRAG** runner |
 | `nano_graphrag_run.py` | **NanoGraphRAG** runner |
@@ -71,9 +71,9 @@ actually reaches the engine (the answer path used to hardcode chunks on), and
 `--short-answers` fails loudly on a build whose engines have no
 `update_prompt()` instead of silently answering at full length.
 
-The decision-model flags (`--selector`, `--decision-model-name`, `--select-*`,
-`--ppr-*`) need RAGU with the `ragu.decision` package, which until it is merged
-upstream lives in the `feature/decision-model` branch of the fork:
+The decision engines (`--query-engine decision`, `query_plan_decision`) and their
+flags (`--decision-*`, `--select-*`) need RAGU with `ragu.decision` and
+`DecisionSearchEngine`, which until they are merged upstream live in the `feature/decision-model` branch of the fork:
 
 ```bash
 pip install -e . && pip install --force-reinstall \
@@ -133,7 +133,7 @@ python runs/ragu_run.py \
 | `--embed-batch-size` | `EMBED_BATCH_SIZE` | `32` | Max texts per embed API call |
 | `--retrieval-top-k` | `RETRIEVAL_TOP_K` | `20` | Entities to retrieve for context |
 | `--qa-top-k` | `QA_TOP_K` | `20` | Entities for answer generation |
-| `--query-engine` | `QUERY_ENGINE` | `local` | `local`, `query_plan`, or `naive` |
+| `--query-engine` | `QUERY_ENGINE` | `local` | `local`, `query_plan`, `naive`, `decision` or `query_plan_decision` (dev RAGU) |
 | `--chunker` | `CHUNKER` | `simple` | `simple` or `smart` |
 | `--use-chunks` / `--no-use-chunks` | `USE_CHUNKS` | `true` | Use text chunks in queries |
 | `--use-summary` / `--no-use-summary` | `USE_SUMMARY` | `false` | Use community summaries |
@@ -151,20 +151,25 @@ python runs/ragu_run.py \
 | `--context-budget` | `CONTEXT_BUDGET` | engine default (30k) | Max context tokens for the answer prompt |
 | `--always-answer` / `--no-always-answer` | `ALWAYS_ANSWER` | `false` | With `--short-answers`: forbid "I don't know" (benchmarks where every question has an answer) |
 | `--reason-first` / `--no-reason-first` | `REASON_FIRST` | `false` | With `--short-answers`: a short "Thought:" before the final "Answer:" line, as in HippoRAG 2. `<i>.txt` gets the final answer only, the full text goes to `raw_answer` in `<i>.context.json` |
-| `--selector` | `SELECTOR` | `none` | dev RAGU: `pointwise` (decision model) or `cosine` context selection in LocalSearch |
-| `--decision-model-name` | `DECISION_MODEL_NAME` | — | Model for the single-token decision model (same client as answers) |
+| `--decision-model-name` | `DECISION_MODEL_NAME` | — | Model for the single-token decision model (same client as answers); required by the decision engines |
 | `--decision-constraint` | `DECISION_CONSTRAINT` | `none` | `none`, `logit_bias` (OpenAI) or `allowed_token_ids` (vLLM) |
-| `--select-pool-entities/relations/chunks`, `--select-threshold`, `--select-floor`, `--select-top-entities/relations/chunks` | — | RAGU defaults | Selection pools and rules, see `ragu/search_engine/README.md` |
-| `--select-hops` | — | `1` | pointwise: hops walked from relations the decision model kept |
-| `--select-keep-seed-context` / `--no-select-keep-seed-context` | — | `false` | pointwise: keep the full seed context and append what further hops select |
-| `--ppr-chunks`, `--ppr-alpha` | — | `0`, `0.5` | Append Personalized PageRank chunks (seeded by the decision model when present) |
+| `--decision-policy`, `--decision-seeds`, `--decision-prerank`, `--decision-state`, `--decision-next-query`, `--decision-stop`, `--decision-context-order` | — | RAGU defaults | `DecisionParams` strategies. Only `threshold`, `entities`, `cosine`, `facts`, `blob`, `hops`, `sections` are implemented; other values raise `NotImplementedError` |
+| `--decision-max-context-tokens`, `--decision-max-decisions`, `--decision-min-probability` | — | — | `DecisionParams` budgets, not implemented yet (raise `NotImplementedError`) |
+| `--select-pool-entities/relations/chunks`, `--select-threshold`, `--select-floor` | — | RAGU defaults | Selection pools and rules, see `ragu/search_engine/README.md` |
+| `--select-hops` | — | `1` | Hops walked from relations the decision model kept |
+| `--select-keep-seed-context` / `--no-select-keep-seed-context` | — | `false` | Keep the full seed context and append what further hops select |
 
-All of these are off by default, so a run without them is the plain LocalSearch
-it always was. Best MuSiQue setup so far: `--short-answers --always-answer
---selector pointwise --decision-model-name gpt-4o-mini --select-hops 2 --select-pool-chunks 30`
+The `--decision-*` and `--select-*` flags work only with the decision engines; with
+any other engine the run stops with an error, so it cannot silently answer from the
+full context. Best MuSiQue setup so far: `--short-answers --always-answer
+--query-engine decision --decision-model-name gpt-4o-mini --select-hops 2 --select-pool-chunks 30`
 (+3.8 pp answer correctness over the same prompt without the decision model on
 395 held-out questions; scripts and numbers in
 [runs_local/README.md](../runs_local/README.md#эксперименты-с-decision-model)).
+
+The old `--selector`, `--select-top-*` and `--ppr-*` flags (the `cosine` selector and
+the PageRank chunks) are gone. To reproduce runs made with them, use commit `14bbcd8`
+of this repository with commit `7662b7e` of the RAGU fork.
 
 ## Query Engines
 
@@ -173,6 +178,12 @@ Single-stage retrieval + LLM answer generation. Good for simple questions.
 
 ### `query_plan`
 Decomposes complex questions into sub-query DAGs via LLM planning, executes sub-queries in topological order, and returns the final answer. Falls back to the underlying engine when no decomposition is needed.
+
+### `decision`
+`DecisionSearchEngine` from dev RAGU: the neighbourhood `local` would retrieve, cut to what a single-token decision model accepts, optionally walking further hops from the relations it kept. Needs `--decision-model-name`.
+
+### `query_plan_decision`
+`query_plan` over `decision`: every sub-query gets its own walk, so the decisions per question multiply by the number of sub-queries.
 
 ### `naive`
 Plain vector RAG: retrieves the most similar text **chunks** from the chunk vector DB and answers from them — the knowledge graph (entities/relations) is **not** traversed. Uses the same on-disk RAGU index, so it can reuse an existing graph's index (e.g. symlink the RAGU `index/` into a `generated/naive_<dataset>/` output dir).
