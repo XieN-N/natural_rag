@@ -153,7 +153,7 @@ python runs/ragu_run.py \
 | `--reason-first` / `--no-reason-first` | `REASON_FIRST` | `false` | With `--short-answers`: a short "Thought:" before the final "Answer:" line, as in HippoRAG 2. `<i>.txt` gets the final answer only, the full text goes to `raw_answer` in `<i>.context.json` |
 | `--decision-model-name` | `DECISION_MODEL_NAME` | — | Model for the single-token decision model (same client as answers); required by the decision engines |
 | `--decision-constraint` | `DECISION_CONSTRAINT` | `none` | `none`, `logit_bias` (OpenAI) or `allowed_token_ids` (vLLM) |
-| `--decision-policy`, `--decision-seeds`, `--decision-prerank`, `--decision-state`, `--decision-next-query`, `--decision-stop`, `--decision-context-order` | — | RAGU defaults | `DecisionParams` strategies. Only `threshold`, `entities`, `cosine`, `facts`, `blob`, `hops`, `sections` are implemented; other values raise `NotImplementedError` |
+| `--decision-policy`, `--decision-seeds`, `--decision-state`, `--decision-next-query`, `--decision-stop`, `--decision-context-order` | — | RAGU defaults | `DecisionParams` strategies. Only `threshold`, `entities`, `cosine`, `facts`, `blob`, `hops`, `sections` are implemented; other values raise `NotImplementedError` |
 | `--decision-max-context-tokens`, `--decision-max-decisions`, `--decision-min-probability` | — | — | `DecisionParams` budgets, not implemented yet (raise `NotImplementedError`) |
 | `--select-pool-entities/relations/chunks`, `--select-threshold`, `--select-floor` | — | RAGU defaults | Selection pools and rules, see `ragu/search_engine/README.md` |
 | `--select-hops` | — | `1` | Hops walked from relations the decision model kept |

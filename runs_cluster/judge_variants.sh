@@ -19,7 +19,7 @@ export LLM_API_KEY="$(cat "$W/secrets/yandex_api_key")"
 export GRAPHRAG_BENCH_ROOT="$W/GraphRAG-Benchmark" EVAL_PYTHON="$W/env_eval/bin/python"
 export PYTHON=/userspace/sse/.conda/envs/ragu_dev/bin/python PYTHONUTF8=1 HOME=/userspace/sse
 export PYTHONPATH="$W/natural_rag:$W/RAGU"
-export PASS=yandex JUDGE_WRAPPER=runs_local/judge_yandex.py JUDGE_CONCURRENCY=8
+export PASS="${PASS:-yandex}" JUDGE_WRAPPER=runs_local/judge_yandex.py JUDGE_CONCURRENCY=8
 export JUDGE_BASE_URL=https://llm.api.cloud.yandex.net/v1
 export JUDGE_MODEL="gpt://$FOLDER/yandexgpt-5.1/latest"
 export JUDGE_EMBEDDING_MODEL="emb://$FOLDER/text-search-query/latest"

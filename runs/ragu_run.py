@@ -72,12 +72,11 @@ def parse_args() -> argparse.Namespace:
     # DecisionParams options (--query-engine decision or query_plan_decision); values
     # left out keep the engine defaults, not-yet-implemented ones make the engine raise.
     parser.add_argument("--decision-seeds", default=None, help="entities | entities+facts | entities+facts+names")
-    parser.add_argument("--decision-prerank", default=None, help="cosine | cross_encoder")
     parser.add_argument("--decision-policy", default=None, help="threshold | one_round | best_first")
     parser.add_argument("--decision-state", default=None, help="facts | chain")
     parser.add_argument("--decision-next-query", default=None, help="blob | subquestion")
     parser.add_argument("--decision-stop", default=None, help="hops | budget | sufficient")
-    parser.add_argument("--decision-context-order", default=None, help="sections | chain")
+    parser.add_argument("--decision-context-order", default=None, help="sections | ranked | chunks_first | flat")
     parser.add_argument("--decision-max-context-tokens", type=int, default=None)
     parser.add_argument("--decision-max-decisions", type=int, default=None)
     parser.add_argument("--decision-min-probability", type=float, default=None)
@@ -413,7 +412,6 @@ def main() -> None:
         decision_options={
             key: value for key, value in {
                 "seeds": args.decision_seeds,
-                "prerank": args.decision_prerank,
                 "policy": args.decision_policy,
                 "state": args.decision_state,
                 "next_query": args.decision_next_query,
